@@ -15,6 +15,7 @@
         :root {
             --primary-red: #dc2626;
             --primary-red-hover: #b91c1c;
+            --primary-red-active: #991b1b;
             --text-primary: #1f2937;
             --text-secondary: #6b7280;
             --border-color: #d1d5db;
@@ -25,15 +26,16 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
             background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 1rem;
+            color: var(--text-primary);
         }
 
         .login-container {
@@ -88,8 +90,13 @@
 
         .form-label {
             font-size: 0.875rem;
-            font-weight: 600;
+            font-weight: 500;
             color: var(--text-primary);
+        }
+
+        .form-label .required {
+            color: var(--primary-red);
+            margin-left: 0.125rem;
         }
 
         .form-input {
@@ -109,22 +116,25 @@
             box-shadow: 0 0 0 3px var(--focus-ring);
         }
 
+        .form-input:hover:not(:focus) {
+            border-color: #9ca3af;
+        }
+
         .form-input::placeholder {
-            color: var(--text-secondary);
+            color: #9ca3af;
         }
 
-        .form-input:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+        .form-input.error {
+            border-color: var(--error-color);
         }
 
-        .form-error {
+        .error-message {
             font-size: 0.75rem;
             color: var(--error-color);
             display: none;
         }
 
-        .form-error.active {
+        .error-message.visible {
             display: block;
         }
 
@@ -133,23 +143,23 @@
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 0.5rem;
+            gap: 0.75rem;
         }
 
-        .checkbox-group {
+        .remember-me {
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
-        .checkbox-input {
+        .remember-me input[type="checkbox"] {
             width: 1rem;
             height: 1rem;
             cursor: pointer;
             accent-color: var(--primary-red);
         }
 
-        .checkbox-label {
+        .remember-me label {
             font-size: 0.875rem;
             color: var(--text-secondary);
             cursor: pointer;
@@ -161,11 +171,11 @@
             color: var(--primary-red);
             text-decoration: none;
             font-weight: 500;
-            transition: opacity 0.2s ease;
+            transition: color 0.2s ease;
         }
 
         .forgot-password:hover {
-            opacity: 0.8;
+            color: var(--primary-red-hover);
             text-decoration: underline;
         }
 
@@ -181,6 +191,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
             outline: none;
+            margin-top: 0.5rem;
         }
 
         .submit-button:hover {
@@ -190,57 +201,45 @@
         }
 
         .submit-button:active {
+            background: var(--primary-red-active);
             transform: translateY(0);
-        }
-
-        .submit-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
         }
 
         .submit-button:focus {
             box-shadow: 0 0 0 3px var(--focus-ring);
         }
 
-        .divider {
-            display: flex;
-            align-items: center;
+        .submit-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-footer {
             text-align: center;
-            margin: 1.5rem 0;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
         }
 
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .divider span {
-            padding: 0 1rem;
+        .login-footer p {
             font-size: 0.875rem;
             color: var(--text-secondary);
         }
 
-        .signup-link {
-            text-align: center;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .signup-link a {
+        .login-footer a {
             color: var(--primary-red);
             text-decoration: none;
-            font-weight: 600;
-            transition: opacity 0.2s ease;
+            font-weight: 500;
+            transition: color 0.2s ease;
         }
 
-        .signup-link a:hover {
-            opacity: 0.8;
+        .login-footer a:hover {
+            color: var(--primary-red-hover);
             text-decoration: underline;
         }
 
+        /* Responsive Design */
         @media (max-width: 640px) {
             .login-container {
                 padding: 2rem 1.5rem;
@@ -257,10 +256,6 @@
         }
 
         @media (max-width: 375px) {
-            body {
-                padding: 0.5rem;
-            }
-
             .login-container {
                 padding: 1.5rem 1rem;
             }
@@ -275,11 +270,23 @@
             }
         }
 
+        /* Accessibility */
         @media (prefers-reduced-motion: reduce) {
             * {
                 animation-duration: 0.01ms !important;
                 animation-iteration-count: 1 !important;
                 transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .form-input {
+                border-width: 2px;
+            }
+
+            .submit-button {
+                border: 2px solid transparent;
             }
         }
     </style>
@@ -293,23 +300,28 @@
 
         <form class="login-form" id="loginForm" novalidate aria-label="Login form">
             <div class="form-group">
-                <label for="email" class="form-label">Email Address</label>
+                <label for="username" class="form-label">
+                    Username<span class="required" aria-label="required">*</span>
+                </label>
                 <input
-                    type="email"
-                    id="email"
-                    name="email"
+                    type="text"
+                    id="username"
+                    name="username"
                     class="form-input"
-                    placeholder="Enter your email"
+                    placeholder="Enter your username"
                     required
-                    autocomplete="email"
+                    autocomplete="username"
                     aria-required="true"
-                    aria-describedby="email-error"
+                    aria-describedby="username-error"
+                    aria-invalid="false"
                 />
-                <span id="email-error" class="form-error" role="alert"></span>
+                <span id="username-error" class="error-message" role="alert"></span>
             </div>
 
             <div class="form-group">
-                <label for="password" class="form-label">Password</label>
+                <label for="password" class="form-label">
+                    Password<span class="required" aria-label="required">*</span>
+                </label>
                 <input
                     type="password"
                     id="password"
@@ -320,23 +332,22 @@
                     autocomplete="current-password"
                     aria-required="true"
                     aria-describedby="password-error"
+                    aria-invalid="false"
                 />
-                <span id="password-error" class="form-error" role="alert"></span>
+                <span id="password-error" class="error-message" role="alert"></span>
             </div>
 
             <div class="form-options">
-                <div class="checkbox-group">
+                <div class="remember-me">
                     <input
                         type="checkbox"
                         id="remember"
                         name="remember"
-                        class="checkbox-input"
+                        aria-label="Remember me"
                     />
-                    <label for="remember" class="checkbox-label">Remember me</label>
+                    <label for="remember">Remember me</label>
                 </div>
-                <a href="/member-benefits/forgot-password" class="forgot-password">
-                    Forgot password?
-                </a>
+                <a href="#" class="forgot-password">Forgot password?</a>
             </div>
 
             <button type="submit" class="submit-button" aria-label="Sign in to member benefits">
@@ -344,13 +355,12 @@
             </button>
         </form>
 
-        <div class="divider">
-            <span>or</span>
-        </div>
-
-        <div class="signup-link">
-            Don't have an account? <a href="/member-benefits/signup">Sign up</a>
-        </div>
+        <footer class="login-footer">
+            <p>
+                Don't have an account? 
+                <a href="#" aria-label="Create new account">Sign up</a>
+            </p>
+        </footer>
     </main>
 
     <script>
@@ -358,96 +368,92 @@
             'use strict';
 
             const form = document.getElementById('loginForm');
-            const emailInput = document.getElementById('email');
+            const usernameInput = document.getElementById('username');
             const passwordInput = document.getElementById('password');
-            const emailError = document.getElementById('email-error');
+            const usernameError = document.getElementById('username-error');
             const passwordError = document.getElementById('password-error');
-            const submitButton = form.querySelector('.submit-button');
 
             /**
-             * Validates email format
-             * @param {string} email - Email address to validate
-             * @returns {boolean} - True if valid, false otherwise
+             * Validates username field
+             * @returns {boolean} True if valid, false otherwise
              */
-            function validateEmail(email) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                return emailRegex.test(email);
-            }
-
-            /**
-             * Displays error message for a field
-             * @param {HTMLElement} errorElement - Error message element
-             * @param {string} message - Error message to display
-             */
-            function showError(errorElement, message) {
-                errorElement.textContent = message;
-                errorElement.classList.add('active');
-            }
-
-            /**
-             * Clears error message for a field
-             * @param {HTMLElement} errorElement - Error message element
-             */
-            function clearError(errorElement) {
-                errorElement.textContent = '';
-                errorElement.classList.remove('active');
-            }
-
-            /**
-             * Validates email field
-             * @returns {boolean} - True if valid, false otherwise
-             */
-            function validateEmailField() {
-                const email = emailInput.value.trim();
+            function validateUsername() {
+                const value = usernameInput.value.trim();
                 
-                if (!email) {
-                    showError(emailError, 'Email address is required');
+                if (!value) {
+                    showError(usernameInput, usernameError, 'Username is required');
                     return false;
                 }
                 
-                if (!validateEmail(email)) {
-                    showError(emailError, 'Please enter a valid email address');
+                if (value.length < 3) {
+                    showError(usernameInput, usernameError, 'Username must be at least 3 characters');
                     return false;
                 }
                 
-                clearError(emailError);
+                clearError(usernameInput, usernameError);
                 return true;
             }
 
             /**
              * Validates password field
-             * @returns {boolean} - True if valid, false otherwise
+             * @returns {boolean} True if valid, false otherwise
              */
-            function validatePasswordField() {
-                const password = passwordInput.value;
+            function validatePassword() {
+                const value = passwordInput.value;
                 
-                if (!password) {
-                    showError(passwordError, 'Password is required');
+                if (!value) {
+                    showError(passwordInput, passwordError, 'Password is required');
                     return false;
                 }
                 
-                if (password.length < 6) {
-                    showError(passwordError, 'Password must be at least 6 characters');
+                if (value.length < 6) {
+                    showError(passwordInput, passwordError, 'Password must be at least 6 characters');
                     return false;
                 }
                 
-                clearError(passwordError);
+                clearError(passwordInput, passwordError);
                 return true;
             }
 
-            // Real-time validation
-            emailInput.addEventListener('blur', validateEmailField);
-            passwordInput.addEventListener('blur', validatePasswordField);
+            /**
+             * Shows error message for a field
+             * @param {HTMLElement} input - Input element
+             * @param {HTMLElement} errorElement - Error message element
+             * @param {string} message - Error message
+             */
+            function showError(input, errorElement, message) {
+                input.classList.add('error');
+                input.setAttribute('aria-invalid', 'true');
+                errorElement.textContent = message;
+                errorElement.classList.add('visible');
+            }
 
-            emailInput.addEventListener('input', function() {
-                if (emailError.classList.contains('active')) {
-                    validateEmailField();
+            /**
+             * Clears error message for a field
+             * @param {HTMLElement} input - Input element
+             * @param {HTMLElement} errorElement - Error message element
+             */
+            function clearError(input, errorElement) {
+                input.classList.remove('error');
+                input.setAttribute('aria-invalid', 'false');
+                errorElement.textContent = '';
+                errorElement.classList.remove('visible');
+            }
+
+            // Real-time validation
+            usernameInput.addEventListener('blur', validateUsername);
+            passwordInput.addEventListener('blur', validatePassword);
+
+            // Clear errors on input
+            usernameInput.addEventListener('input', function() {
+                if (usernameError.classList.contains('visible')) {
+                    clearError(usernameInput, usernameError);
                 }
             });
 
             passwordInput.addEventListener('input', function() {
-                if (passwordError.classList.contains('active')) {
-                    validatePasswordField();
+                if (passwordError.classList.contains('visible')) {
+                    clearError(passwordInput, passwordError);
                 }
             });
 
@@ -458,27 +464,33 @@
             form.addEventListener('submit', function(event) {
                 event.preventDefault();
 
-                const isEmailValid = validateEmailField();
-                const isPasswordValid = validatePasswordField();
+                const isUsernameValid = validateUsername();
+                const isPasswordValid = validatePassword();
 
-                if (isEmailValid && isPasswordValid) {
-                    submitButton.disabled = true;
-                    submitButton.textContent = 'Signing in...';
+                if (isUsernameValid && isPasswordValid) {
+                    // Form is valid - handle submission
+                    const formData = {
+                        username: usernameInput.value.trim(),
+                        password: passwordInput.value,
+                        remember: document.getElementById('remember').checked
+                    };
 
-                    // Simulate API call
-                    setTimeout(function() {
-                        console.log('Login submitted:', {
-                            email: emailInput.value,
-                            remember: document.getElementById('remember').checked
-                        });
-                        
-                        // Reset button state
-                        submitButton.disabled = false;
-                        submitButton.textContent = 'Sign In';
-                        
-                        // Redirect or show success message
-                        // window.location.href = '/member-benefits/dashboard';
-                    }, 1500);
+                    console.log('Form submitted:', formData);
+                    
+                    // TODO: Implement actual login logic
+                    // Example: Send data to authentication endpoint
+                    // fetch('/api/auth/login', {
+                    //     method: 'POST',
+                    //     headers: { 'Content-Type': 'application/json' },
+                    //     body: JSON.stringify(formData)
+                    // });
+                } else {
+                    // Focus first invalid field
+                    if (!isUsernameValid) {
+                        usernameInput.focus();
+                    } else if (!isPasswordValid) {
+                        passwordInput.focus();
+                    }
                 }
             });
         })();
