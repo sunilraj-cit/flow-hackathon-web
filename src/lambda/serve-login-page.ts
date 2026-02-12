@@ -2,7 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
 /**
  * Generates the HTML content for the login page
- * @returns {string} The complete HTML content for the login page
+ * @returns {string} The complete HTML document as a string
  */
 const generateLoginPageHTML = (): string => {
   return `<!DOCTYPE html>
@@ -21,7 +21,7 @@ const generateLoginPageHTML = (): string => {
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -32,10 +32,10 @@ const generateLoginPageHTML = (): string => {
         .login-container {
             background: white;
             border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 40px;
             width: 100%;
             max-width: 400px;
-            padding: 40px;
         }
 
         .login-header {
@@ -60,18 +60,18 @@ const generateLoginPageHTML = (): string => {
 
         .form-group label {
             display: block;
+            margin-bottom: 8px;
             font-size: 14px;
             font-weight: 500;
             color: #333;
-            margin-bottom: 8px;
         }
 
         .form-group input {
             width: 100%;
             padding: 12px 16px;
-            font-size: 14px;
             border: 1px solid #ddd;
             border-radius: 4px;
+            font-size: 14px;
             transition: border-color 0.3s ease;
         }
 
@@ -84,33 +84,18 @@ const generateLoginPageHTML = (): string => {
             color: #999;
         }
 
-        .forgot-password {
-            text-align: right;
-            margin-bottom: 20px;
-        }
-
-        .forgot-password a {
-            font-size: 13px;
-            color: #666;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .forgot-password a:hover {
-            color: #dc2626;
-        }
-
         .login-button {
             width: 100%;
-            padding: 14px;
-            font-size: 16px;
-            font-weight: 600;
-            color: white;
+            padding: 14px 20px;
             background-color: #dc2626;
+            color: white;
             border: none;
             border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.1s ease;
+            margin-top: 10px;
         }
 
         .login-button:hover {
@@ -126,45 +111,21 @@ const generateLoginPageHTML = (): string => {
             cursor: not-allowed;
         }
 
-        .divider {
+        .forgot-password {
             text-align: center;
-            margin: 30px 0;
-            position: relative;
+            margin-top: 16px;
         }
 
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background-color: #e5e5e5;
-        }
-
-        .divider span {
-            position: relative;
-            background: white;
-            padding: 0 15px;
-            color: #999;
-            font-size: 13px;
-        }
-
-        .signup-link {
-            text-align: center;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .signup-link a {
+        .forgot-password a {
             color: #dc2626;
             text-decoration: none;
-            font-weight: 600;
+            font-size: 14px;
             transition: color 0.3s ease;
         }
 
-        .signup-link a:hover {
+        .forgot-password a:hover {
             color: #b91c1c;
+            text-decoration: underline;
         }
 
         .error-message {
@@ -177,14 +138,8 @@ const generateLoginPageHTML = (): string => {
             display: none;
         }
 
-        .success-message {
-            background-color: #d1fae5;
-            color: #065f46;
-            padding: 12px;
-            border-radius: 4px;
-            font-size: 14px;
-            margin-bottom: 20px;
-            display: none;
+        .error-message.show {
+            display: block;
         }
 
         @media (max-width: 480px) {
@@ -196,23 +151,21 @@ const generateLoginPageHTML = (): string => {
                 font-size: 20px;
             }
 
-            .form-group input {
-                padding: 10px 14px;
-            }
-
             .login-button {
-                padding: 12px;
-                font-size: 15px;
+                padding: 12px 16px;
+                font-size: 14px;
             }
         }
 
-        @media (max-width: 360px) {
+        @media (min-width: 481px) and (max-width: 768px) {
             .login-container {
-                padding: 25px 15px;
+                max-width: 450px;
             }
+        }
 
-            .login-header h1 {
-                font-size: 18px;
+        @media (min-width: 769px) {
+            .login-container {
+                max-width: 400px;
             }
         }
     </style>
@@ -225,9 +178,8 @@ const generateLoginPageHTML = (): string => {
         </div>
 
         <div id="errorMessage" class="error-message"></div>
-        <div id="successMessage" class="success-message"></div>
 
-        <form id="loginForm">
+        <form id="loginForm" novalidate>
             <div class="form-group">
                 <label for="email">Email Address</label>
                 <input 
@@ -237,7 +189,7 @@ const generateLoginPageHTML = (): string => {
                     placeholder="Enter your email"
                     required
                     autocomplete="email"
-                >
+                />
             </div>
 
             <div class="form-group">
@@ -249,11 +201,7 @@ const generateLoginPageHTML = (): string => {
                     placeholder="Enter your password"
                     required
                     autocomplete="current-password"
-                >
-            </div>
-
-            <div class="forgot-password">
-                <a href="#" id="forgotPasswordLink">Forgot password?</a>
+                />
             </div>
 
             <button type="submit" class="login-button" id="loginButton">
@@ -261,96 +209,70 @@ const generateLoginPageHTML = (): string => {
             </button>
         </form>
 
-        <div class="divider">
-            <span>or</span>
-        </div>
-
-        <div class="signup-link">
-            Don't have an account? <a href="#" id="signupLink">Sign up</a>
+        <div class="forgot-password">
+            <a href="#" id="forgotPasswordLink">Forgot your password?</a>
         </div>
     </div>
 
     <script>
-        const loginForm = document.getElementById('loginForm');
-        const loginButton = document.getElementById('loginButton');
-        const errorMessage = document.getElementById('errorMessage');
-        const successMessage = document.getElementById('successMessage');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
+        (function() {
+            const form = document.getElementById('loginForm');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const loginButton = document.getElementById('loginButton');
+            const errorMessage = document.getElementById('errorMessage');
+            const forgotPasswordLink = document.getElementById('forgotPasswordLink');
 
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-            successMessage.style.display = 'none';
-        }
-
-        function showSuccess(message) {
-            successMessage.textContent = message;
-            successMessage.style.display = 'block';
-            errorMessage.style.display = 'none';
-        }
-
-        function hideMessages() {
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
-        }
-
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            hideMessages();
-
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-
-            if (!email || !password) {
-                showError('Please fill in all fields');
-                return;
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.add('show');
             }
 
-            if (!isValidEmail(email)) {
-                showError('Please enter a valid email address');
-                return;
+            function hideError() {
+                errorMessage.classList.remove('show');
             }
 
-            loginButton.disabled = true;
-            loginButton.textContent = 'Signing in...';
-
-            try {
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                
-                // This is a placeholder - replace with actual authentication logic
-                showSuccess('Login successful! Redirecting...');
-                
-                setTimeout(() => {
-                    // Redirect to dashboard or home page
-                    window.location.href = '/dashboard';
-                }, 1500);
-            } catch (error) {
-                showError('Login failed. Please check your credentials and try again.');
-                loginButton.disabled = false;
-                loginButton.textContent = 'Sign In';
+            function validateEmail(email) {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
             }
-        });
 
-        function isValidEmail(email) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return emailRegex.test(email);
-        }
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                hideError();
 
-        document.getElementById('forgotPasswordLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            alert('Password reset functionality will be implemented soon.');
-        });
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
 
-        document.getElementById('signupLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            alert('Sign up functionality will be implemented soon.');
-        });
+                if (!email || !password) {
+                    showError('Please fill in all fields');
+                    return;
+                }
 
-        // Clear error messages when user starts typing
-        emailInput.addEventListener('input', hideMessages);
-        passwordInput.addEventListener('input', hideMessages);
+                if (!validateEmail(email)) {
+                    showError('Please enter a valid email address');
+                    return;
+                }
+
+                loginButton.disabled = true;
+                loginButton.textContent = 'Signing in...';
+
+                // Simulate login process
+                setTimeout(function() {
+                    loginButton.disabled = false;
+                    loginButton.textContent = 'Sign In';
+                    showError('Login functionality not yet implemented');
+                }, 1000);
+            });
+
+            forgotPasswordLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('Password reset functionality will be available soon.');
+            });
+
+            emailInput.addEventListener('input', hideError);
+            passwordInput.addEventListener('input', hideError);
+        })();
     </script>
 </body>
 </html>`;
@@ -365,31 +287,21 @@ export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const origin = event.headers.origin || event.headers.Origin || '*';
-    
-    const corsHeaders = {
-      'Access-Control-Allow-Origin': origin,
-      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-      'Access-Control-Allow-Methods': 'GET,OPTIONS',
-      'Access-Control-Allow-Credentials': 'true',
-    };
-
-    // Handle OPTIONS request for CORS preflight
-    if (event.httpMethod === 'OPTIONS') {
-      return {
-        statusCode: 200,
-        headers: corsHeaders,
-        body: '',
-      };
-    }
+    // Log the incoming request for debugging
+    console.log('Serving login page', {
+      path: event.path,
+      method: event.httpMethod,
+      requestId: event.requestContext.requestId,
+    });
 
     // Only allow GET requests
     if (event.httpMethod !== 'GET') {
       return {
         statusCode: 405,
         headers: {
-          ...corsHeaders,
           'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET',
         },
         body: JSON.stringify({
           error: 'Method Not Allowed',
@@ -398,22 +310,29 @@ export const handler = async (
       };
     }
 
+    // Generate the HTML content
     const htmlContent = generateLoginPageHTML();
 
+    // Return the HTML response with proper headers
     return {
       statusCode: 200,
       headers: {
-        ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
       },
       body: htmlContent,
     };
   } catch (error) {
+    // Log the error for debugging
     console.error('Error serving login page:', error);
 
+    // Return a generic error response
     return {
       statusCode: 500,
       headers: {
@@ -427,4 +346,3 @@ export const handler = async (
     };
   }
 };
-```
