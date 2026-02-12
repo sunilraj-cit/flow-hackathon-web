@@ -2,7 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
 /**
  * Generates the HTML content for the login page
- * @returns {string} The complete HTML document as a string
+ * @returns {string} The complete HTML document
  */
 const generateLoginPageHTML = (): string => {
   return `<!DOCTYPE html>
@@ -11,7 +11,7 @@ const generateLoginPageHTML = (): string => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Member Benefits Login</title>
+    <title>Member Benefits - Login</title>
     <style>
         * {
             margin: 0;
@@ -20,22 +20,34 @@ const generateLoginPageHTML = (): string => {
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             padding: 20px;
         }
 
         .login-container {
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             width: 100%;
             max-width: 400px;
+            padding: 40px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .login-header {
@@ -44,7 +56,7 @@ const generateLoginPageHTML = (): string => {
         }
 
         .login-header h1 {
-            font-size: 24px;
+            font-size: 28px;
             color: #333;
             margin-bottom: 8px;
         }
@@ -60,42 +72,58 @@ const generateLoginPageHTML = (): string => {
 
         .form-group label {
             display: block;
-            margin-bottom: 8px;
             font-size: 14px;
             font-weight: 500;
             color: #333;
+            margin-bottom: 8px;
         }
 
         .form-group input {
             width: 100%;
             padding: 12px 16px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
             font-size: 14px;
-            transition: border-color 0.3s ease;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
 
         .form-group input:focus {
             outline: none;
             border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
         }
 
         .form-group input::placeholder {
             color: #999;
         }
 
+        .forgot-password {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+
+        .forgot-password a {
+            font-size: 13px;
+            color: #666;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .forgot-password a:hover {
+            color: #dc2626;
+        }
+
         .login-button {
             width: 100%;
-            padding: 14px 20px;
-            background-color: #dc2626;
-            color: white;
-            border: none;
-            border-radius: 4px;
+            padding: 14px;
             font-size: 16px;
             font-weight: 600;
+            color: white;
+            background-color: #dc2626;
+            border: none;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.1s ease;
-            margin-top: 10px;
+            transition: background-color 0.3s, transform 0.1s;
         }
 
         .login-button:hover {
@@ -106,66 +134,94 @@ const generateLoginPageHTML = (): string => {
             transform: scale(0.98);
         }
 
-        .login-button:disabled {
-            background-color: #fca5a5;
-            cursor: not-allowed;
+        .login-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
         }
 
-        .forgot-password {
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+            color: #999;
+            font-size: 13px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background-color: #ddd;
+        }
+
+        .divider::before {
+            margin-right: 12px;
+        }
+
+        .divider::after {
+            margin-left: 12px;
+        }
+
+        .signup-link {
             text-align: center;
-            margin-top: 16px;
+            font-size: 14px;
+            color: #666;
         }
 
-        .forgot-password a {
+        .signup-link a {
             color: #dc2626;
             text-decoration: none;
-            font-size: 14px;
-            transition: color 0.3s ease;
+            font-weight: 600;
+            transition: color 0.3s;
         }
 
-        .forgot-password a:hover {
+        .signup-link a:hover {
             color: #b91c1c;
             text-decoration: underline;
         }
 
-        .error-message {
-            background-color: #fee2e2;
-            color: #991b1b;
-            padding: 12px;
-            border-radius: 4px;
-            font-size: 14px;
+        .checkbox-group {
+            display: flex;
+            align-items: center;
             margin-bottom: 20px;
-            display: none;
         }
 
-        .error-message.show {
-            display: block;
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            margin-bottom: 0;
         }
 
         @media (max-width: 480px) {
             .login-container {
-                padding: 30px 20px;
+                padding: 30px 24px;
             }
 
             .login-header h1 {
-                font-size: 20px;
+                font-size: 24px;
             }
 
             .login-button {
-                padding: 12px 16px;
-                font-size: 14px;
+                padding: 12px;
+                font-size: 15px;
             }
         }
 
-        @media (min-width: 481px) and (max-width: 768px) {
+        @media (max-width: 360px) {
             .login-container {
-                max-width: 450px;
+                padding: 24px 20px;
             }
-        }
 
-        @media (min-width: 769px) {
-            .login-container {
-                max-width: 400px;
+            .login-header h1 {
+                font-size: 22px;
             }
         }
     </style>
@@ -176,10 +232,8 @@ const generateLoginPageHTML = (): string => {
             <h1>Member Benefits</h1>
             <p>Sign in to access your account</p>
         </div>
-
-        <div id="errorMessage" class="error-message"></div>
-
-        <form id="loginForm" novalidate>
+        
+        <form id="loginForm" onsubmit="handleLogin(event)">
             <div class="form-group">
                 <label for="email">Email Address</label>
                 <input 
@@ -191,7 +245,7 @@ const generateLoginPageHTML = (): string => {
                     autocomplete="email"
                 />
             </div>
-
+            
             <div class="form-group">
                 <label for="password">Password</label>
                 <input 
@@ -203,76 +257,48 @@ const generateLoginPageHTML = (): string => {
                     autocomplete="current-password"
                 />
             </div>
-
-            <button type="submit" class="login-button" id="loginButton">
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="remember" name="remember" />
+                <label for="remember">Remember me</label>
+            </div>
+            
+            <div class="forgot-password">
+                <a href="#" onclick="handleForgotPassword(event)">Forgot password?</a>
+            </div>
+            
+            <button type="submit" class="login-button">
                 Sign In
             </button>
         </form>
-
-        <div class="forgot-password">
-            <a href="#" id="forgotPasswordLink">Forgot your password?</a>
+        
+        <div class="divider">or</div>
+        
+        <div class="signup-link">
+            Don't have an account? <a href="#" onclick="handleSignup(event)">Sign up</a>
         </div>
     </div>
 
     <script>
-        (function() {
-            const form = document.getElementById('loginForm');
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-            const loginButton = document.getElementById('loginButton');
-            const errorMessage = document.getElementById('errorMessage');
-            const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
+            
+            console.log('Login attempt:', { email, remember });
+            alert('Login functionality will be implemented in the next phase.');
+        }
 
-            function showError(message) {
-                errorMessage.textContent = message;
-                errorMessage.classList.add('show');
-            }
+        function handleForgotPassword(event) {
+            event.preventDefault();
+            alert('Password reset functionality will be implemented in the next phase.');
+        }
 
-            function hideError() {
-                errorMessage.classList.remove('show');
-            }
-
-            function validateEmail(email) {
-                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                return re.test(email);
-            }
-
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                hideError();
-
-                const email = emailInput.value.trim();
-                const password = passwordInput.value;
-
-                if (!email || !password) {
-                    showError('Please fill in all fields');
-                    return;
-                }
-
-                if (!validateEmail(email)) {
-                    showError('Please enter a valid email address');
-                    return;
-                }
-
-                loginButton.disabled = true;
-                loginButton.textContent = 'Signing in...';
-
-                // Simulate login process
-                setTimeout(function() {
-                    loginButton.disabled = false;
-                    loginButton.textContent = 'Sign In';
-                    showError('Login functionality not yet implemented');
-                }, 1000);
-            });
-
-            forgotPasswordLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                alert('Password reset functionality will be available soon.');
-            });
-
-            emailInput.addEventListener('input', hideError);
-            passwordInput.addEventListener('input', hideError);
-        })();
+        function handleSignup(event) {
+            event.preventDefault();
+            alert('Sign up functionality will be implemented in the next phase.');
+        }
     </script>
 </body>
 </html>`;
@@ -287,11 +313,10 @@ export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // Log the incoming request for debugging
     console.log('Serving login page', {
+      requestId: event.requestContext.requestId,
       path: event.path,
       method: event.httpMethod,
-      requestId: event.requestContext.requestId,
     });
 
     // Only allow GET requests
@@ -301,7 +326,8 @@ export const handler = async (
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
         },
         body: JSON.stringify({
           error: 'Method Not Allowed',
@@ -310,17 +336,13 @@ export const handler = async (
       };
     }
 
-    // Generate the HTML content
     const htmlContent = generateLoginPageHTML();
 
-    // Return the HTML response with proper headers
     return {
       statusCode: 200,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        'Cache-Control': 'public, max-age=300',
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
         'X-XSS-Protection': '1; mode=block',
@@ -329,10 +351,8 @@ export const handler = async (
       body: htmlContent,
     };
   } catch (error) {
-    // Log the error for debugging
     console.error('Error serving login page:', error);
 
-    // Return a generic error response
     return {
       statusCode: 500,
       headers: {
