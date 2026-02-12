@@ -13,8 +13,8 @@ import { useToast } from '@/components/ui/use-toast';
  * Login form validation schema
  */
 const loginSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -23,12 +23,12 @@ type LoginFormData = z.infer<typeof loginSchema>;
  * Member Benefits Login Page Component
  * 
  * A minimalist, responsive login page for the member benefits section.
- * Features email/password authentication with a red-styled submit button.
+ * Features a clean design with email/password inputs and a red primary action button.
  * 
  * @returns {JSX.Element} The login page component
  */
 export default function MemberBenefitsLogin(): JSX.Element {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const {
@@ -61,7 +61,7 @@ export default function MemberBenefitsLogin(): JSX.Element {
     } catch (error) {
       toast({
         title: 'Login Failed',
-        description: 'Please check your credentials and try again',
+        description: 'Please check your credentials and try again.',
         variant: 'destructive',
       });
     } finally {
@@ -72,6 +72,7 @@ export default function MemberBenefitsLogin(): JSX.Element {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
+        {/* Header Section */}
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
             Member Benefits
@@ -81,8 +82,10 @@ export default function MemberBenefitsLogin(): JSX.Element {
           </p>
         </div>
 
-        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-8">
+        {/* Login Form */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Email Field */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                 Email Address
@@ -90,10 +93,10 @@ export default function MemberBenefitsLogin(): JSX.Element {
               <Input
                 id="email"
                 type="email"
+                placeholder="you@example.com"
                 autoComplete="email"
-                placeholder="Enter your email"
-                className={`w-full ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 disabled={isLoading}
+                className={`w-full ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 {...register('email')}
               />
               {errors.email && (
@@ -103,6 +106,7 @@ export default function MemberBenefitsLogin(): JSX.Element {
               )}
             </div>
 
+            {/* Password Field */}
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                 Password
@@ -110,10 +114,10 @@ export default function MemberBenefitsLogin(): JSX.Element {
               <Input
                 id="password"
                 type="password"
+                placeholder="••••••••"
                 autoComplete="current-password"
-                placeholder="Enter your password"
-                className={`w-full ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 disabled={isLoading}
+                className={`w-full ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 {...register('password')}
               />
               {errors.password && (
@@ -123,10 +127,11 @@ export default function MemberBenefitsLogin(): JSX.Element {
               )}
             </div>
 
+            {/* Submit Button */}
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center">
@@ -135,6 +140,7 @@ export default function MemberBenefitsLogin(): JSX.Element {
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
+                    aria-hidden="true"
                   >
                     <circle
                       className="opacity-25"
@@ -158,6 +164,7 @@ export default function MemberBenefitsLogin(): JSX.Element {
             </Button>
           </form>
 
+          {/* Additional Links */}
           <div className="mt-6 text-center">
             <a
               href="#"
@@ -168,15 +175,18 @@ export default function MemberBenefitsLogin(): JSX.Element {
           </div>
         </div>
 
-        <p className="text-center text-sm text-gray-600">
-          Don&apos;t have an account?{' '}
-          <a
-            href="#"
-            className="font-medium text-red-600 hover:text-red-700 transition-colors duration-200"
-          >
-            Sign up
-          </a>
-        </p>
+        {/* Footer */}
+        <div className="text-center text-sm text-gray-600">
+          <p>
+            Don&apos;t have an account?{' '}
+            <a
+              href="#"
+              className="font-medium text-red-600 hover:text-red-700 transition-colors duration-200"
+            >
+              Sign up
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
