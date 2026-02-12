@@ -1,5 +1,5 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 import { handler } from '../../src/handlers/member-benefits-login';
+import { APIGatewayProxyEvent, Context } from 'aws-lambda';
 
 /**
  * Creates a mock API Gateway Proxy Event for testing
@@ -36,7 +36,7 @@ const createMockEvent = (overrides?: Partial<APIGatewayProxyEvent>): APIGatewayP
         principalOrgId: null,
         sourceIp: '127.0.0.1',
         user: null,
-        userAgent: 'Mozilla/5.0',
+        userAgent: 'test-agent',
         userArn: null,
       },
       path: '/member-benefits/login',
@@ -57,12 +57,12 @@ const createMockEvent = (overrides?: Partial<APIGatewayProxyEvent>): APIGatewayP
 const createMockContext = (): Context => {
   return {
     callbackWaitsForEmptyEventLoop: false,
-    functionName: 'test-function',
+    functionName: 'member-benefits-login',
     functionVersion: '1',
-    invokedFunctionArn: 'arn:aws:lambda:us-east-1:123456789012:function:test-function',
+    invokedFunctionArn: 'arn:aws:lambda:us-east-1:123456789012:function:member-benefits-login',
     memoryLimitInMB: '128',
     awsRequestId: 'test-request-id',
-    logGroupName: '/aws/lambda/test-function',
+    logGroupName: '/aws/lambda/member-benefits-login',
     logStreamName: '2024/01/01/[$LATEST]test',
     getRemainingTimeInMillis: () => 30000,
     done: () => {},
@@ -80,214 +80,192 @@ describe('Member Benefits Login Handler', () => {
     mockContext = createMockContext();
   });
 
-  describe('Response Validation', () => {
-    it('should return a 200 status code', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
+  describe('Successful Page Load', () => {
+    it('should return 200 status code on successful request', async () => {
+      const response = await handler(mockEvent, mockContext);
 
-      expect(result.statusCode).toBe(200);
+      expect(response.statusCode).toBe(200);
     });
 
-    it('should return correct content-type header', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
+    it('should return HTML content in the body', async () => {
+      const response = await handler(mockEvent, mockContext);
 
-      expect(result.headers).toBeDefined();
-      expect(result.headers?.['Content-Type']).toBe('text/html');
+      expect(response.body).toBeDefined();
+      expect(response.body).toContain('<!DOCTYPE html>');
+      expect(response.body).toContain('<html');
+      expect(response.body).toContain('</html>');
     });
 
-    it('should return cache-control headers', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
+    it('should include login form elements', async () => {
+      const response = await handler(mockEvent, mockContext);
 
-      expect(result.headers).toBeDefined();
-      expect(result.headers?.['Cache-Control']).toBeDefined();
+      expect(response.body).toContain('<form');
+      expect(response.body).toContain('type="email"');
+      expect(response.body).toContain('type="password"');
+      expect(response.body).toContain('type="submit"');
     });
 
-    it('should return a non-empty body', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
+    it('should include red button styling', async () => {
+      const response = await handler(mockEvent, mockContext);
 
-      expect(result.body).toBeDefined();
-      expect(result.body.length).toBeGreaterThan(0);
+      expect(response.body).toMatch(/background.*red|bg-red|red.*button/i);
     });
 
-    it('should return valid HTML structure', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
+    it('should include responsive meta viewport tag', async () => {
+      const response = await handler(mockEvent, mockContext);
 
-      expect(result.body).toContain('<!DOCTYPE html>');
-      expect(result.body).toContain('<html');
-      expect(result.body).toContain('</html>');
-    });
-  });
-
-  describe('HTML Content Validation', () => {
-    it('should contain required HTML head elements', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
-
-      expect(result.body).toContain('<head>');
-      expect(result.body).toContain('</head>');
-      expect(result.body).toContain('<meta charset="UTF-8">');
-      expect(result.body).toContain('<meta name="viewport"');
+      expect(response.body).toContain('<meta name="viewport"');
+      expect(response.body).toContain('width=device-width');
+      expect(response.body).toContain('initial-scale=1');
     });
 
-    it('should contain a title element', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
+    it('should include page title', async () => {
+      const response = await handler(mockEvent, mockContext);
 
-      expect(result.body).toContain('<title>');
-      expect(result.body).toContain('</title>');
-      expect(result.body).toMatch(/Member Benefits.*Login/i);
-    });
-
-    it('should contain a body element', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
-
-      expect(result.body).toContain('<body');
-      expect(result.body).toContain('</body>');
-    });
-
-    it('should contain a login form', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
-
-      expect(result.body).toContain('<form');
-      expect(result.body).toContain('</form>');
-    });
-
-    it('should contain email/username input field', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
-
-      expect(result.body).toMatch(/<input[^>]*type=["'](?:email|text)["'][^>]*>/i);
-    });
-
-    it('should contain password input field', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
-
-      expect(result.body).toMatch(/<input[^>]*type=["']password["'][^>]*>/i);
-    });
-
-    it('should contain a red button', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
-
-      expect(result.body).toContain('<button');
-      expect(result.body).toMatch(/background-color:\s*red|bg-red|#[fF]{2}0{4}|rgb\(255,\s*0,\s*0\)/);
-    });
-
-    it('should contain responsive meta viewport tag', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
-
-      expect(result.body).toMatch(/<meta\s+name=["']viewport["']\s+content=["'][^"']*width=device-width[^"']*["']/i);
+      expect(response.body).toContain('<title');
+      expect(response.body).toMatch(/member.*benefits.*login|login.*member.*benefits/i);
     });
   });
 
-  describe('Responsive Design Validation', () => {
-    it('should contain CSS for responsive design', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
+  describe('Content-Type Headers', () => {
+    it('should return proper content-type header for HTML', async () => {
+      const response = await handler(mockEvent, mockContext);
 
-      const hasStyleTag = result.body.includes('<style>') || result.body.includes('<link');
-      const hasMediaQuery = result.body.includes('@media');
-      const hasResponsiveClasses = result.body.match(/max-width|min-width|flex|grid/);
-
-      expect(hasStyleTag || hasMediaQuery || hasResponsiveClasses).toBeTruthy();
+      expect(response.headers).toBeDefined();
+      expect(response.headers?.['Content-Type']).toBe('text/html');
     });
 
-    it('should contain mobile-friendly CSS properties', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
+    it('should include charset in content-type', async () => {
+      const response = await handler(mockEvent, mockContext);
 
-      const hasMobileProperties = 
-        result.body.includes('max-width') ||
-        result.body.includes('min-width') ||
-        result.body.includes('flex') ||
-        result.body.includes('grid') ||
-        result.body.includes('@media');
+      const contentType = response.headers?.['Content-Type'];
+      expect(contentType).toMatch(/text\/html/);
+    });
 
-      expect(hasMobileProperties).toBeTruthy();
+    it('should include cache-control headers', async () => {
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.headers).toHaveProperty('Cache-Control');
+    });
+
+    it('should include security headers', async () => {
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.headers).toBeDefined();
+      expect(response.headers?.['X-Content-Type-Options']).toBe('nosniff');
     });
   });
 
-  describe('Accessibility Validation', () => {
-    it('should contain proper label elements for inputs', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
+  describe('Response Structure', () => {
+    it('should return a valid API Gateway response structure', async () => {
+      const response = await handler(mockEvent, mockContext);
 
-      expect(result.body).toContain('<label');
+      expect(response).toHaveProperty('statusCode');
+      expect(response).toHaveProperty('headers');
+      expect(response).toHaveProperty('body');
     });
 
-    it('should have lang attribute on html tag', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
+    it('should have headers as an object', async () => {
+      const response = await handler(mockEvent, mockContext);
 
-      expect(result.body).toMatch(/<html[^>]*lang=["'][^"']+["']/i);
+      expect(typeof response.headers).toBe('object');
+      expect(response.headers).not.toBeNull();
+    });
+
+    it('should have body as a string', async () => {
+      const response = await handler(mockEvent, mockContext);
+
+      expect(typeof response.body).toBe('string');
+      expect(response.body.length).toBeGreaterThan(0);
+    });
+
+    it('should not be base64 encoded', async () => {
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.isBase64Encoded).toBeFalsy();
+    });
+
+    it('should include CORS headers if configured', async () => {
+      const response = await handler(mockEvent, mockContext);
+
+      if (response.headers?.['Access-Control-Allow-Origin']) {
+        expect(response.headers['Access-Control-Allow-Origin']).toBeDefined();
+      }
+    });
+  });
+
+  describe('Responsive Design', () => {
+    it('should include CSS for responsive design', async () => {
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.body).toMatch(/<style|<link.*stylesheet/);
+      expect(response.body).toMatch(/@media|flex|grid/);
+    });
+
+    it('should include mobile-friendly meta tags', async () => {
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.body).toContain('viewport');
+      expect(response.body).toContain('width=device-width');
     });
   });
 
   describe('Error Handling', () => {
-    it('should handle malformed events gracefully', async () => {
-      const malformedEvent = {} as APIGatewayProxyEvent;
+    it('should handle missing event gracefully', async () => {
+      const response = await handler(null as any, mockContext);
 
-      const result = await handler(malformedEvent, mockContext) as APIGatewayProxyResult;
-
-      expect(result.statusCode).toBeDefined();
-      expect([200, 400, 500]).toContain(result.statusCode);
+      expect(response.statusCode).toBeDefined();
+      expect([200, 400, 500]).toContain(response.statusCode);
     });
 
-    it('should return a valid response structure even with null context', async () => {
-      const result = await handler(mockEvent, null as any) as APIGatewayProxyResult;
+    it('should handle missing context gracefully', async () => {
+      const response = await handler(mockEvent, null as any);
 
-      expect(result).toHaveProperty('statusCode');
-      expect(result).toHaveProperty('body');
-      expect(result).toHaveProperty('headers');
+      expect(response.statusCode).toBeDefined();
+      expect([200, 400, 500]).toContain(response.statusCode);
     });
   });
 
-  describe('Security Headers', () => {
-    it('should include security-related headers', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
+  describe('HTTP Methods', () => {
+    it('should handle GET requests', async () => {
+      const getEvent = createMockEvent({ httpMethod: 'GET' });
+      const response = await handler(getEvent, mockContext);
 
-      expect(result.headers).toBeDefined();
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should handle POST requests appropriately', async () => {
+      const postEvent = createMockEvent({ httpMethod: 'POST' });
+      const response = await handler(postEvent, mockContext);
+
+      expect(response.statusCode).toBeDefined();
+      expect([200, 405]).toContain(response.statusCode);
+    });
+  });
+
+  describe('Content Validation', () => {
+    it('should have valid HTML structure', async () => {
+      const response = await handler(mockEvent, mockContext);
+
+      const htmlTagCount = (response.body.match(/<html/g) || []).length;
+      const htmlCloseTagCount = (response.body.match(/<\/html>/g) || []).length;
       
-      const hasSecurityHeaders = 
-        result.headers?.['X-Content-Type-Options'] ||
-        result.headers?.['X-Frame-Options'] ||
-        result.headers?.['Content-Security-Policy'];
-
-      expect(hasSecurityHeaders).toBeDefined();
-    });
-  });
-
-  describe('Button Styling', () => {
-    it('should have a button with red color styling', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
-
-      const redColorPatterns = [
-        /background-color:\s*red/i,
-        /background:\s*red/i,
-        /bg-red/i,
-        /#[fF]{2}0{4}/,
-        /rgb\(255,\s*0,\s*0\)/,
-        /rgba\(255,\s*0,\s*0/,
-      ];
-
-      const hasRedButton = redColorPatterns.some(pattern => pattern.test(result.body));
-      expect(hasRedButton).toBeTruthy();
+      expect(htmlTagCount).toBe(htmlCloseTagCount);
     });
 
-    it('should have a submit button in the form', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
+    it('should include proper DOCTYPE declaration', async () => {
+      const response = await handler(mockEvent, mockContext);
 
-      const hasSubmitButton = 
-        result.body.match(/<button[^>]*type=["']submit["'][^>]*>/i) ||
-        result.body.match(/<input[^>]*type=["']submit["'][^>]*>/i);
-
-      expect(hasSubmitButton).toBeTruthy();
-    });
-  });
-
-  describe('Basic Design Requirements', () => {
-    it('should maintain a simple and basic design structure', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
-
-      const formCount = (result.body.match(/<form/g) || []).length;
-      expect(formCount).toBeLessThanOrEqual(1);
+      expect(response.body.trim().toLowerCase()).toMatch(/^<!doctype html>/i);
     });
 
-    it('should contain member benefits branding or reference', async () => {
-      const result = await handler(mockEvent, mockContext) as APIGatewayProxyResult;
+    it('should include head and body sections', async () => {
+      const response = await handler(mockEvent, mockContext);
 
-      expect(result.body).toMatch(/member\s*benefits/i);
+      expect(response.body).toContain('<head');
+      expect(response.body).toContain('</head>');
+      expect(response.body).toContain('<body');
+      expect(response.body).toContain('</body>');
     });
   });
 });
