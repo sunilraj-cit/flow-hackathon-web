@@ -1,402 +1,388 @@
 /* ============================================
    Member Benefits Login Page Styles
+   Mobile-First Responsive Design
    ============================================ */
 
-/* CSS Variables for consistent theming */
-:root {
-  --primary-red: #dc2626;
-  --primary-red-hover: #b91c1c;
-  --primary-red-active: #991b1b;
-  --text-primary: #1f2937;
-  --text-secondary: #6b7280;
-  --border-color: #d1d5db;
-  --background-white: #ffffff;
-  --background-gray: #f9fafb;
-  --error-color: #ef4444;
-  --focus-ring: rgba(220, 38, 38, 0.2);
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-/* Reset and Base Styles */
+/* ============================================
+   CSS Reset & Base Styles
+   ============================================ */
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
-.member-benefits-login {
-  min-height: 100vh;
+/* ============================================
+   Container & Layout
+   ============================================ */
+.member-benefits-login-container {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  background-color: var(--background-gray);
+  align-items: center;
+  min-height: 100vh;
   padding: 1rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Login Container */
-.login-container {
+/* ============================================
+   Login Card
+   ============================================ */
+.member-benefits-login-card {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 400px;
-  background-color: var(--background-white);
+  background: #ffffff;
   border-radius: 8px;
-  box-shadow: var(--shadow-lg);
-  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 2rem 1.5rem;
+  gap: 1.5rem;
 }
 
-/* Header Styles */
-.login-header {
+/* ============================================
+   Header Section
+   ============================================ */
+.member-benefits-login-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   text-align: center;
-  margin-bottom: 2rem;
 }
 
-.login-title {
+.member-benefits-login-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
+  color: #1a202c;
+  line-height: 1.2;
 }
 
-.login-subtitle {
+.member-benefits-login-subtitle {
   font-size: 0.875rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
+  color: #718096;
+  line-height: 1.4;
 }
 
-/* Form Styles */
-.login-form {
+/* ============================================
+   Form Styles
+   ============================================ */
+.member-benefits-login-form {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
 }
 
-.form-group {
+.member-benefits-form-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.form-label {
+.member-benefits-form-label {
   font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  display: block;
+  font-weight: 600;
+  color: #2d3748;
+  line-height: 1.4;
 }
 
-.form-label.required::after {
-  content: '*';
-  color: var(--primary-red);
-  margin-left: 0.25rem;
-}
-
-.form-input {
+.member-benefits-form-input {
   width: 100%;
-  padding: 0.625rem 0.875rem;
+  padding: 0.75rem 1rem;
   font-size: 1rem;
-  line-height: 1.5;
-  color: var(--text-primary);
-  background-color: var(--background-white);
-  border: 1px solid var(--border-color);
+  color: #2d3748;
+  background: #ffffff;
+  border: 1px solid #cbd5e0;
   border-radius: 6px;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.form-input:focus {
   outline: none;
-  border-color: var(--primary-red);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.form-input::placeholder {
-  color: var(--text-secondary);
-  opacity: 0.6;
+.member-benefits-form-input:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
-.form-input:disabled {
-  background-color: var(--background-gray);
+.member-benefits-form-input::placeholder {
+  color: #a0aec0;
+}
+
+.member-benefits-form-input:disabled {
+  background: #f7fafc;
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-.form-input.error {
-  border-color: var(--error-color);
-}
-
-.form-input.error:focus {
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
-}
-
-.form-error {
+/* ============================================
+   Error Message
+   ============================================ */
+.member-benefits-form-error {
   font-size: 0.75rem;
-  color: var(--error-color);
+  color: #dc2626;
   margin-top: 0.25rem;
-  display: block;
+  line-height: 1.4;
 }
 
-/* Checkbox and Remember Me */
-.form-checkbox-group {
+/* ============================================
+   Red Button Styles
+   ============================================ */
+.member-benefits-btn-red {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #dc2626;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.member-benefits-btn-red:hover {
+  background: #b91c1c;
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.2);
+}
+
+.member-benefits-btn-red:active {
+  background: #991b1b;
+  transform: translateY(1px);
+}
+
+.member-benefits-btn-red:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
+}
+
+.member-benefits-btn-red:disabled {
+  background: #fca5a5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ============================================
+   Additional Options
+   ============================================ */
+.member-benefits-form-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.member-benefits-checkbox-group {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  width: 100%;
 }
 
-.form-checkbox {
+.member-benefits-checkbox {
   width: 1rem;
   height: 1rem;
   cursor: pointer;
-  accent-color: var(--primary-red);
+  accent-color: #dc2626;
 }
 
-.form-checkbox-label {
+.member-benefits-checkbox-label {
   font-size: 0.875rem;
-  color: var(--text-primary);
+  color: #4a5568;
   cursor: pointer;
   user-select: none;
 }
 
-/* Red Button Styles */
-.btn-red {
-  width: 100%;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--background-white);
-  background-color: var(--primary-red);
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-red:hover {
-  background-color: var(--primary-red-hover);
-  box-shadow: var(--shadow-md);
-}
-
-.btn-red:active {
-  background-color: var(--primary-red-active);
-  transform: translateY(1px);
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-red:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--focus-ring);
-}
-
-.btn-red:disabled {
-  background-color: var(--text-secondary);
-  cursor: not-allowed;
-  opacity: 0.6;
-  transform: none;
-}
-
-.btn-red:disabled:hover {
-  background-color: var(--text-secondary);
-  box-shadow: var(--shadow-sm);
-}
-
-/* Link Styles */
-.form-link {
-  color: var(--primary-red);
-  text-decoration: none;
+.member-benefits-link {
   font-size: 0.875rem;
+  color: #dc2626;
+  text-decoration: none;
   font-weight: 500;
-  transition: color 0.2s ease-in-out;
+  transition: color 0.2s ease;
 }
 
-.form-link:hover {
-  color: var(--primary-red-hover);
+.member-benefits-link:hover {
+  color: #b91c1c;
   text-decoration: underline;
 }
 
-.form-link:focus {
-  outline: 2px solid var(--primary-red);
-  outline-offset: 2px;
-  border-radius: 2px;
-}
-
-.forgot-password {
-  text-align: right;
-  margin-top: -0.5rem;
-}
-
-/* Footer Links */
-.login-footer {
-  margin-top: 1.5rem;
+/* ============================================
+   Footer Section
+   ============================================ */
+.member-benefits-login-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
   text-align: center;
+}
+
+.member-benefits-footer-text {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: #718096;
 }
 
-.login-footer-link {
-  display: inline-block;
-  margin-top: 0.5rem;
-}
-
-/* Divider */
-.form-divider {
+/* ============================================
+   Divider
+   ============================================ */
+.member-benefits-divider {
   display: flex;
   align-items: center;
-  text-align: center;
-  margin: 1.5rem 0;
+  gap: 1rem;
+  margin: 0.5rem 0;
 }
 
-.form-divider::before,
-.form-divider::after {
+.member-benefits-divider::before,
+.member-benefits-divider::after {
   content: '';
   flex: 1;
-  border-bottom: 1px solid var(--border-color);
+  height: 1px;
+  background: #e2e8f0;
 }
 
-.form-divider span {
-  padding: 0 0.75rem;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
+.member-benefits-divider-text {
+  font-size: 0.75rem;
+  color: #a0aec0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-/* Loading Spinner */
-.btn-loading {
-  position: relative;
-  pointer-events: none;
-}
-
-.btn-loading::after {
-  content: '';
-  position: absolute;
+/* ============================================
+   Loading State
+   ============================================ */
+.member-benefits-loading {
+  display: inline-block;
   width: 1rem;
   height: 1rem;
-  top: 50%;
-  left: 50%;
-  margin-left: -0.5rem;
-  margin-top: -0.5rem;
-  border: 2px solid var(--background-white);
-  border-radius: 50%;
+  border: 2px solid #ffffff;
   border-top-color: transparent;
-  animation: spinner 0.6s linear infinite;
+  border-radius: 50%;
+  animation: member-benefits-spin 0.6s linear infinite;
+  margin-right: 0.5rem;
 }
 
-@keyframes spinner {
+@keyframes member-benefits-spin {
   to {
     transform: rotate(360deg);
   }
 }
 
 /* ============================================
-   Responsive Breakpoints
+   Tablet Breakpoint (768px and up)
    ============================================ */
-
-/* Mobile Devices (default styles above) */
-/* 320px - 767px */
-
-/* Tablet Devices */
 @media (min-width: 768px) {
-  .member-benefits-login {
+  .member-benefits-login-container {
     padding: 2rem;
   }
 
-  .login-container {
+  .member-benefits-login-card {
     max-width: 450px;
-    padding: 2.5rem;
+    padding: 2.5rem 2rem;
+    gap: 2rem;
   }
 
-  .login-title {
-    font-size: 1.75rem;
+  .member-benefits-login-title {
+    font-size: 1.875rem;
   }
 
-  .login-subtitle {
+  .member-benefits-login-subtitle {
     font-size: 1rem;
   }
 
-  .form-input {
-    padding: 0.75rem 1rem;
+  .member-benefits-form-group {
+    gap: 0.625rem;
   }
 
-  .btn-red {
-    padding: 0.875rem 1.75rem;
+  .member-benefits-form-label {
+    font-size: 0.9375rem;
+  }
+
+  .member-benefits-form-input {
+    padding: 0.875rem 1.125rem;
+    font-size: 1rem;
+  }
+
+  .member-benefits-btn-red {
+    padding: 1rem 1.75rem;
     font-size: 1.0625rem;
   }
 
-  .form-group {
-    gap: 0.625rem;
+  .member-benefits-form-options {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .member-benefits-checkbox-group {
+    width: auto;
   }
 }
 
-/* Desktop Devices */
+/* ============================================
+   Desktop Breakpoint (1024px and up)
+   ============================================ */
 @media (min-width: 1024px) {
-  .member-benefits-login {
+  .member-benefits-login-container {
     padding: 3rem;
   }
 
-  .login-container {
-    max-width: 480px;
-    padding: 3rem;
+  .member-benefits-login-card {
+    max-width: 500px;
+    padding: 3rem 2.5rem;
+    gap: 2.25rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   }
 
-  .login-title {
+  .member-benefits-login-title {
     font-size: 2rem;
   }
 
-  .login-header {
-    margin-bottom: 2.5rem;
+  .member-benefits-login-subtitle {
+    font-size: 1.0625rem;
   }
 
-  .form-group {
-    gap: 0.75rem;
+  .member-benefits-form-input {
+    padding: 1rem 1.25rem;
+    font-size: 1.0625rem;
   }
 
-  .login-form {
-    gap: 1.5rem;
-  }
-
-  .btn-red {
-    padding: 1rem 2rem;
+  .member-benefits-btn-red {
+    padding: 1.125rem 2rem;
     font-size: 1.125rem;
   }
 
-  .form-input {
-    padding: 0.875rem 1.125rem;
+  .member-benefits-btn-red:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(220, 38, 38, 0.25);
+  }
+
+  .member-benefits-btn-red:active {
+    transform: translateY(0);
   }
 }
 
-/* Large Desktop Devices */
+/* ============================================
+   Large Desktop Breakpoint (1440px and up)
+   ============================================ */
 @media (min-width: 1440px) {
-  .login-container {
-    max-width: 500px;
+  .member-benefits-login-card {
+    max-width: 550px;
+    padding: 3.5rem 3rem;
+  }
+
+  .member-benefits-login-title {
+    font-size: 2.25rem;
   }
 }
 
-/* Small Mobile Devices */
-@media (max-width: 374px) {
-  .login-container {
-    padding: 1.5rem;
-  }
-
-  .login-title {
-    font-size: 1.25rem;
-  }
-
-  .login-subtitle {
-    font-size: 0.8125rem;
-  }
-
-  .form-input {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.9375rem;
-  }
-
-  .btn-red {
-    padding: 0.625rem 1.25rem;
-    font-size: 0.9375rem;
-  }
-}
-
-/* Accessibility Improvements */
+/* ============================================
+   Accessibility & Print Styles
+   ============================================ */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
@@ -405,51 +391,24 @@
   }
 }
 
-/* High Contrast Mode Support */
-@media (prefers-contrast: high) {
-  .form-input {
-    border-width: 2px;
-  }
-
-  .btn-red {
-    border: 2px solid var(--text-primary);
-  }
-}
-
-/* Dark Mode Support (Optional) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text-primary: #f9fafb;
-    --text-secondary: #d1d5db;
-    --border-color: #4b5563;
-    --background-white: #1f2937;
-    --background-gray: #111827;
-  }
-
-  .form-input {
-    background-color: #374151;
-    color: var(--text-primary);
-  }
-
-  .form-input:disabled {
-    background-color: #1f2937;
-  }
-}
-
-/* Print Styles */
 @media print {
-  .member-benefits-login {
-    background-color: var(--background-white);
+  .member-benefits-login-container {
+    background: #ffffff;
   }
 
-  .login-container {
+  .member-benefits-login-card {
     box-shadow: none;
-    border: 1px solid var(--border-color);
+    border: 1px solid #e2e8f0;
   }
+}
 
-  .btn-red {
-    background-color: var(--background-white);
-    color: var(--text-primary);
-    border: 2px solid var(--text-primary);
-  }
+/* ============================================
+   Focus Visible for Keyboard Navigation
+   ============================================ */
+.member-benefits-form-input:focus-visible,
+.member-benefits-btn-red:focus-visible,
+.member-benefits-link:focus-visible,
+.member-benefits-checkbox:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
 }
