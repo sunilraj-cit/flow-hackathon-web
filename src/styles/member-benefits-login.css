@@ -1,0 +1,451 @@
+/* ============================================
+   Member Benefits Login Page Styles
+   Mobile-First Responsive Design
+   ============================================ */
+
+/* ============================================
+   CSS Reset & Base Styles
+   ============================================ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ============================================
+   Container & Layout (Mobile First)
+   ============================================ */
+.member-benefits-login-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: #f5f5f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.member-benefits-login-card {
+  width: 100%;
+  max-width: 400px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem 1.5rem;
+}
+
+/* ============================================
+   Header Styles
+   ============================================ */
+.member-benefits-login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.member-benefits-login-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 0.5rem;
+}
+
+.member-benefits-login-subtitle {
+  font-size: 0.875rem;
+  color: #666666;
+  line-height: 1.5;
+}
+
+/* ============================================
+   Form Styles
+   ============================================ */
+.member-benefits-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.member-benefits-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.member-benefits-form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #333333;
+}
+
+.member-benefits-form-input {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background-color: #ffffff;
+  color: #333333;
+}
+
+.member-benefits-form-input:focus {
+  outline: none;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.member-benefits-form-input::placeholder {
+  color: #9ca3af;
+}
+
+.member-benefits-form-input:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ============================================
+   Error Message Styles
+   ============================================ */
+.member-benefits-form-error {
+  font-size: 0.75rem;
+  color: #dc2626;
+  margin-top: 0.25rem;
+}
+
+/* ============================================
+   Red Button Styles (Primary CTA)
+   ============================================ */
+.member-benefits-btn-primary {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #dc2626;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.member-benefits-btn-primary:hover {
+  background-color: #b91c1c;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.member-benefits-btn-primary:active {
+  background-color: #991b1b;
+  transform: translateY(1px);
+}
+
+.member-benefits-btn-primary:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
+}
+
+.member-benefits-btn-primary:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+.member-benefits-btn-primary:disabled:hover {
+  background-color: #9ca3af;
+  transform: none;
+}
+
+/* ============================================
+   Additional Links & Actions
+   ============================================ */
+.member-benefits-form-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.member-benefits-link {
+  font-size: 0.875rem;
+  color: #dc2626;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.member-benefits-link:hover {
+  color: #b91c1c;
+  text-decoration: underline;
+}
+
+.member-benefits-link:focus {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ============================================
+   Checkbox & Remember Me Styles
+   ============================================ */
+.member-benefits-checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.member-benefits-checkbox {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  accent-color: #dc2626;
+}
+
+.member-benefits-checkbox-label {
+  font-size: 0.875rem;
+  color: #333333;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ============================================
+   Divider Styles
+   ============================================ */
+.member-benefits-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.member-benefits-divider::before,
+.member-benefits-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.member-benefits-divider-text {
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* ============================================
+   Loading Spinner
+   ============================================ */
+.member-benefits-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: member-benefits-spin 0.6s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes member-benefits-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   Alert/Message Styles
+   ============================================ */
+.member-benefits-alert {
+  padding: 0.875rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.member-benefits-alert-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.member-benefits-alert-success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.member-benefits-alert-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+/* ============================================
+   Tablet Breakpoint (768px and up)
+   ============================================ */
+@media screen and (min-width: 768px) {
+  .member-benefits-login-container {
+    padding: 2rem;
+  }
+
+  .member-benefits-login-card {
+    padding: 2.5rem 2rem;
+    max-width: 450px;
+  }
+
+  .member-benefits-login-title {
+    font-size: 1.75rem;
+  }
+
+  .member-benefits-login-subtitle {
+    font-size: 1rem;
+  }
+
+  .member-benefits-form-input {
+    padding: 0.875rem 1rem;
+  }
+
+  .member-benefits-btn-primary {
+    padding: 1rem 1.5rem;
+    font-size: 1.0625rem;
+  }
+
+  .member-benefits-form-footer {
+    margin-top: 2rem;
+  }
+}
+
+/* ============================================
+   Desktop Breakpoint (1024px and up)
+   ============================================ */
+@media screen and (min-width: 1024px) {
+  .member-benefits-login-card {
+    max-width: 480px;
+    padding: 3rem 2.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .member-benefits-login-title {
+    font-size: 2rem;
+  }
+
+  .member-benefits-form-group {
+    gap: 0.625rem;
+  }
+
+  .member-benefits-form-input {
+    padding: 1rem;
+    font-size: 1.0625rem;
+  }
+
+  .member-benefits-btn-primary {
+    padding: 1.125rem 1.5rem;
+    font-size: 1.125rem;
+  }
+
+  .member-benefits-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.35);
+  }
+
+  .member-benefits-btn-primary:active {
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   Large Desktop Breakpoint (1440px and up)
+   ============================================ */
+@media screen and (min-width: 1440px) {
+  .member-benefits-login-card {
+    max-width: 520px;
+  }
+}
+
+/* ============================================
+   Accessibility & Focus Styles
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .member-benefits-form-input {
+    border-width: 2px;
+  }
+
+  .member-benefits-btn-primary {
+    border: 2px solid #000000;
+  }
+}
+
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+  .member-benefits-login-container {
+    background-color: #1f2937;
+  }
+
+  .member-benefits-login-card {
+    background-color: #374151;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .member-benefits-login-title {
+    color: #f9fafb;
+  }
+
+  .member-benefits-login-subtitle {
+    color: #d1d5db;
+  }
+
+  .member-benefits-form-label {
+    color: #f9fafb;
+  }
+
+  .member-benefits-form-input {
+    background-color: #1f2937;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+
+  .member-benefits-form-input::placeholder {
+    color: #6b7280;
+  }
+
+  .member-benefits-checkbox-label {
+    color: #f9fafb;
+  }
+
+  .member-benefits-divider::before,
+  .member-benefits-divider::after {
+    border-bottom-color: #4b5563;
+  }
+
+  .member-benefits-divider-text {
+    color: #9ca3af;
+  }
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+  .member-benefits-login-container {
+    background-color: #ffffff;
+  }
+
+  .member-benefits-login-card {
+    box-shadow: none;
+    border: 1px solid #000000;
+  }
+
+  .member-benefits-btn-primary {
+    display: none;
+  }
+}
