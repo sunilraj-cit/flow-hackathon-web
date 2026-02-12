@@ -68,7 +68,7 @@ const generateLoginPageHTML = (): string => {
 
         .form-group input {
             width: 100%;
-            padding: 12px;
+            padding: 12px 16px;
             font-size: 14px;
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -82,7 +82,7 @@ const generateLoginPageHTML = (): string => {
 
         .login-button {
             width: 100%;
-            padding: 14px;
+            padding: 14px 20px;
             font-size: 16px;
             font-weight: 600;
             color: white;
@@ -91,6 +91,7 @@ const generateLoginPageHTML = (): string => {
             border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.1s ease;
+            margin-top: 10px;
         }
 
         .login-button:hover {
@@ -108,7 +109,7 @@ const generateLoginPageHTML = (): string => {
 
         .forgot-password {
             text-align: center;
-            margin-top: 16px;
+            margin-top: 20px;
         }
 
         .forgot-password a {
@@ -144,19 +145,23 @@ const generateLoginPageHTML = (): string => {
                 font-size: 20px;
             }
 
+            .form-group input {
+                padding: 10px 14px;
+            }
+
             .login-button {
-                padding: 12px;
-                font-size: 14px;
+                padding: 12px 18px;
+                font-size: 15px;
             }
         }
 
-        @media (max-width: 320px) {
+        @media (max-width: 360px) {
             .login-container {
-                padding: 20px 15px;
+                padding: 25px 15px;
             }
 
-            .form-group input {
-                padding: 10px;
+            .login-header h1 {
+                font-size: 18px;
             }
         }
     </style>
@@ -177,8 +182,8 @@ const generateLoginPageHTML = (): string => {
                     type="email" 
                     id="email" 
                     name="email" 
-                    required 
                     placeholder="Enter your email"
+                    required
                     autocomplete="email"
                 />
             </div>
@@ -189,13 +194,13 @@ const generateLoginPageHTML = (): string => {
                     type="password" 
                     id="password" 
                     name="password" 
-                    required 
                     placeholder="Enter your password"
+                    required
                     autocomplete="current-password"
                 />
             </div>
 
-            <button type="submit" class="login-button">
+            <button type="submit" class="login-button" id="loginButton">
                 Sign In
             </button>
         </form>
@@ -206,41 +211,42 @@ const generateLoginPageHTML = (): string => {
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        const loginForm = document.getElementById('loginForm');
+        const loginButton = document.getElementById('loginButton');
+        const errorMessage = document.getElementById('errorMessage');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('errorMessage');
-            const submitButton = document.querySelector('.login-button');
 
-            // Basic validation
-            if (!email || !password) {
-                errorMessage.textContent = 'Please fill in all fields.';
-                errorMessage.classList.add('show');
-                return;
-            }
-
-            // Disable button during submission
-            submitButton.disabled = true;
-            submitButton.textContent = 'Signing in...';
             errorMessage.classList.remove('show');
+            loginButton.disabled = true;
+            loginButton.textContent = 'Signing in...';
 
-            // Simulate login (replace with actual API call)
-            setTimeout(function() {
-                // Reset button state
-                submitButton.disabled = false;
-                submitButton.textContent = 'Sign In';
+            try {
+                // Placeholder for actual authentication logic
+                await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                // Show error for demo purposes
-                errorMessage.textContent = 'Login functionality not yet implemented.';
+                // This would be replaced with actual API call
+                console.log('Login attempt:', { email });
+                
+                // Simulate error for demonstration
+                throw new Error('Authentication endpoint not configured');
+            } catch (error) {
+                errorMessage.textContent = error.message || 'An error occurred during login. Please try again.';
                 errorMessage.classList.add('show');
-            }, 1000);
+            } finally {
+                loginButton.disabled = false;
+                loginButton.textContent = 'Sign In';
+            }
         });
 
-        document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
+        forgotPasswordLink.addEventListener('click', (e) => {
             e.preventDefault();
-            alert('Password reset functionality will be available soon.');
+            alert('Password reset functionality will be implemented soon.');
         });
     </script>
 </body>
@@ -256,41 +262,44 @@ export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // Get origin for CORS
     const origin = event.headers.origin || event.headers.Origin || '*';
+    
+    const allowedOrigins = process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(',')
+      : ['*'];
 
-    // Generate the HTML content
+    const corsOrigin = allowedOrigins.includes('*') || allowedOrigins.includes(origin)
+      ? origin
+      : allowedOrigins[0];
+
     const htmlContent = generateLoginPageHTML();
 
-    // Return successful response with proper headers
     return {
       statusCode: 200,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Origin': corsOrigin,
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Max-Age': '86400',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0',
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
         'X-XSS-Protection': '1; mode=block',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
       },
       body: htmlContent,
     };
   } catch (error) {
     console.error('Error serving login page:', error);
 
-    // Return error response
     return {
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
       },
       body: JSON.stringify({
         error: 'Internal Server Error',
@@ -299,26 +308,4 @@ export const handler = async (
     };
   }
 };
-
-/**
- * Handler for OPTIONS requests (CORS preflight)
- * @param {APIGatewayProxyEvent} event - The API Gateway event object
- * @returns {Promise<APIGatewayProxyResult>} The API Gateway response for OPTIONS
- */
-export const optionsHandler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
-  const origin = event.headers.origin || event.headers.Origin || '*';
-
-  return {
-    statusCode: 200,
-    headers: {
-      'Access-Control-Allow-Origin': origin,
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Max-Age': '86400',
-    },
-    body: '',
-  };
-};
+```
