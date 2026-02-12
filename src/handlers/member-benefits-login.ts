@@ -1,18 +1,67 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
 /**
- * Generates the HTML content for the member benefits login page
- * @returns {string} Complete HTML page with responsive design and red button styling
+ * Lambda handler to serve the member benefits login page
+ * Returns HTML content with proper CORS and security headers
+ * 
+ * @param event - API Gateway proxy event
+ * @returns API Gateway proxy result with HTML content
  */
-const generateLoginPageHTML = (): string => {
-  return `
-<!DOCTYPE html>
+export const handler = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const html = generateLoginPageHTML();
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'Content-Security-Policy': "default-src 'self'; style-src 'unsafe-inline'; script-src 'none';",
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+      body: html,
+    };
+  } catch (error) {
+    console.error('Error serving login page:', error);
+    
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({
+        error: 'Internal Server Error',
+        message: 'Failed to load login page',
+      }),
+    };
+  }
+};
+
+/**
+ * Generates the HTML content for the member benefits login page
+ * Includes responsive design and red button styling
+ * 
+ * @returns HTML string for the login page
+ */
+function generateLoginPageHTML(): string {
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Member Benefits Login">
-    <title>Member Benefits - Login</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Member Benefits Login</title>
     <style>
         * {
             margin: 0;
@@ -73,16 +122,12 @@ const generateLoginPageHTML = (): string => {
             font-size: 1rem;
             border: 1px solid #ddd;
             border-radius: 4px;
-            transition: border-color 0.3s ease;
+            transition: border-color 0.2s;
         }
 
         .form-group input:focus {
             outline: none;
             border-color: #dc2626;
-        }
-
-        .form-group input::placeholder {
-            color: #999;
         }
 
         .login-button {
@@ -95,7 +140,7 @@ const generateLoginPageHTML = (): string => {
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.1s ease;
+            transition: background-color 0.2s;
         }
 
         .login-button:hover {
@@ -103,7 +148,7 @@ const generateLoginPageHTML = (): string => {
         }
 
         .login-button:active {
-            transform: scale(0.98);
+            background-color: #991b1b;
         }
 
         .login-button:disabled {
@@ -120,11 +165,9 @@ const generateLoginPageHTML = (): string => {
             font-size: 0.875rem;
             color: #dc2626;
             text-decoration: none;
-            transition: color 0.3s ease;
         }
 
         .forgot-password a:hover {
-            color: #b91c1c;
             text-decoration: underline;
         }
 
@@ -152,13 +195,16 @@ const generateLoginPageHTML = (): string => {
                 font-size: 1.5rem;
             }
 
-            .form-group input,
+            .form-group input {
+                padding: 0.625rem;
+            }
+
             .login-button {
-                font-size: 0.9375rem;
+                padding: 0.75rem;
             }
         }
 
-        @media (max-width: 360px) {
+        @media (max-width: 375px) {
             .login-container {
                 padding: 1rem;
             }
@@ -178,17 +224,17 @@ const generateLoginPageHTML = (): string => {
 
         <div id="errorMessage" class="error-message"></div>
 
-        <form id="loginForm" novalidate>
+        <form id="loginForm">
             <div class="form-group">
                 <label for="email">Email Address</label>
                 <input 
                     type="email" 
                     id="email" 
                     name="email" 
-                    placeholder="Enter your email"
-                    required
+                    required 
                     autocomplete="email"
-                />
+                    placeholder="Enter your email"
+                >
             </div>
 
             <div class="form-group">
@@ -197,124 +243,21 @@ const generateLoginPageHTML = (): string => {
                     type="password" 
                     id="password" 
                     name="password" 
-                    placeholder="Enter your password"
-                    required
+                    required 
                     autocomplete="current-password"
-                />
+                    placeholder="Enter your password"
+                >
             </div>
 
-            <button type="submit" class="login-button" id="loginButton">
+            <button type="submit" class="login-button">
                 Sign In
             </button>
         </form>
 
         <div class="forgot-password">
-            <a href="#" id="forgotPasswordLink">Forgot your password?</a>
+            <a href="#forgot">Forgot your password?</a>
         </div>
     </div>
-
-    <script>
-        (function() {
-            const form = document.getElementById('loginForm');
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-            const loginButton = document.getElementById('loginButton');
-            const errorMessage = document.getElementById('errorMessage');
-            const forgotPasswordLink = document.getElementById('forgotPasswordLink');
-
-            function showError(message) {
-                errorMessage.textContent = message;
-                errorMessage.classList.add('show');
-            }
-
-            function hideError() {
-                errorMessage.classList.remove('show');
-            }
-
-            function validateEmail(email) {
-                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                return re.test(email);
-            }
-
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                hideError();
-
-                const email = emailInput.value.trim();
-                const password = passwordInput.value;
-
-                if (!email || !password) {
-                    showError('Please fill in all fields');
-                    return;
-                }
-
-                if (!validateEmail(email)) {
-                    showError('Please enter a valid email address');
-                    return;
-                }
-
-                loginButton.disabled = true;
-                loginButton.textContent = 'Signing In...';
-
-                // Simulate login process
-                setTimeout(function() {
-                    loginButton.disabled = false;
-                    loginButton.textContent = 'Sign In';
-                    showError('Login functionality not yet implemented');
-                }, 1000);
-            });
-
-            forgotPasswordLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                alert('Password reset functionality will be available soon.');
-            });
-
-            // Clear error on input
-            emailInput.addEventListener('input', hideError);
-            passwordInput.addEventListener('input', hideError);
-        })();
-    </script>
 </body>
-</html>
-  `.trim();
-};
-
-/**
- * Lambda handler for serving the member benefits login page
- * @param {APIGatewayProxyEvent} event - API Gateway event object
- * @returns {Promise<APIGatewayProxyResult>} API Gateway response with HTML content
- */
-export const handler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
-  try {
-    const html = generateLoginPageHTML();
-
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-        'X-Content-Type-Options': 'nosniff',
-        'X-Frame-Options': 'DENY',
-        'X-XSS-Protection': '1; mode=block',
-      },
-      body: html,
-    };
-  } catch (error) {
-    console.error('Error serving login page:', error);
-
-    return {
-      statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        error: 'Internal Server Error',
-        message: 'Failed to load login page',
-      }),
-    };
-  }
-};
+</html>`;
+}
