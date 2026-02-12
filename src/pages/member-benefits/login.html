@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="description" content="Member Benefits Login - Access your exclusive member benefits">
+    <title>Member Benefits Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-red: #dc2626;
+            --primary-red-hover: #b91c1c;
+            --primary-red-active: #991b1b;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #d1d5db;
+            --background-light: #f9fafb;
+            --white: #ffffff;
+            --error-color: #ef4444;
+            --focus-ring: rgba(220, 38, 38, 0.2);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: var(--background-light);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            padding: 2rem;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-label .required {
+            color: var(--primary-red);
+            margin-left: 0.125rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: var(--text-primary);
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 3px var(--focus-ring);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        .form-input:disabled {
+            background-color: var(--background-light);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .form-input.error {
+            border-color: var(--error-color);
+        }
+
+        .form-input.error:focus {
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+        }
+
+        .error-message {
+            font-size: 0.875rem;
+            color: var(--error-color);
+            display: none;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        .form-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-input {
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+            accent-color: var(--primary-red);
+        }
+
+        .checkbox-label {
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .forgot-password-link {
+            font-size: 0.875rem;
+            color: var(--primary-red);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.15s ease-in-out;
+        }
+
+        .forgot-password-link:hover {
+            color: var(--primary-red-hover);
+            text-decoration: underline;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--white);
+            background-color: var(--primary-red);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.15s ease-in-out, transform 0.1s ease-in-out;
+            margin-top: 0.5rem;
+        }
+
+        .submit-button:hover {
+            background-color: var(--primary-red-hover);
+        }
+
+        .submit-button:active {
+            background-color: var(--primary-red-active);
+            transform: scale(0.98);
+        }
+
+        .submit-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px var(--focus-ring);
+        }
+
+        .submit-button:disabled {
+            background-color: var(--text-secondary);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .login-footer {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .signup-link {
+            color: var(--primary-red);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.15s ease-in-out;
+        }
+
+        .signup-link:hover {
+            color: var(--primary-red-hover);
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 1.5rem;
+            }
+
+            .login-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .form-options {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 360px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .login-container {
+                padding: 1.25rem;
+            }
+
+            .login-header h1 {
+                font-size: 1.375rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="login-container" role="main">
+        <header class="login-header">
+            <h1>Member Benefits Login</h1>
+            <p>Access your exclusive member benefits</p>
+        </header>
+
+        <form class="login-form" id="loginForm" novalidate aria-label="Login form">
+            <div class="form-group">
+                <label for="email" class="form-label">
+                    Email Address<span class="required" aria-label="required">*</span>
+                </label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    class="form-input"
+                    placeholder="Enter your email"
+                    required
+                    autocomplete="email"
+                    aria-required="true"
+                    aria-describedby="email-error"
+                    aria-invalid="false"
+                />
+                <span id="email-error" class="error-message" role="alert"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">
+                    Password<span class="required" aria-label="required">*</span>
+                </label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="form-input"
+                    placeholder="Enter your password"
+                    required
+                    autocomplete="current-password"
+                    aria-required="true"
+                    aria-describedby="password-error"
+                    aria-invalid="false"
+                />
+                <span id="password-error" class="error-message" role="alert"></span>
+            </div>
+
+            <div class="form-options">
+                <div class="checkbox-group">
+                    <input
+                        type="checkbox"
+                        id="remember"
+                        name="remember"
+                        class="checkbox-input"
+                        aria-label="Remember me"
+                    />
+                    <label for="remember" class="checkbox-label">Remember me</label>
+                </div>
+                <a href="/member-benefits/forgot-password" class="forgot-password-link">
+                    Forgot password?
+                </a>
+            </div>
+
+            <button type="submit" class="submit-button" aria-label="Sign in to member benefits">
+                Sign In
+            </button>
+        </form>
+
+        <footer class="login-footer">
+            <p>
+                Don't have an account?
+                <a href="/member-benefits/signup" class="signup-link">Sign up</a>
+            </p>
+        </footer>
+    </main>
+
+    <script>
+        (function() {
+            'use strict';
+
+            const form = document.getElementById('loginForm');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const emailError = document.getElementById('email-error');
+            const passwordError = document.getElementById('password-error');
+
+            /**
+             * Validates email format using standard email regex
+             * @param {string} email - Email address to validate
+             * @returns {boolean} True if email is valid
+             */
+            function isValidEmail(email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email);
+            }
+
+            /**
+             * Displays error message for a form field
+             * @param {HTMLInputElement} input - Input element
+             * @param {HTMLElement} errorElement - Error message element
+             * @param {string} message - Error message to display
+             */
+            function showError(input, errorElement, message) {
+                input.classList.add('error');
+                input.setAttribute('aria-invalid', 'true');
+                errorElement.textContent = message;
+                errorElement.classList.add('visible');
+            }
+
+            /**
+             * Clears error message for a form field
+             * @param {HTMLInputElement} input - Input element
+             * @param {HTMLElement} errorElement - Error message element
+             */
+            function clearError(input, errorElement) {
+                input.classList.remove('error');
+                input.setAttribute('aria-invalid', 'false');
+                errorElement.textContent = '';
+                errorElement.classList.remove('visible');
+            }
+
+            /**
+             * Validates email input field
+             * @returns {boolean} True if email is valid
+             */
+            function validateEmail() {
+                const email = emailInput.value.trim();
+
+                if (!email) {
+                    showError(emailInput, emailError, 'Email address is required');
+                    return false;
+                }
+
+                if (!isValidEmail(email)) {
+                    showError(emailInput, emailError, 'Please enter a valid email address');
+                    return false;
+                }
+
+                clearError(emailInput, emailError);
+                return true;
+            }
+
+            /**
+             * Validates password input field
+             * @returns {boolean} True if password is valid
+             */
+            function validatePassword() {
+                const password = passwordInput.value;
+
+                if (!password) {
+                    showError(passwordInput, passwordError, 'Password is required');
+                    return false;
+                }
+
+                if (password.length < 6) {
+                    showError(passwordInput, passwordError, 'Password must be at least 6 characters');
+                    return false;
+                }
+
+                clearError(passwordInput, passwordError);
+                return true;
+            }
+
+            /**
+             * Handles form submission
+             * @param {Event} event - Form submit event
+             */
+            function handleSubmit(event) {
+                event.preventDefault();
+
+                const isEmailValid = validateEmail();
+                const isPasswordValid = validatePassword();
+
+                if (isEmailValid && isPasswordValid) {
+                    // Form is valid - handle login logic here
+                    console.log('Form is valid - proceeding with login');
+                    
+                    // Example: Submit form data
+                    // const formData = new FormData(form);
+                    // fetch('/api/login', { method: 'POST', body: formData });
+                } else {
+                    // Focus on first invalid field
+                    if (!isEmailValid) {
+                        emailInput.focus();
+                    } else if (!isPasswordValid) {
+                        passwordInput.focus();
+                    }
+                }
+            }
+
+            // Event listeners
+            form.addEventListener('submit', handleSubmit);
+            
+            emailInput.addEventListener('blur', validateEmail);
+            emailInput.addEventListener('input', function() {
+                if (emailError.classList.contains('visible')) {
+                    validateEmail();
+                }
+            });
+
+            passwordInput.addEventListener('blur', validatePassword);
+            passwordInput.addEventListener('input', function() {
+                if (passwordError.classList.contains('visible')) {
+                    validatePassword();
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
