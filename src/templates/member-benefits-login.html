@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Member Benefits Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .login-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .form-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 0.875rem;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .forgot-password {
+            font-size: 0.875rem;
+            color: #dc2626;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .forgot-password:hover {
+            color: #b91c1c;
+            text-decoration: underline;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 0.875rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #ffffff;
+            background-color: #dc2626;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            margin-top: 0.5rem;
+        }
+
+        .login-button:hover {
+            background-color: #b91c1c;
+        }
+
+        .login-button:active {
+            transform: scale(0.98);
+        }
+
+        .login-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .divider span {
+            padding: 0 1rem;
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+
+        .signup-link {
+            text-align: center;
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .signup-link a {
+            color: #dc2626;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .signup-link a:hover {
+            color: #b91c1c;
+            text-decoration: underline;
+        }
+
+        .error-message {
+            display: none;
+            padding: 0.75rem;
+            background-color: #fee2e2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            color: #991b1b;
+            font-size: 0.875rem;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* Mobile First - Base styles above are for mobile */
+
+        /* Tablet styles */
+        @media (min-width: 768px) {
+            .login-container {
+                padding: 2.5rem;
+            }
+
+            .login-header h1 {
+                font-size: 2rem;
+            }
+
+            .login-header p {
+                font-size: 1rem;
+            }
+
+            .form-input {
+                padding: 0.875rem;
+            }
+
+            .login-button {
+                padding: 1rem;
+            }
+        }
+
+        /* Desktop styles */
+        @media (min-width: 1024px) {
+            .login-container {
+                max-width: 450px;
+                padding: 3rem;
+            }
+
+            .login-header h1 {
+                font-size: 2.25rem;
+            }
+
+            .form-input:hover {
+                border-color: #9ca3af;
+            }
+        }
+
+        /* Large desktop styles */
+        @media (min-width: 1440px) {
+            .login-container {
+                max-width: 480px;
+            }
+        }
+
+        /* Accessibility improvements */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .login-container {
+                border: 2px solid #000;
+            }
+
+            .form-input {
+                border-width: 2px;
+            }
+
+            .login-button {
+                border: 2px solid #000;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Member Benefits</h1>
+            <p>Sign in to access your benefits</p>
+        </div>
+
+        <div id="errorMessage" class="error-message" role="alert" aria-live="polite"></div>
+
+        <form class="login-form" id="loginForm" novalidate>
+            <div class="form-group">
+                <label for="email" class="form-label">Email Address</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    class="form-input" 
+                    placeholder="Enter your email"
+                    required
+                    autocomplete="email"
+                    aria-required="true"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="form-input" 
+                    placeholder="Enter your password"
+                    required
+                    autocomplete="current-password"
+                    aria-required="true"
+                >
+            </div>
+
+            <div class="form-options">
+                <div class="checkbox-group">
+                    <input 
+                        type="checkbox" 
+                        id="remember" 
+                        name="remember"
+                        aria-label="Remember me"
+                    >
+                    <label for="remember">Remember me</label>
+                </div>
+                <a href="#" class="forgot-password">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="login-button" id="loginButton">
+                Sign In
+            </button>
+        </form>
+
+        <div class="divider">
+            <span>or</span>
+        </div>
+
+        <div class="signup-link">
+            Don't have an account? <a href="#">Sign up</a>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            const loginForm = document.getElementById('loginForm');
+            const loginButton = document.getElementById('loginButton');
+            const errorMessage = document.getElementById('errorMessage');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+
+            /**
+             * Display error message to user
+             * @param {string} message - Error message to display
+             */
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.add('show');
+                errorMessage.setAttribute('role', 'alert');
+            }
+
+            /**
+             * Hide error message
+             */
+            function hideError() {
+                errorMessage.textContent = '';
+                errorMessage.classList.remove('show');
+                errorMessage.removeAttribute('role');
+            }
+
+            /**
+             * Validate email format
+             * @param {string} email - Email address to validate
+             * @returns {boolean} - True if valid, false otherwise
+             */
+            function isValidEmail(email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email);
+            }
+
+            /**
+             * Handle form submission
+             * @param {Event} event - Form submit event
+             */
+            function handleSubmit(event) {
+                event.preventDefault();
+                hideError();
+
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+
+                // Validation
+                if (!email) {
+                    showError('Please enter your email address');
+                    emailInput.focus();
+                    return;
+                }
+
+                if (!isValidEmail(email)) {
+                    showError('Please enter a valid email address');
+                    emailInput.focus();
+                    return;
+                }
+
+                if (!password) {
+                    showError('Please enter your password');
+                    passwordInput.focus();
+                    return;
+                }
+
+                if (password.length < 6) {
+                    showError('Password must be at least 6 characters');
+                    passwordInput.focus();
+                    return;
+                }
+
+                // Disable button during submission
+                loginButton.disabled = true;
+                loginButton.textContent = 'Signing in...';
+
+                // Simulate API call - Replace with actual authentication logic
+                setTimeout(function() {
+                    // Re-enable button
+                    loginButton.disabled = false;
+                    loginButton.textContent = 'Sign In';
+
+                    // Handle successful login or show error
+                    console.log('Login attempt:', { email: email });
+                    
+                    // Example: Redirect on success
+                    // window.location.href = '/member-benefits/dashboard';
+                    
+                    // Example: Show error on failure
+                    showError('Invalid email or password. Please try again.');
+                }, 1500);
+            }
+
+            // Event listeners
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleSubmit);
+            }
+
+            // Clear error on input
+            emailInput.addEventListener('input', hideError);
+            passwordInput.addEventListener('input', hideError);
+        })();
+    </script>
+</body>
+</html>
