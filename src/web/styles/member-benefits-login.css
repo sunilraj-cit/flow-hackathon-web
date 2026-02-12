@@ -1,0 +1,427 @@
+/* ============================================
+   Member Benefits Login Page Styles
+   Mobile-First Responsive Design
+   ============================================ */
+
+/* ============================================
+   CSS Reset & Base Styles
+   ============================================ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ============================================
+   Mobile-First Base Styles (320px+)
+   ============================================ */
+.member-benefits-login {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 400px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 2rem 1.5rem;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 0.5rem;
+}
+
+.login-subtitle {
+  font-size: 0.875rem;
+  color: #718096;
+  margin-top: 0.5rem;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #2d3748;
+  display: block;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  background-color: #ffffff;
+  color: #1a202c;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.form-input::placeholder {
+  color: #a0aec0;
+}
+
+.form-input:disabled {
+  background-color: #f7fafc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-error {
+  font-size: 0.75rem;
+  color: #dc2626;
+  margin-top: 0.25rem;
+  display: none;
+}
+
+.form-group.error .form-error {
+  display: block;
+}
+
+.form-group.error .form-input {
+  border-color: #dc2626;
+}
+
+.form-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.remember-me input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  accent-color: #dc2626;
+}
+
+.remember-me label {
+  color: #4a5568;
+  cursor: pointer;
+  user-select: none;
+}
+
+.forgot-password {
+  color: #dc2626;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  align-self: flex-start;
+}
+
+.forgot-password:hover {
+  color: #b91c1c;
+  text-decoration: underline;
+}
+
+/* ============================================
+   Red Button Styling
+   ============================================ */
+.btn-red {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #dc2626;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 0.5rem;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+}
+
+.btn-red:hover {
+  background-color: #b91c1c;
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-red:active {
+  background-color: #991b1b;
+  box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2);
+  transform: translateY(0);
+}
+
+.btn-red:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
+}
+
+.btn-red:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+  opacity: 0.6;
+}
+
+.btn-red.loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.btn-red.loading::after {
+  content: "";
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  top: 50%;
+  left: 50%;
+  margin-left: -0.5rem;
+  margin-top: -0.5rem;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spinner 0.6s linear infinite;
+}
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+.signup-link {
+  color: #dc2626;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.signup-link:hover {
+  color: #b91c1c;
+  text-decoration: underline;
+}
+
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  display: none;
+}
+
+.alert.show {
+  display: block;
+}
+
+.alert-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.alert-success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+/* ============================================
+   Tablet Styles (768px+)
+   ============================================ */
+@media (min-width: 768px) {
+  .member-benefits-login {
+    padding: 2rem;
+  }
+
+  .login-container {
+    max-width: 450px;
+    padding: 2.5rem 2rem;
+  }
+
+  .login-title {
+    font-size: 1.875rem;
+  }
+
+  .login-subtitle {
+    font-size: 1rem;
+  }
+
+  .form-input {
+    padding: 0.875rem 1.125rem;
+  }
+
+  .btn-red {
+    padding: 1rem 1.75rem;
+    font-size: 1.0625rem;
+  }
+
+  .form-options {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .forgot-password {
+    align-self: auto;
+  }
+}
+
+/* ============================================
+   Desktop Styles (1024px+)
+   ============================================ */
+@media (min-width: 1024px) {
+  .member-benefits-login {
+    padding: 3rem;
+  }
+
+  .login-container {
+    max-width: 500px;
+    padding: 3rem 2.5rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .login-title {
+    font-size: 2rem;
+  }
+
+  .login-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .form-group {
+    gap: 0.625rem;
+  }
+
+  .form-input {
+    padding: 1rem 1.25rem;
+    font-size: 1.0625rem;
+  }
+
+  .btn-red {
+    padding: 1.125rem 2rem;
+    font-size: 1.125rem;
+    margin-top: 0.75rem;
+  }
+
+  .login-footer {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    font-size: 1rem;
+  }
+}
+
+/* ============================================
+   Large Desktop Styles (1440px+)
+   ============================================ */
+@media (min-width: 1440px) {
+  .login-container {
+    max-width: 550px;
+    padding: 3.5rem 3rem;
+  }
+
+  .login-title {
+    font-size: 2.25rem;
+  }
+}
+
+/* ============================================
+   Accessibility & Print Styles
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  .member-benefits-login {
+    background: #ffffff;
+  }
+
+  .login-container {
+    box-shadow: none;
+    border: 1px solid #e2e8f0;
+  }
+
+  .btn-red {
+    background-color: #dc2626;
+    color: #ffffff;
+  }
+}
+
+/* ============================================
+   High Contrast Mode Support
+   ============================================ */
+@media (prefers-contrast: high) {
+  .form-input {
+    border-width: 2px;
+  }
+
+  .btn-red {
+    border: 2px solid #000000;
+  }
+}
