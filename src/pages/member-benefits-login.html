@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="description" content="Member Benefits Login - Access your member benefits account">
     <title>Member Benefits Login</title>
     <style>
@@ -13,7 +14,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             background-color: #f5f5f5;
             color: #333;
             line-height: 1.6;
@@ -24,18 +25,13 @@
             padding: 1rem;
         }
 
-        .container {
+        .login-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             width: 100%;
             max-width: 400px;
-            margin: 0 auto;
-        }
-
-        .login-card {
-            background: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             padding: 2rem;
-            width: 100%;
         }
 
         .login-header {
@@ -55,16 +51,22 @@
             color: #666;
         }
 
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
         .form-group {
-            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
 
         .form-label {
-            display: block;
             font-size: 0.875rem;
             font-weight: 500;
             color: #333;
-            margin-bottom: 0.5rem;
         }
 
         .form-input {
@@ -73,8 +75,7 @@
             font-size: 1rem;
             border: 1px solid #d1d5db;
             border-radius: 4px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            background-color: #ffffff;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
         .form-input:focus {
@@ -87,16 +88,44 @@
             color: #9ca3af;
         }
 
-        .form-input:disabled {
-            background-color: #f3f4f6;
-            cursor: not-allowed;
+        .form-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            font-size: 0.875rem;
         }
 
-        .form-actions {
-            margin-top: 1.5rem;
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .btn-submit {
+        .remember-me input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+        }
+
+        .remember-me label {
+            cursor: pointer;
+            color: #666;
+        }
+
+        .forgot-password {
+            color: #dc2626;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .forgot-password:hover {
+            color: #b91c1c;
+            text-decoration: underline;
+        }
+
+        .login-button {
             width: 100%;
             padding: 0.875rem;
             font-size: 1rem;
@@ -106,62 +135,63 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
+            transition: background-color 0.2s ease, transform 0.1s ease;
         }
 
-        .btn-submit:hover {
+        .login-button:hover {
             background-color: #b91c1c;
         }
 
-        .btn-submit:active {
+        .login-button:active {
             transform: scale(0.98);
         }
 
-        .btn-submit:focus {
+        .login-button:focus {
             outline: none;
             box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
         }
 
-        .btn-submit:disabled {
+        .login-button:disabled {
             background-color: #9ca3af;
             cursor: not-allowed;
             transform: none;
         }
 
-        .form-footer {
+        .login-footer {
             margin-top: 1.5rem;
             text-align: center;
+            font-size: 0.875rem;
+            color: #666;
         }
 
-        .form-footer a {
+        .login-footer a {
             color: #dc2626;
             text-decoration: none;
-            font-size: 0.875rem;
-            transition: color 0.2s;
+            font-weight: 500;
+            transition: color 0.2s ease;
         }
 
-        .form-footer a:hover {
+        .login-footer a:hover {
             color: #b91c1c;
             text-decoration: underline;
         }
 
         .error-message {
             display: none;
-            color: #dc2626;
+            padding: 0.75rem;
+            background-color: #fee2e2;
+            border: 1px solid #fecaca;
+            border-radius: 4px;
+            color: #991b1b;
             font-size: 0.875rem;
-            margin-top: 0.5rem;
         }
 
         .error-message.show {
             display: block;
         }
 
-        .form-input.error {
-            border-color: #dc2626;
-        }
-
         @media (max-width: 480px) {
-            .login-card {
+            .login-container {
                 padding: 1.5rem;
             }
 
@@ -169,220 +199,206 @@
                 font-size: 1.5rem;
             }
 
-            .form-input,
-            .btn-submit {
-                font-size: 0.9375rem;
+            .form-options {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 360px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .login-container {
+                padding: 1rem;
+            }
+
+            .login-header h1 {
+                font-size: 1.25rem;
             }
         }
 
         @media (min-width: 768px) {
-            .container {
-                max-width: 450px;
-            }
-
-            .login-card {
+            .login-container {
                 padding: 2.5rem;
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
             }
         }
     </style>
 </head>
 <body>
-    <main class="container">
-        <article class="login-card">
-            <header class="login-header">
-                <h1>Member Benefits Login</h1>
-                <p>Sign in to access your member benefits</p>
-            </header>
+    <main class="login-container">
+        <header class="login-header">
+            <h1>Member Benefits Login</h1>
+            <p>Access your member benefits account</p>
+        </header>
 
-            <form id="loginForm" novalidate>
-                <div class="form-group">
-                    <label for="email" class="form-label">Email Address</label>
+        <div id="errorMessage" class="error-message" role="alert" aria-live="polite"></div>
+
+        <form class="login-form" id="loginForm" novalidate>
+            <div class="form-group">
+                <label for="username" class="form-label">Username</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    class="form-input"
+                    placeholder="Enter your username"
+                    required
+                    autocomplete="username"
+                    aria-required="true"
+                    aria-describedby="usernameError"
+                />
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="form-input"
+                    placeholder="Enter your password"
+                    required
+                    autocomplete="current-password"
+                    aria-required="true"
+                    aria-describedby="passwordError"
+                />
+            </div>
+
+            <div class="form-options">
+                <div class="remember-me">
                     <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        class="form-input"
-                        placeholder="Enter your email"
-                        required
-                        autocomplete="email"
-                        aria-required="true"
-                        aria-describedby="email-error"
+                        type="checkbox"
+                        id="rememberMe"
+                        name="rememberMe"
+                        aria-label="Remember me"
                     />
-                    <span id="email-error" class="error-message" role="alert"></span>
+                    <label for="rememberMe">Remember me</label>
                 </div>
+                <a href="#" class="forgot-password">Forgot password?</a>
+            </div>
 
-                <div class="form-group">
-                    <label for="password" class="form-label">Password</label>
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        class="form-input"
-                        placeholder="Enter your password"
-                        required
-                        autocomplete="current-password"
-                        aria-required="true"
-                        aria-describedby="password-error"
-                    />
-                    <span id="password-error" class="error-message" role="alert"></span>
-                </div>
+            <button type="submit" class="login-button" aria-label="Login to member benefits">
+                Login
+            </button>
+        </form>
 
-                <div class="form-actions">
-                    <button type="submit" class="btn-submit" id="submitBtn">
-                        Sign In
-                    </button>
-                </div>
-            </form>
-
-            <footer class="form-footer">
-                <a href="#" id="forgotPassword">Forgot your password?</a>
-            </footer>
-        </article>
+        <footer class="login-footer">
+            <p>Don't have an account? <a href="#">Sign up</a></p>
+        </footer>
     </main>
 
     <script>
         (function() {
             'use strict';
 
-            const form = document.getElementById('loginForm');
-            const emailInput = document.getElementById('email');
+            const loginForm = document.getElementById('loginForm');
+            const errorMessage = document.getElementById('errorMessage');
+            const usernameInput = document.getElementById('username');
             const passwordInput = document.getElementById('password');
-            const submitBtn = document.getElementById('submitBtn');
-            const emailError = document.getElementById('email-error');
-            const passwordError = document.getElementById('password-error');
+            const loginButton = loginForm.querySelector('.login-button');
 
             /**
-             * Validates email format
-             * @param {string} email - Email address to validate
-             * @returns {boolean} True if valid, false otherwise
-             */
-            function isValidEmail(email) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                return emailRegex.test(email);
-            }
-
-            /**
-             * Shows error message for a field
-             * @param {HTMLElement} input - Input element
-             * @param {HTMLElement} errorElement - Error message element
+             * Display error message to user
              * @param {string} message - Error message to display
              */
-            function showError(input, errorElement, message) {
-                input.classList.add('error');
-                errorElement.textContent = message;
-                errorElement.classList.add('show');
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.add('show');
+                errorMessage.setAttribute('role', 'alert');
             }
 
             /**
-             * Clears error message for a field
-             * @param {HTMLElement} input - Input element
-             * @param {HTMLElement} errorElement - Error message element
+             * Hide error message
              */
-            function clearError(input, errorElement) {
-                input.classList.remove('error');
-                errorElement.textContent = '';
-                errorElement.classList.remove('show');
+            function hideError() {
+                errorMessage.textContent = '';
+                errorMessage.classList.remove('show');
+                errorMessage.removeAttribute('role');
             }
 
             /**
-             * Validates the email field
-             * @returns {boolean} True if valid, false otherwise
+             * Validate form inputs
+             * @returns {boolean} - True if form is valid
              */
-            function validateEmail() {
-                const email = emailInput.value.trim();
+            function validateForm() {
+                hideError();
 
-                if (!email) {
-                    showError(emailInput, emailError, 'Email address is required');
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value.trim();
+
+                if (!username) {
+                    showError('Please enter your username');
+                    usernameInput.focus();
                     return false;
                 }
-
-                if (!isValidEmail(email)) {
-                    showError(emailInput, emailError, 'Please enter a valid email address');
-                    return false;
-                }
-
-                clearError(emailInput, emailError);
-                return true;
-            }
-
-            /**
-             * Validates the password field
-             * @returns {boolean} True if valid, false otherwise
-             */
-            function validatePassword() {
-                const password = passwordInput.value;
 
                 if (!password) {
-                    showError(passwordInput, passwordError, 'Password is required');
+                    showError('Please enter your password');
+                    passwordInput.focus();
+                    return false;
+                }
+
+                if (username.length < 3) {
+                    showError('Username must be at least 3 characters long');
+                    usernameInput.focus();
                     return false;
                 }
 
                 if (password.length < 6) {
-                    showError(passwordInput, passwordError, 'Password must be at least 6 characters');
+                    showError('Password must be at least 6 characters long');
+                    passwordInput.focus();
                     return false;
                 }
 
-                clearError(passwordInput, passwordError);
                 return true;
             }
 
             /**
-             * Handles form submission
-             * @param {Event} event - Submit event
+             * Handle form submission
+             * @param {Event} event - Form submit event
              */
             function handleSubmit(event) {
                 event.preventDefault();
 
-                const isEmailValid = validateEmail();
-                const isPasswordValid = validatePassword();
-
-                if (isEmailValid && isPasswordValid) {
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = 'Signing In...';
-
-                    // Simulate form submission
-                    setTimeout(function() {
-                        console.log('Form submitted successfully');
-                        // In production, this would make an API call
-                        // window.location.href = '/member-benefits/dashboard';
-                        
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Sign In';
-                    }, 1500);
+                if (!validateForm()) {
+                    return;
                 }
+
+                loginButton.disabled = true;
+                loginButton.textContent = 'Logging in...';
+
+                // Simulate API call
+                setTimeout(function() {
+                    // Replace this with actual authentication logic
+                    console.log('Login attempt with:', {
+                        username: usernameInput.value,
+                        rememberMe: document.getElementById('rememberMe').checked
+                    });
+
+                    // Reset button state
+                    loginButton.disabled = false;
+                    loginButton.textContent = 'Login';
+
+                    // Example: Show error for demo purposes
+                    // showError('Invalid username or password');
+                }, 1500);
             }
 
             // Event listeners
-            form.addEventListener('submit', handleSubmit);
+            loginForm.addEventListener('submit', handleSubmit);
 
-            emailInput.addEventListener('blur', validateEmail);
-            passwordInput.addEventListener('blur', validatePassword);
+            // Clear error on input
+            usernameInput.addEventListener('input', hideError);
+            passwordInput.addEventListener('input', hideError);
 
-            emailInput.addEventListener('input', function() {
-                if (emailError.classList.contains('show')) {
-                    clearError(emailInput, emailError);
+            // Prevent form submission on Enter in input fields (optional)
+            usernameInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    passwordInput.focus();
                 }
-            });
-
-            passwordInput.addEventListener('input', function() {
-                if (passwordError.classList.contains('show')) {
-                    clearError(passwordInput, passwordError);
-                }
-            });
-
-            document.getElementById('forgotPassword').addEventListener('click', function(event) {
-                event.preventDefault();
-                console.log('Forgot password clicked');
-                // In production, this would navigate to password reset page
-                // window.location.href = '/member-benefits/forgot-password';
             });
         })();
     </script>
