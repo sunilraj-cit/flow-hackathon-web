@@ -1,56 +1,167 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
-import { z } from 'zod';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
+import * as crypto from 'crypto';
+import * as jwt from 'jsonwebtoken';
 
-/**
- * Validation schema for member benefits login request
- */
-const loginRequestSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  rememberMe: z.boolean().optional().default(false),
-});
+const dynamoClient = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
-/**
- * Type definition for login request payload
- */
-type LoginRequest = z.infer<typeof loginRequestSchema>;
+const USERS_TABLE = process.env.USERS_TABLE || 'member-benefits-users';
+const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-in-production';
+const JWT_EXPIRATION = process.env.JWT_EXPIRATION || '24h';
 
-/**
- * Interface for successful login response
- */
-interface LoginResponse {
-  success: boolean;
-  token?: string;
-  refreshToken?: string;
-  expiresIn?: number;
-  user?: {
-    id: string;
-    email: string;
-    membershipLevel?: string;
-  };
-  message?: string;
+interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+interface UserRecord {
+  email: string;
+  passwordHash: string;
+  salt: string;
+  firstName?: string;
+  lastName?: string;
+  memberId?: string;
+  status: string;
+  createdAt: string;
+  lastLoginAt?: string;
+}
+
+interface TokenPayload {
+  email: string;
+  memberId?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 /**
- * Interface for error response
+ * Hash password with salt using PBKDF2
+ * @param password - Plain text password
+ * @param salt - Salt for hashing
+ * @returns Hashed password
  */
-interface ErrorResponse {
-  success: false;
-  error: string;
-  details?: string[];
-}
+const hashPassword = (password: string, salt: string): string => {
+  return crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+};
 
 /**
- * Creates a standardized API Gateway response
- * 
+ * Verify password against stored hash
+ * @param password - Plain text password to verify
+ * @param hash - Stored password hash
+ * @param salt - Salt used for hashing
+ * @returns True if password matches
+ */
+const verifyPassword = (password: string, hash: string, salt: string): boolean => {
+  const passwordHash = hashPassword(password, salt);
+  return passwordHash === hash;
+};
+
+/**
+ * Generate JWT token for authenticated user
+ * @param payload - Token payload data
+ * @returns JWT token string
+ */
+const generateToken = (payload: TokenPayload): string => {
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: JWT_EXPIRATION,
+    issuer: 'member-benefits-auth',
+  });
+};
+
+/**
+ * Validate login request body
+ * @param body - Request body to validate
+ * @returns Parsed login request or null if invalid
+ */
+const validateLoginRequest = (body: string | null): LoginRequest | null => {
+  if (!body) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(body);
+    
+    if (!parsed.email || typeof parsed.email !== 'string') {
+      return null;
+    }
+    
+    if (!parsed.password || typeof parsed.password !== 'string') {
+      return null;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(parsed.email)) {
+      return null;
+    }
+
+    return {
+      email: parsed.email.toLowerCase().trim(),
+      password: parsed.password,
+    };
+  } catch (error) {
+    return null;
+  }
+};
+
+/**
+ * Retrieve user from DynamoDB by email
+ * @param email - User email address
+ * @returns User record or null if not found
+ */
+const getUserByEmail = async (email: string): Promise<UserRecord | null> => {
+  try {
+    const command = new GetCommand({
+      TableName: USERS_TABLE,
+      Key: {
+        email,
+      },
+    });
+
+    const response = await docClient.send(command);
+    
+    if (!response.Item) {
+      return null;
+    }
+
+    return response.Item as UserRecord;
+  } catch (error) {
+    console.error('Error retrieving user from DynamoDB:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update user's last login timestamp
+ * @param email - User email address
+ */
+const updateLastLogin = async (email: string): Promise<void> => {
+  try {
+    const { UpdateCommand } = await import('@aws-sdk/lib-dynamodb');
+    const command = new UpdateCommand({
+      TableName: USERS_TABLE,
+      Key: {
+        email,
+      },
+      UpdateExpression: 'SET lastLoginAt = :timestamp',
+      ExpressionAttributeValues: {
+        ':timestamp': new Date().toISOString(),
+      },
+    });
+
+    await docClient.send(command);
+  } catch (error) {
+    console.error('Error updating last login:', error);
+  }
+};
+
+/**
+ * Create API Gateway response
  * @param statusCode - HTTP status code
  * @param body - Response body object
- * @returns Formatted API Gateway response
+ * @returns API Gateway proxy result
  */
-const createResponse = (
-  statusCode: number,
-  body: LoginResponse | ErrorResponse
-): APIGatewayProxyResult => {
+const createResponse = (statusCode: number, body: Record<string, unknown>): APIGatewayProxyResult => {
   return {
     statusCode,
     headers: {
@@ -65,246 +176,96 @@ const createResponse = (
 };
 
 /**
- * Validates the login request payload
- * 
- * @param body - Raw request body
- * @returns Validated login request data
- * @throws ZodError if validation fails
- */
-const validateLoginRequest = (body: string | null): LoginRequest => {
-  if (!body) {
-    throw new Error('Request body is required');
-  }
-
-  const parsedBody = JSON.parse(body);
-  return loginRequestSchema.parse(parsedBody);
-};
-
-/**
- * Authenticates user credentials
- * This is a placeholder implementation that should be replaced with actual authentication logic
- * 
- * @param email - User email address
- * @param password - User password
- * @returns Authentication result with user data and tokens
- */
-const authenticateUser = async (
-  email: string,
-  password: string
-): Promise<{
-  authenticated: boolean;
-  user?: {
-    id: string;
-    email: string;
-    membershipLevel: string;
-  };
-  token?: string;
-  refreshToken?: string;
-}> => {
-  // TODO: Implement actual authentication logic
-  // This should integrate with your authentication service (e.g., Cognito, Auth0, custom DB)
-  
-  // Placeholder implementation
-  // In production, this should:
-  // 1. Query user database
-  // 2. Verify password hash
-  // 3. Generate JWT tokens
-  // 4. Store refresh token
-  
-  const isValidCredentials = await verifyCredentials(email, password);
-  
-  if (!isValidCredentials) {
-    return { authenticated: false };
-  }
-
-  // Generate tokens (placeholder)
-  const token = await generateAccessToken(email);
-  const refreshToken = await generateRefreshToken(email);
-
-  return {
-    authenticated: true,
-    user: {
-      id: 'user-' + Date.now(),
-      email,
-      membershipLevel: 'premium',
-    },
-    token,
-    refreshToken,
-  };
-};
-
-/**
- * Verifies user credentials against stored data
- * Placeholder implementation
- * 
- * @param email - User email
- * @param password - User password
- * @returns True if credentials are valid
- */
-const verifyCredentials = async (
-  email: string,
-  password: string
-): Promise<boolean> => {
-  // TODO: Implement actual credential verification
-  // This should use bcrypt or similar to compare password hashes
-  
-  // Placeholder: Always return false for security
-  // Replace with actual implementation
-  return false;
-};
-
-/**
- * Generates an access token for authenticated user
- * Placeholder implementation
- * 
- * @param email - User email
- * @returns JWT access token
- */
-const generateAccessToken = async (email: string): Promise<string> => {
-  // TODO: Implement JWT token generation
-  // Should include user claims, expiration, and be signed with secret key
-  
-  return `access_token_${email}_${Date.now()}`;
-};
-
-/**
- * Generates a refresh token for authenticated user
- * Placeholder implementation
- * 
- * @param email - User email
- * @returns JWT refresh token
- */
-const generateRefreshToken = async (email: string): Promise<string> => {
-  // TODO: Implement refresh token generation
-  // Should be stored in database and have longer expiration
-  
-  return `refresh_token_${email}_${Date.now()}`;
-};
-
-/**
- * Logs authentication attempt for security monitoring
- * 
- * @param email - User email
- * @param success - Whether authentication was successful
- * @param ipAddress - Request IP address
- */
-const logAuthenticationAttempt = async (
-  email: string,
-  success: boolean,
-  ipAddress?: string
-): Promise<void> => {
-  // TODO: Implement logging to CloudWatch or security monitoring service
-  console.log(JSON.stringify({
-    timestamp: new Date().toISOString(),
-    event: 'member_benefits_login_attempt',
-    email,
-    success,
-    ipAddress,
-  }));
-};
-
-/**
- * Main Lambda handler for member benefits login
- * Processes authentication requests with validation and error handling
- * 
+ * Lambda handler for member benefits login
+ * Validates credentials and returns JWT token on success
  * @param event - API Gateway proxy event
- * @param context - Lambda execution context
- * @returns API Gateway proxy result with authentication response
+ * @returns API Gateway proxy result with token or error
  */
-export const handler = async (
-  event: APIGatewayProxyEvent,
-  context: Context
-): Promise<APIGatewayProxyResult> => {
-  console.log('Member benefits login request received', {
-    requestId: context.requestId,
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  console.log('Login request received:', {
+    path: event.path,
+    method: event.httpMethod,
     sourceIp: event.requestContext.identity.sourceIp,
   });
 
-  // Handle OPTIONS request for CORS preflight
   if (event.httpMethod === 'OPTIONS') {
-    return createResponse(200, { success: true });
+    return createResponse(200, { message: 'OK' });
   }
 
-  // Validate HTTP method
   if (event.httpMethod !== 'POST') {
     return createResponse(405, {
-      success: false,
       error: 'Method not allowed',
+      message: 'Only POST requests are supported',
     });
   }
 
   try {
-    // Validate and parse request body
     const loginRequest = validateLoginRequest(event.body);
 
-    // Authenticate user
-    const authResult = await authenticateUser(
-      loginRequest.email,
-      loginRequest.password
-    );
-
-    // Get source IP for logging
-    const sourceIp = event.requestContext.identity.sourceIp;
-
-    // Log authentication attempt
-    await logAuthenticationAttempt(
-      loginRequest.email,
-      authResult.authenticated,
-      sourceIp
-    );
-
-    // Handle authentication failure
-    if (!authResult.authenticated) {
-      return createResponse(401, {
-        success: false,
-        error: 'Invalid email or password',
+    if (!loginRequest) {
+      return createResponse(400, {
+        error: 'Invalid request',
+        message: 'Email and password are required and must be valid',
       });
     }
 
-    // Return successful authentication response
-    const expiresIn = loginRequest.rememberMe ? 2592000 : 3600; // 30 days or 1 hour
+    const user = await getUserByEmail(loginRequest.email);
+
+    if (!user) {
+      console.warn('Login attempt for non-existent user:', loginRequest.email);
+      return createResponse(401, {
+        error: 'Authentication failed',
+        message: 'Invalid email or password',
+      });
+    }
+
+    if (user.status !== 'active') {
+      console.warn('Login attempt for inactive user:', loginRequest.email);
+      return createResponse(403, {
+        error: 'Account inactive',
+        message: 'Your account is not active. Please contact support.',
+      });
+    }
+
+    const isPasswordValid = verifyPassword(loginRequest.password, user.passwordHash, user.salt);
+
+    if (!isPasswordValid) {
+      console.warn('Invalid password attempt for user:', loginRequest.email);
+      return createResponse(401, {
+        error: 'Authentication failed',
+        message: 'Invalid email or password',
+      });
+    }
+
+    const tokenPayload: TokenPayload = {
+      email: user.email,
+      memberId: user.memberId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
+
+    const token = generateToken(tokenPayload);
+
+    await updateLastLogin(user.email);
+
+    console.log('Successful login for user:', loginRequest.email);
 
     return createResponse(200, {
       success: true,
-      token: authResult.token,
-      refreshToken: authResult.refreshToken,
-      expiresIn,
-      user: authResult.user,
+      token,
+      user: {
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        memberId: user.memberId,
+      },
     });
-
   } catch (error) {
     console.error('Error processing login request:', error);
 
-    // Handle validation errors
-    if (error instanceof z.ZodError) {
-      return createResponse(400, {
-        success: false,
-        error: 'Validation failed',
-        details: error.errors.map(err => `${err.path.join('.')}: ${err.message}`),
-      });
-    }
-
-    // Handle JSON parse errors
-    if (error instanceof SyntaxError) {
-      return createResponse(400, {
-        success: false,
-        error: 'Invalid JSON in request body',
-      });
-    }
-
-    // Handle generic errors
     return createResponse(500, {
-      success: false,
       error: 'Internal server error',
-      details: process.env.NODE_ENV === 'development' 
-        ? [(error as Error).message]
-        : undefined,
+      message: 'An error occurred while processing your request',
     });
   }
 };
-
-/**
- * Export types for use in other modules
- */
-export type { LoginRequest, LoginResponse, ErrorResponse };
-```
