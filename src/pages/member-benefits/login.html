@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="description" content="Member Benefits Login - Access your exclusive member benefits">
     <title>Member Benefits Login</title>
     <style>
@@ -16,23 +15,20 @@
         :root {
             --primary-red: #dc2626;
             --primary-red-hover: #b91c1c;
-            --primary-red-active: #991b1b;
             --text-primary: #1f2937;
             --text-secondary: #6b7280;
             --border-color: #d1d5db;
-            --background-light: #f9fafb;
-            --white: #ffffff;
+            --background: #ffffff;
+            --input-background: #f9fafb;
             --error-color: #ef4444;
             --focus-ring: rgba(220, 38, 38, 0.2);
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            background-color: var(--background-light);
-            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
+            color: var(--text-primary);
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -43,10 +39,22 @@
         .login-container {
             width: 100%;
             max-width: 420px;
-            background-color: var(--white);
-            border-radius: 8px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            padding: 2rem;
+            background: var(--background);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .login-header {
@@ -80,59 +88,43 @@
 
         .form-label {
             font-size: 0.875rem;
-            font-weight: 500;
+            font-weight: 600;
             color: var(--text-primary);
-        }
-
-        .form-label .required {
-            color: var(--primary-red);
-            margin-left: 0.125rem;
         }
 
         .form-input {
             width: 100%;
-            padding: 0.625rem 0.875rem;
+            padding: 0.75rem 1rem;
             font-size: 1rem;
-            line-height: 1.5;
-            color: var(--text-primary);
-            background-color: var(--white);
             border: 1px solid var(--border-color);
-            border-radius: 6px;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            border-radius: 8px;
+            background: var(--input-background);
+            transition: all 0.2s ease;
+            outline: none;
         }
 
         .form-input:focus {
-            outline: none;
             border-color: var(--primary-red);
+            background: var(--background);
             box-shadow: 0 0 0 3px var(--focus-ring);
         }
 
         .form-input::placeholder {
             color: var(--text-secondary);
-            opacity: 0.6;
         }
 
         .form-input:disabled {
-            background-color: var(--background-light);
-            cursor: not-allowed;
             opacity: 0.6;
+            cursor: not-allowed;
         }
 
-        .form-input.error {
-            border-color: var(--error-color);
-        }
-
-        .form-input.error:focus {
-            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
-        }
-
-        .error-message {
-            font-size: 0.875rem;
+        .form-error {
+            font-size: 0.75rem;
             color: var(--error-color);
             display: none;
         }
 
-        .error-message.visible {
+        .form-error.active {
             display: block;
         }
 
@@ -141,7 +133,7 @@
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 0.75rem;
+            gap: 0.5rem;
         }
 
         .checkbox-group {
@@ -159,80 +151,99 @@
 
         .checkbox-label {
             font-size: 0.875rem;
-            color: var(--text-primary);
+            color: var(--text-secondary);
             cursor: pointer;
             user-select: none;
         }
 
-        .forgot-password-link {
+        .forgot-password {
             font-size: 0.875rem;
             color: var(--primary-red);
             text-decoration: none;
             font-weight: 500;
-            transition: color 0.15s ease-in-out;
+            transition: opacity 0.2s ease;
         }
 
-        .forgot-password-link:hover {
-            color: var(--primary-red-hover);
+        .forgot-password:hover {
+            opacity: 0.8;
             text-decoration: underline;
         }
 
         .submit-button {
             width: 100%;
-            padding: 0.75rem 1rem;
+            padding: 0.875rem 1.5rem;
             font-size: 1rem;
             font-weight: 600;
-            color: var(--white);
-            background-color: var(--primary-red);
+            color: #ffffff;
+            background: var(--primary-red);
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.15s ease-in-out, transform 0.1s ease-in-out;
-            margin-top: 0.5rem;
+            transition: all 0.2s ease;
+            outline: none;
         }
 
         .submit-button:hover {
-            background-color: var(--primary-red-hover);
+            background: var(--primary-red-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
         }
 
         .submit-button:active {
-            background-color: var(--primary-red-active);
-            transform: scale(0.98);
-        }
-
-        .submit-button:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px var(--focus-ring);
+            transform: translateY(0);
         }
 
         .submit-button:disabled {
-            background-color: var(--text-secondary);
-            cursor: not-allowed;
             opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
-        .login-footer {
-            margin-top: 1.5rem;
+        .submit-button:focus {
+            box-shadow: 0 0 0 3px var(--focus-ring);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
             text-align: center;
+            margin: 1.5rem 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .divider span {
+            padding: 0 1rem;
             font-size: 0.875rem;
             color: var(--text-secondary);
         }
 
         .signup-link {
-            color: var(--primary-red);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.15s ease-in-out;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
         }
 
-        .signup-link:hover {
-            color: var(--primary-red-hover);
+        .signup-link a {
+            color: var(--primary-red);
+            text-decoration: none;
+            font-weight: 600;
+            transition: opacity 0.2s ease;
+        }
+
+        .signup-link a:hover {
+            opacity: 0.8;
             text-decoration: underline;
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 640px) {
             .login-container {
-                padding: 1.5rem;
+                padding: 2rem 1.5rem;
             }
 
             .login-header h1 {
@@ -245,17 +256,22 @@
             }
         }
 
-        @media (max-width: 360px) {
+        @media (max-width: 375px) {
             body {
                 padding: 0.5rem;
             }
 
             .login-container {
-                padding: 1.25rem;
+                padding: 1.5rem 1rem;
             }
 
             .login-header h1 {
                 font-size: 1.375rem;
+            }
+
+            .form-input,
+            .submit-button {
+                font-size: 0.9375rem;
             }
         }
 
@@ -277,9 +293,7 @@
 
         <form class="login-form" id="loginForm" novalidate aria-label="Login form">
             <div class="form-group">
-                <label for="email" class="form-label">
-                    Email Address<span class="required" aria-label="required">*</span>
-                </label>
+                <label for="email" class="form-label">Email Address</label>
                 <input
                     type="email"
                     id="email"
@@ -290,15 +304,12 @@
                     autocomplete="email"
                     aria-required="true"
                     aria-describedby="email-error"
-                    aria-invalid="false"
                 />
-                <span id="email-error" class="error-message" role="alert"></span>
+                <span id="email-error" class="form-error" role="alert"></span>
             </div>
 
             <div class="form-group">
-                <label for="password" class="form-label">
-                    Password<span class="required" aria-label="required">*</span>
-                </label>
+                <label for="password" class="form-label">Password</label>
                 <input
                     type="password"
                     id="password"
@@ -309,9 +320,8 @@
                     autocomplete="current-password"
                     aria-required="true"
                     aria-describedby="password-error"
-                    aria-invalid="false"
                 />
-                <span id="password-error" class="error-message" role="alert"></span>
+                <span id="password-error" class="form-error" role="alert"></span>
             </div>
 
             <div class="form-options">
@@ -321,11 +331,10 @@
                         id="remember"
                         name="remember"
                         class="checkbox-input"
-                        aria-label="Remember me"
                     />
                     <label for="remember" class="checkbox-label">Remember me</label>
                 </div>
-                <a href="/member-benefits/forgot-password" class="forgot-password-link">
+                <a href="/member-benefits/forgot-password" class="forgot-password">
                     Forgot password?
                 </a>
             </div>
@@ -335,12 +344,13 @@
             </button>
         </form>
 
-        <footer class="login-footer">
-            <p>
-                Don't have an account?
-                <a href="/member-benefits/signup" class="signup-link">Sign up</a>
-            </p>
-        </footer>
+        <div class="divider">
+            <span>or</span>
+        </div>
+
+        <div class="signup-link">
+            Don't have an account? <a href="/member-benefits/signup">Sign up</a>
+        </div>
     </main>
 
     <script>
@@ -352,125 +362,123 @@
             const passwordInput = document.getElementById('password');
             const emailError = document.getElementById('email-error');
             const passwordError = document.getElementById('password-error');
+            const submitButton = form.querySelector('.submit-button');
 
             /**
-             * Validates email format using standard email regex
+             * Validates email format
              * @param {string} email - Email address to validate
-             * @returns {boolean} True if email is valid
+             * @returns {boolean} - True if valid, false otherwise
              */
-            function isValidEmail(email) {
+            function validateEmail(email) {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 return emailRegex.test(email);
             }
 
             /**
-             * Displays error message for a form field
-             * @param {HTMLInputElement} input - Input element
+             * Displays error message for a field
              * @param {HTMLElement} errorElement - Error message element
              * @param {string} message - Error message to display
              */
-            function showError(input, errorElement, message) {
-                input.classList.add('error');
-                input.setAttribute('aria-invalid', 'true');
+            function showError(errorElement, message) {
                 errorElement.textContent = message;
-                errorElement.classList.add('visible');
+                errorElement.classList.add('active');
             }
 
             /**
-             * Clears error message for a form field
-             * @param {HTMLInputElement} input - Input element
+             * Clears error message for a field
              * @param {HTMLElement} errorElement - Error message element
              */
-            function clearError(input, errorElement) {
-                input.classList.remove('error');
-                input.setAttribute('aria-invalid', 'false');
+            function clearError(errorElement) {
                 errorElement.textContent = '';
-                errorElement.classList.remove('visible');
+                errorElement.classList.remove('active');
             }
 
             /**
-             * Validates email input field
-             * @returns {boolean} True if email is valid
+             * Validates email field
+             * @returns {boolean} - True if valid, false otherwise
              */
-            function validateEmail() {
+            function validateEmailField() {
                 const email = emailInput.value.trim();
-
+                
                 if (!email) {
-                    showError(emailInput, emailError, 'Email address is required');
+                    showError(emailError, 'Email address is required');
                     return false;
                 }
-
-                if (!isValidEmail(email)) {
-                    showError(emailInput, emailError, 'Please enter a valid email address');
+                
+                if (!validateEmail(email)) {
+                    showError(emailError, 'Please enter a valid email address');
                     return false;
                 }
-
-                clearError(emailInput, emailError);
+                
+                clearError(emailError);
                 return true;
             }
 
             /**
-             * Validates password input field
-             * @returns {boolean} True if password is valid
+             * Validates password field
+             * @returns {boolean} - True if valid, false otherwise
              */
-            function validatePassword() {
+            function validatePasswordField() {
                 const password = passwordInput.value;
-
+                
                 if (!password) {
-                    showError(passwordInput, passwordError, 'Password is required');
+                    showError(passwordError, 'Password is required');
                     return false;
                 }
-
+                
                 if (password.length < 6) {
-                    showError(passwordInput, passwordError, 'Password must be at least 6 characters');
+                    showError(passwordError, 'Password must be at least 6 characters');
                     return false;
                 }
-
-                clearError(passwordInput, passwordError);
+                
+                clearError(passwordError);
                 return true;
             }
 
-            /**
-             * Handles form submission
-             * @param {Event} event - Form submit event
-             */
-            function handleSubmit(event) {
-                event.preventDefault();
+            // Real-time validation
+            emailInput.addEventListener('blur', validateEmailField);
+            passwordInput.addEventListener('blur', validatePasswordField);
 
-                const isEmailValid = validateEmail();
-                const isPasswordValid = validatePassword();
-
-                if (isEmailValid && isPasswordValid) {
-                    // Form is valid - handle login logic here
-                    console.log('Form is valid - proceeding with login');
-                    
-                    // Example: Submit form data
-                    // const formData = new FormData(form);
-                    // fetch('/api/login', { method: 'POST', body: formData });
-                } else {
-                    // Focus on first invalid field
-                    if (!isEmailValid) {
-                        emailInput.focus();
-                    } else if (!isPasswordValid) {
-                        passwordInput.focus();
-                    }
-                }
-            }
-
-            // Event listeners
-            form.addEventListener('submit', handleSubmit);
-            
-            emailInput.addEventListener('blur', validateEmail);
             emailInput.addEventListener('input', function() {
-                if (emailError.classList.contains('visible')) {
-                    validateEmail();
+                if (emailError.classList.contains('active')) {
+                    validateEmailField();
                 }
             });
 
-            passwordInput.addEventListener('blur', validatePassword);
             passwordInput.addEventListener('input', function() {
-                if (passwordError.classList.contains('visible')) {
-                    validatePassword();
+                if (passwordError.classList.contains('active')) {
+                    validatePasswordField();
+                }
+            });
+
+            /**
+             * Handles form submission
+             * @param {Event} event - Submit event
+             */
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const isEmailValid = validateEmailField();
+                const isPasswordValid = validatePasswordField();
+
+                if (isEmailValid && isPasswordValid) {
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Signing in...';
+
+                    // Simulate API call
+                    setTimeout(function() {
+                        console.log('Login submitted:', {
+                            email: emailInput.value,
+                            remember: document.getElementById('remember').checked
+                        });
+                        
+                        // Reset button state
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Sign In';
+                        
+                        // Redirect or show success message
+                        // window.location.href = '/member-benefits/dashboard';
+                    }, 1500);
                 }
             });
         })();
