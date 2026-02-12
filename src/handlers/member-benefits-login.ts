@@ -82,7 +82,7 @@ const generateLoginPageHTML = (): string => {
 
         .login-button {
             width: 100%;
-            padding: 14px 20px;
+            padding: 14px 16px;
             font-size: 16px;
             font-weight: 600;
             color: white;
@@ -109,7 +109,7 @@ const generateLoginPageHTML = (): string => {
 
         .forgot-password {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 16px;
         }
 
         .forgot-password a {
@@ -150,7 +150,7 @@ const generateLoginPageHTML = (): string => {
             }
 
             .login-button {
-                padding: 12px 18px;
+                padding: 12px 16px;
                 font-size: 15px;
             }
         }
@@ -230,11 +230,11 @@ const generateLoginPageHTML = (): string => {
                 // Placeholder for actual authentication logic
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                // This would be replaced with actual API call
+                // This is where you would implement actual authentication
                 console.log('Login attempt:', { email });
                 
                 // Simulate error for demonstration
-                throw new Error('Authentication endpoint not configured');
+                throw new Error('Authentication not yet implemented');
             } catch (error) {
                 errorMessage.textContent = error.message || 'An error occurred during login. Please try again.';
                 errorMessage.classList.add('show');
@@ -255,8 +255,8 @@ const generateLoginPageHTML = (): string => {
 
 /**
  * Lambda handler for serving the member benefits login page
- * @param {APIGatewayProxyEvent} event - The API Gateway event object
- * @returns {Promise<APIGatewayProxyResult>} The API Gateway response with HTML content
+ * @param {APIGatewayProxyEvent} event - The API Gateway event
+ * @returns {Promise<APIGatewayProxyResult>} The HTTP response with HTML content
  */
 export const handler = async (
   event: APIGatewayProxyEvent
@@ -264,10 +264,10 @@ export const handler = async (
   try {
     const origin = event.headers.origin || event.headers.Origin || '*';
     
-    const allowedOrigins = process.env.ALLOWED_ORIGINS
-      ? process.env.ALLOWED_ORIGINS.split(',')
+    const allowedOrigins = process.env.ALLOWED_ORIGINS 
+      ? process.env.ALLOWED_ORIGINS.split(',') 
       : ['*'];
-
+    
     const corsOrigin = allowedOrigins.includes('*') || allowedOrigins.includes(origin)
       ? origin
       : allowedOrigins[0];
@@ -308,4 +308,3 @@ export const handler = async (
     };
   }
 };
-```
