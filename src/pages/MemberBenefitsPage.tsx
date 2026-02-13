@@ -5,15 +5,15 @@ import BannerSection from '@/components/BannerSection';
  * MemberBenefitsPage Component
  * 
  * Displays member benefits information with a banner section at the bottom.
- * Implements PM-104: Banner image on the bottom section of member benefits page.
+ * Implements PM-104: Create banner image on the bottom section of member benefits
  */
 const MemberBenefitsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        {/* Page Header */}
+        {/* Header Section */}
         <header className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground mb-2">
+          <h1 className="text-4xl font-bold tracking-tight text-foreground mb-4">
             Member Benefits
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -52,45 +52,55 @@ const MemberBenefitsPage: React.FC = () => {
             <div className="rounded-lg border bg-card p-6 shadow-sm">
               <h3 className="text-xl font-semibold mb-3">Community Access</h3>
               <p className="text-muted-foreground">
-                Join our exclusive community and network with other members.
+                Join our exclusive community and connect with like-minded members.
               </p>
             </div>
 
             {/* Benefit Card 5 */}
             <div className="rounded-lg border bg-card p-6 shadow-sm">
-              <h3 className="text-xl font-semibold mb-3">Learning Resources</h3>
+              <h3 className="text-xl font-semibold mb-3">Educational Resources</h3>
               <p className="text-muted-foreground">
-                Access premium educational content and training materials.
+                Access premium educational content, webinars, and training materials.
               </p>
             </div>
 
             {/* Benefit Card 6 */}
             <div className="rounded-lg border bg-card p-6 shadow-sm">
-              <h3 className="text-xl font-semibold mb-3">Event Invitations</h3>
+              <h3 className="text-xl font-semibold mb-3">Rewards Program</h3>
               <p className="text-muted-foreground">
-                Get invited to exclusive member events and webinars.
+                Earn points and rewards for your engagement and loyalty.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Additional Benefits Information */}
+        {/* Additional Benefits Section */}
         <section className="mb-12">
-          <div className="rounded-lg border bg-card p-8">
-            <h2 className="text-2xl font-bold mb-4">Why Become a Member?</h2>
-            <div className="space-y-4 text-muted-foreground">
-              <p>
-                Our membership program is designed to provide you with the best possible
-                experience and value. Whether you're looking to advance your skills,
-                connect with like-minded individuals, or access exclusive resources,
-                we have something for everyone.
-              </p>
-              <p>
-                Members enjoy a wide range of benefits that are continuously updated
-                and expanded based on feedback and needs. Join our growing community
-                today and unlock your full potential.
-              </p>
-            </div>
+          <h2 className="text-3xl font-bold mb-6">Why Become a Member?</h2>
+          <div className="prose prose-lg max-w-none dark:prose-invert">
+            <p className="text-muted-foreground mb-4">
+              Our membership program is designed to provide you with the best possible
+              experience and value. Whether you're looking for exclusive content,
+              priority support, or special discounts, we have something for everyone.
+            </p>
+            <p className="text-muted-foreground mb-4">
+              Join thousands of satisfied members who have already discovered the
+              benefits of being part of our community. Start your journey today and
+              unlock a world of possibilities.
+            </p>
+          </div>
+        </section>
+
+        {/* Call to Action Section */}
+        <section className="mb-12 text-center">
+          <div className="rounded-lg border bg-card p-8 shadow-sm">
+            <h2 className="text-2xl font-bold mb-4">Ready to Get Started?</h2>
+            <p className="text-muted-foreground mb-6">
+              Join our community today and start enjoying all the benefits of membership.
+            </p>
+            <button className="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+              Become a Member
+            </button>
           </div>
         </section>
       </div>
@@ -102,4 +112,3 @@ const MemberBenefitsPage: React.FC = () => {
 };
 
 export default MemberBenefitsPage;
-```
