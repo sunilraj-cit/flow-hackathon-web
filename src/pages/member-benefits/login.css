@@ -99,7 +99,6 @@
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.15s ease-in-out, transform 0.1s ease-in-out;
-  box-sizing: border-box;
 }
 
 .btn-primary:hover {
@@ -124,10 +123,10 @@
 
 .forgot-password {
   text-align: center;
-  font-size: 0.875rem;
 }
 
 .forgot-password-link {
+  font-size: 0.875rem;
   color: #dc3545;
   text-decoration: none;
   transition: color 0.15s ease-in-out;
@@ -139,12 +138,16 @@
 }
 
 .login-footer {
+  text-align: center;
   margin-top: 1.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid #dee2e6;
-  text-align: center;
+}
+
+.login-footer-text {
   font-size: 0.875rem;
   color: #6c757d;
+  margin: 0;
 }
 
 .signup-link {
@@ -197,25 +200,12 @@
     font-size: 1rem;
   }
 
-  .form-label {
-    font-size: 1rem;
-  }
-
   .form-input {
-    padding: 0.875rem 1rem;
+    padding: 0.875rem;
   }
 
   .btn-primary {
     padding: 0.875rem 1.5rem;
-    font-size: 1.0625rem;
-  }
-
-  .forgot-password {
-    font-size: 1rem;
-  }
-
-  .login-footer {
-    font-size: 1rem;
   }
 }
 
@@ -232,7 +222,6 @@
 
   .login-title {
     font-size: 2rem;
-    margin-bottom: 0.75rem;
   }
 
   .login-header {
@@ -245,12 +234,11 @@
 
   .form-input {
     padding: 1rem;
-    font-size: 1.0625rem;
   }
 
   .btn-primary {
     padding: 1rem 1.5rem;
-    font-size: 1.125rem;
+    font-size: 1.0625rem;
   }
 
   .btn-primary:hover {
@@ -260,11 +248,6 @@
 
   .btn-primary:active {
     transform: translateY(0);
-  }
-
-  .login-footer {
-    margin-top: 2rem;
-    padding-top: 2rem;
   }
 }
 
@@ -296,6 +279,6 @@
   }
 
   .btn-primary {
-    border: 2px solid #000000;
+    border: 2px solid #bd2130;
   }
 }
