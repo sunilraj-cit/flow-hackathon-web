@@ -1,0 +1,381 @@
+/* Member Benefits Login Page Styles */
+
+/* CSS Reset and Base Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --primary-red: #dc2626;
+  --primary-red-hover: #b91c1c;
+  --primary-red-active: #991b1b;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --border-color: #d1d5db;
+  --background-white: #ffffff;
+  --background-gray: #f9fafb;
+  --error-color: #ef4444;
+  --focus-ring: rgba(220, 38, 38, 0.2);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Container and Layout */
+.member-benefits-login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--background-gray);
+  padding: 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.member-benefits-login-card {
+  width: 100%;
+  max-width: 400px;
+  background-color: var(--background-white);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  padding: 2rem;
+}
+
+/* Header */
+.member-benefits-login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.member-benefits-login-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.member-benefits-login-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* Form Styles */
+.member-benefits-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.member-benefits-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.member-benefits-form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.member-benefits-form-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  font-size: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--background-white);
+  color: var(--text-primary);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.member-benefits-form-input:focus {
+  outline: none;
+  border-color: var(--primary-red);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.member-benefits-form-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.member-benefits-form-input:disabled {
+  background-color: var(--background-gray);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Error State */
+.member-benefits-form-input.error {
+  border-color: var(--error-color);
+}
+
+.member-benefits-form-error {
+  font-size: 0.75rem;
+  color: var(--error-color);
+  margin-top: 0.25rem;
+}
+
+/* Red Button Styles */
+.member-benefits-btn-red {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--background-white);
+  background-color: var(--primary-red);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.member-benefits-btn-red:hover {
+  background-color: var(--primary-red-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.member-benefits-btn-red:active {
+  background-color: var(--primary-red-active);
+  transform: translateY(1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.member-benefits-btn-red:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.member-benefits-btn-red:disabled {
+  background-color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+/* Additional Links */
+.member-benefits-login-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.member-benefits-login-link {
+  font-size: 0.875rem;
+  color: var(--primary-red);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.member-benefits-login-link:hover {
+  color: var(--primary-red-hover);
+  text-decoration: underline;
+}
+
+.member-benefits-login-divider {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.member-benefits-login-divider::before,
+.member-benefits-login-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.member-benefits-login-divider::before {
+  margin-right: 0.75rem;
+}
+
+.member-benefits-login-divider::after {
+  margin-left: 0.75rem;
+}
+
+/* Checkbox Group */
+.member-benefits-checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.member-benefits-checkbox {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  accent-color: var(--primary-red);
+}
+
+.member-benefits-checkbox-label {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Alert/Message Box */
+.member-benefits-alert {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.member-benefits-alert-error {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.member-benefits-alert-success {
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.member-benefits-alert-info {
+  background-color: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+/* Loading Spinner */
+.member-benefits-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--background-white);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: member-benefits-spin 0.6s linear infinite;
+}
+
+@keyframes member-benefits-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile Styles (< 768px) */
+@media (max-width: 767px) {
+  .member-benefits-login-container {
+    padding: 0.75rem;
+  }
+
+  .member-benefits-login-card {
+    padding: 1.5rem;
+    max-width: 100%;
+  }
+
+  .member-benefits-login-title {
+    font-size: 1.25rem;
+  }
+
+  .member-benefits-login-subtitle {
+    font-size: 0.8125rem;
+  }
+
+  .member-benefits-form-input {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9375rem;
+  }
+
+  .member-benefits-btn-red {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9375rem;
+  }
+
+  .member-benefits-login-footer {
+    margin-top: 1.25rem;
+  }
+}
+
+/* Tablet Styles (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .member-benefits-login-container {
+    padding: 1.5rem;
+  }
+
+  .member-benefits-login-card {
+    max-width: 450px;
+    padding: 2.5rem;
+  }
+
+  .member-benefits-login-title {
+    font-size: 1.75rem;
+  }
+
+  .member-benefits-form-input {
+    padding: 0.75rem 1rem;
+  }
+
+  .member-benefits-btn-red {
+    padding: 0.875rem 1.75rem;
+  }
+}
+
+/* Desktop Styles (> 1024px) */
+@media (min-width: 1025px) {
+  .member-benefits-login-container {
+    padding: 2rem;
+  }
+
+  .member-benefits-login-card {
+    max-width: 480px;
+    padding: 3rem;
+  }
+
+  .member-benefits-login-title {
+    font-size: 2rem;
+  }
+
+  .member-benefits-form-input {
+    padding: 0.75rem 1rem;
+  }
+
+  .member-benefits-btn-red {
+    padding: 0.875rem 2rem;
+    font-size: 1.0625rem;
+  }
+
+  .member-benefits-login-footer {
+    margin-top: 2rem;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .member-benefits-form-input {
+    border-width: 2px;
+  }
+
+  .member-benefits-btn-red {
+    border: 2px solid var(--text-primary);
+  }
+}
+
+/* Print Styles */
+@media print {
+  .member-benefits-login-container {
+    background-color: var(--background-white);
+  }
+
+  .member-benefits-login-card {
+    box-shadow: none;
+    border: 1px solid var(--border-color);
+  }
+}
