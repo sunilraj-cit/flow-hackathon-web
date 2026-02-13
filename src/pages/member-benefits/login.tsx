@@ -40,9 +40,9 @@ export default function MemberBenefitsLogin(): JSX.Element {
   });
 
   /**
-   * Handles form submission for login
+   * Handles the login form submission
    * 
-   * @param {LoginFormData} data - The validated form data
+   * @param {LoginFormData} data - The form data containing email and password
    */
   const onSubmit = async (data: LoginFormData): Promise<void> => {
     setIsLoading(true);
@@ -61,7 +61,7 @@ export default function MemberBenefitsLogin(): JSX.Element {
     } catch (error) {
       toast({
         title: 'Login Failed',
-        description: 'Please check your credentials and try again',
+        description: error instanceof Error ? error.message : 'An error occurred during login',
         variant: 'destructive',
       });
     } finally {
@@ -81,7 +81,7 @@ export default function MemberBenefitsLogin(): JSX.Element {
           </p>
         </div>
 
-        <div className="mt-8 bg-white py-8 px-6 shadow-sm rounded-lg sm:px-10">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700">
@@ -90,8 +90,8 @@ export default function MemberBenefitsLogin(): JSX.Element {
               <Input
                 id="email"
                 type="email"
-                autoComplete="email"
                 placeholder="you@example.com"
+                autoComplete="email"
                 disabled={isLoading}
                 className={`w-full ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 {...register('email')}
@@ -110,8 +110,8 @@ export default function MemberBenefitsLogin(): JSX.Element {
               <Input
                 id="password"
                 type="password"
-                autoComplete="current-password"
                 placeholder="••••••••"
+                autoComplete="current-password"
                 disabled={isLoading}
                 className={`w-full ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 {...register('password')}
@@ -123,74 +123,34 @@ export default function MemberBenefitsLogin(): JSX.Element {
               )}
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="text-sm">
-                <a
-                  href="#"
-                  className="font-medium text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                  Forgot your password?
-                </a>
-              </div>
-            </div>
-
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? (
-                <span className="flex items-center justify-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Signing in...
-                </span>
-              ) : (
-                'Sign In'
-              )}
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
-                  New to Member Benefits?
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-6 text-center">
-              <a
-                href="#"
-                className="font-medium text-red-600 hover:text-red-700 transition-colors"
-              >
-                Create an account
-              </a>
-            </div>
+          <div className="mt-6 text-center">
+            <a
+              href="#"
+              className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200"
+            >
+              Forgot your password?
+            </a>
           </div>
         </div>
+
+        <p className="text-center text-sm text-gray-600">
+          Don&apos;t have an account?{' '}
+          <a
+            href="#"
+            className="font-medium text-red-600 hover:text-red-700 transition-colors duration-200"
+          >
+            Sign up
+          </a>
+        </p>
       </div>
     </div>
   );
