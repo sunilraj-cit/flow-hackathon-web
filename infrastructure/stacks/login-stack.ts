@@ -36,7 +36,7 @@ export interface LoginStackProps extends cdk.StackProps {
  * 
  * This stack defines:
  * - API Gateway REST API for login endpoints
- * - Lambda functions for login page rendering and authentication
+ * - Lambda functions for serving login page and handling authentication
  * - IAM roles and permissions
  * - CloudWatch log groups for monitoring
  * 
@@ -45,7 +45,7 @@ export interface LoginStackProps extends cdk.StackProps {
 export class LoginStack extends cdk.Stack {
   public readonly api: apigateway.RestApi;
   public readonly loginPageFunction: lambda.Function;
-  public readonly authenticationFunction: lambda.Function;
+  public readonly authFunction: lambda.Function;
 
   constructor(scope: Construct, id: string, props: LoginStackProps) {
     super(scope, id, props);
@@ -64,8 +64,8 @@ export class LoginStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    const authLogGroup = new logs.LogGroup(this, 'AuthenticationLogGroup', {
-      logGroupName: `/aws/lambda/${environment}-authentication`,
+    const authLogGroup = new logs.LogGroup(this, 'AuthLogGroup', {
+      logGroupName: `/aws/lambda/${environment}-auth`,
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
@@ -79,50 +79,35 @@ export class LoginStack extends cdk.Stack {
       ],
     });
 
-    // Add CloudWatch Logs permissions
-    lambdaRole.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: [
-          'logs:CreateLogGroup',
-          'logs:CreateLogStream',
-          'logs:PutLogEvents',
-        ],
-        resources: ['arn:aws:logs:*:*:*'],
-      })
-    );
-
-    // Lambda function for serving the login page
+    // Lambda function for serving login page
     this.loginPageFunction = new lambda.Function(this, 'LoginPageFunction', {
       functionName: `${environment}-login-page`,
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda/login-page')),
-      role: lambdaRole,
       timeout: cdk.Duration.seconds(lambdaTimeout),
       memorySize: lambdaMemorySize,
+      role: lambdaRole,
       environment: {
         ENVIRONMENT: environment,
         NODE_ENV: environment === 'prod' ? 'production' : 'development',
-        LOG_LEVEL: environment === 'prod' ? 'info' : 'debug',
       },
       logGroup: loginPageLogGroup,
       description: 'Lambda function to serve the member benefits login page',
     });
 
     // Lambda function for authentication
-    this.authenticationFunction = new lambda.Function(this, 'AuthenticationFunction', {
-      functionName: `${environment}-authentication`,
+    this.authFunction = new lambda.Function(this, 'AuthFunction', {
+      functionName: `${environment}-auth`,
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda/authentication')),
-      role: lambdaRole,
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda/auth')),
       timeout: cdk.Duration.seconds(lambdaTimeout),
       memorySize: lambdaMemorySize,
+      role: lambdaRole,
       environment: {
         ENVIRONMENT: environment,
         NODE_ENV: environment === 'prod' ? 'production' : 'development',
-        LOG_LEVEL: environment === 'prod' ? 'info' : 'debug',
       },
       logGroup: authLogGroup,
       description: 'Lambda function to handle authentication requests',
@@ -170,7 +155,7 @@ export class LoginStack extends cdk.Stack {
       ],
     });
 
-    const authenticationIntegration = new apigateway.LambdaIntegration(this.authenticationFunction, {
+    const authIntegration = new apigateway.LambdaIntegration(this.authFunction, {
       proxy: true,
       allowTestInvoke: true,
       integrationResponses: [
@@ -183,10 +168,10 @@ export class LoginStack extends cdk.Stack {
       ],
     });
 
-    // Define API routes
+    // Create API Gateway resources and methods
     const loginResource = this.api.root.addResource('login');
     
-    // GET /login - Serve the login page
+    // GET /login - Serve login page
     loginResource.addMethod('GET', loginPageIntegration, {
       methodResponses: [
         {
@@ -198,9 +183,9 @@ export class LoginStack extends cdk.Stack {
       ],
     });
 
-    // POST /login/authenticate - Handle authentication
-    const authenticateResource = loginResource.addResource('authenticate');
-    authenticateResource.addMethod('POST', authenticationIntegration, {
+    // POST /login/auth - Handle authentication
+    const authResource = loginResource.addResource('auth');
+    authResource.addMethod('POST', authIntegration, {
       methodResponses: [
         {
           statusCode: '200',
@@ -222,9 +207,9 @@ export class LoginStack extends cdk.Stack {
 
     // Grant API Gateway permission to invoke Lambda functions
     this.loginPageFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
-    this.authenticationFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+    this.authFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
 
-    // CloudFormation Outputs
+    // CloudFormation outputs
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: this.api.url,
       description: 'Login API Gateway URL',
@@ -237,10 +222,10 @@ export class LoginStack extends cdk.Stack {
       exportName: `${environment}-login-page-url`,
     });
 
-    new cdk.CfnOutput(this, 'AuthenticationEndpoint', {
-      value: `${this.api.url}login/authenticate`,
+    new cdk.CfnOutput(this, 'AuthEndpointUrl', {
+      value: `${this.api.url}login/auth`,
       description: 'Authentication endpoint URL',
-      exportName: `${environment}-authentication-endpoint`,
+      exportName: `${environment}-auth-endpoint-url`,
     });
 
     new cdk.CfnOutput(this, 'LoginPageFunctionArn', {
@@ -249,10 +234,10 @@ export class LoginStack extends cdk.Stack {
       exportName: `${environment}-login-page-function-arn`,
     });
 
-    new cdk.CfnOutput(this, 'AuthenticationFunctionArn', {
-      value: this.authenticationFunction.functionArn,
+    new cdk.CfnOutput(this, 'AuthFunctionArn', {
+      value: this.authFunction.functionArn,
       description: 'Authentication Lambda function ARN',
-      exportName: `${environment}-authentication-function-arn`,
+      exportName: `${environment}-auth-function-arn`,
     });
 
     // Add tags for resource management
