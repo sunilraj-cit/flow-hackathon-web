@@ -33,7 +33,7 @@ const isValidEmail = (email: string): boolean => {
 };
 
 /**
- * Validates login request body
+ * Validates the login request body
  * @param body - Request body to validate
  * @returns Validation result with error message if invalid
  */
@@ -65,7 +65,7 @@ const validateLoginRequest = (body: any): { valid: boolean; error?: string } => 
  * Authenticates user credentials
  * @param email - User email
  * @param password - User password
- * @returns Authentication result with user data and token
+ * @returns Authentication result with user data and token if successful
  */
 const authenticateUser = async (
   email: string,
@@ -73,34 +73,34 @@ const authenticateUser = async (
 ): Promise<AuthResponse> => {
   try {
     // TODO: Implement actual authentication logic
-    // This should integrate with your authentication service (Cognito, Auth0, etc.)
+    // This should integrate with your authentication service (e.g., Cognito, DynamoDB, etc.)
     // For now, this is a placeholder implementation
     
-    // Example: Query DynamoDB for user
-    // Example: Verify password hash
-    // Example: Generate JWT token
+    // Example: Query user from database
+    // const user = await getUserByEmail(email);
+    // if (!user) {
+    //   return { success: false, message: 'Invalid credentials' };
+    // }
     
-    // Placeholder response - replace with actual authentication
-    if (email && password) {
-      // Simulate authentication delay
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // This is a mock response - replace with real authentication
-      return {
-        success: true,
-        message: 'Authentication successful',
-        token: 'mock-jwt-token', // Replace with actual JWT generation
-        user: {
-          id: 'user-123',
-          email: email,
-          name: 'Member User'
-        }
-      };
-    }
-
+    // Example: Verify password
+    // const isPasswordValid = await verifyPassword(password, user.passwordHash);
+    // if (!isPasswordValid) {
+    //   return { success: false, message: 'Invalid credentials' };
+    // }
+    
+    // Example: Generate JWT token
+    // const token = await generateToken(user);
+    
+    // Placeholder response
     return {
-      success: false,
-      message: 'Invalid credentials'
+      success: true,
+      message: 'Authentication successful',
+      token: 'placeholder-jwt-token',
+      user: {
+        id: 'user-id-placeholder',
+        email: email,
+        name: 'User Name',
+      },
     };
   } catch (error) {
     console.error('Authentication error:', error);
@@ -109,14 +109,14 @@ const authenticateUser = async (
 };
 
 /**
- * Creates API Gateway response
+ * Creates a standardized API Gateway response
  * @param statusCode - HTTP status code
  * @param body - Response body
  * @returns Formatted API Gateway response
  */
 const createResponse = (
   statusCode: number,
-  body: AuthResponse | { error: string }
+  body: Record<string, any>
 ): APIGatewayProxyResult => {
   return {
     statusCode,
@@ -124,16 +124,16 @@ const createResponse = (
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Credentials': true,
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+      'Access-Control-Allow-Methods': 'OPTIONS,POST',
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
   };
 };
 
 /**
- * Lambda handler for authentication
- * Processes login form submission and handles authentication logic
+ * Lambda handler for authentication requests
+ * Processes login form submissions and handles authentication logic
  * 
  * @param event - API Gateway proxy event
  * @returns API Gateway proxy result with authentication response
@@ -141,22 +141,23 @@ const createResponse = (
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  console.log('Authentication request received', {
+  console.log('Authentication request received:', {
     path: event.path,
     method: event.httpMethod,
-    requestId: event.requestContext.requestId
+    requestId: event.requestContext.requestId,
   });
 
   try {
-    // Handle CORS preflight
+    // Handle CORS preflight requests
     if (event.httpMethod === 'OPTIONS') {
-      return createResponse(200, { error: '' });
+      return createResponse(200, { message: 'OK' });
     }
 
-    // Validate HTTP method
+    // Only allow POST requests
     if (event.httpMethod !== 'POST') {
       return createResponse(405, {
-        error: 'Method not allowed. Use POST for authentication.'
+        success: false,
+        message: 'Method not allowed',
       });
     }
 
@@ -164,52 +165,56 @@ export const handler = async (
     let requestBody: LoginRequest;
     try {
       requestBody = JSON.parse(event.body || '{}');
-    } catch (parseError) {
-      console.error('Failed to parse request body:', parseError);
+    } catch (error) {
+      console.error('Failed to parse request body:', error);
       return createResponse(400, {
-        error: 'Invalid JSON in request body'
+        success: false,
+        message: 'Invalid JSON in request body',
       });
     }
 
     // Validate request
     const validation = validateLoginRequest(requestBody);
     if (!validation.valid) {
-      console.warn('Validation failed:', validation.error);
       return createResponse(400, {
-        error: validation.error || 'Invalid request'
+        success: false,
+        message: validation.error,
       });
     }
-
-    // Sanitize email
-    const email = requestBody.email.trim().toLowerCase();
-    const password = requestBody.password;
 
     // Authenticate user
-    const authResult = await authenticateUser(email, password);
+    const authResult = await authenticateUser(
+      requestBody.email.toLowerCase().trim(),
+      requestBody.password
+    );
 
     if (!authResult.success) {
-      console.warn('Authentication failed for email:', email);
       return createResponse(401, {
-        error: authResult.message
+        success: false,
+        message: authResult.message,
       });
     }
 
-    console.log('Authentication successful for email:', email);
+    // Log successful authentication (without sensitive data)
+    console.log('Authentication successful:', {
+      userId: authResult.user?.id,
+      email: authResult.user?.email,
+    });
 
     // Return success response
-    return createResponse(200, authResult);
-
+    return createResponse(200, {
+      success: true,
+      message: authResult.message,
+      token: authResult.token,
+      user: authResult.user,
+    });
   } catch (error) {
     console.error('Unexpected error in authentication handler:', error);
     
     return createResponse(500, {
-      error: 'Internal server error. Please try again later.'
+      success: false,
+      message: 'Internal server error',
     });
   }
 };
-
-/**
- * Export handler as default for Lambda
- */
-export default handler;
 ```
