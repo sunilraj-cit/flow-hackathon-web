@@ -2,9 +2,6 @@ import React from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
-/**
- * Props for the BannerImage component
- */
 interface BannerImageProps {
   /**
    * Source URL or path for the banner image
@@ -20,16 +17,16 @@ interface BannerImageProps {
    */
   priority?: boolean;
   /**
-   * Optional custom CSS classes
+   * Optional CSS classes to apply to the container
    */
   className?: string;
   /**
-   * Optional width for the image
+   * Optional width for the image (in pixels)
    * @default 1920
    */
   width?: number;
   /**
-   * Optional height for the image
+   * Optional height for the image (in pixels)
    * @default 400
    */
   height?: number;
@@ -39,20 +36,10 @@ interface BannerImageProps {
    */
   objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
   /**
-   * Optional object position property
-   * @default 'center'
-   */
-  objectPosition?: string;
-  /**
-   * Optional quality of the image (1-100)
+   * Optional quality setting for image optimization (1-100)
    * @default 85
    */
   quality?: number;
-  /**
-   * Optional loading strategy
-   * @default 'lazy'
-   */
-  loading?: 'lazy' | 'eager';
   /**
    * Optional callback when image loads successfully
    */
@@ -66,21 +53,15 @@ interface BannerImageProps {
 /**
  * BannerImage Component
  * 
- * A reusable banner image component with responsive design and proper image optimization.
- * Designed to be displayed at the bottom section of the member benefits page.
+ * A responsive banner image component optimized for the member benefits page.
+ * Utilizes Next.js Image component for automatic optimization and lazy loading.
  * 
- * Features:
- * - Responsive design with Next.js Image optimization
- * - Lazy loading support
- * - Customizable dimensions and styling
- * - Error handling and loading states
- * - Accessibility compliant
- * 
+ * @component
  * @example
  * ```tsx
  * <BannerImage
  *   src="/images/member-benefits-banner.jpg"
- *   alt="Member Benefits Banner"
+ *   alt="Member Benefits"
  *   priority={false}
  * />
  * ```
@@ -93,17 +74,15 @@ export const BannerImage: React.FC<BannerImageProps> = ({
   width = 1920,
   height = 400,
   objectFit = 'cover',
-  objectPosition = 'center',
   quality = 85,
-  loading = 'lazy',
   onLoad,
   onError,
 }) => {
-  const [imageError, setImageError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [hasError, setHasError] = React.useState(false);
 
   /**
-   * Handle image load success
+   * Handle successful image load
    */
   const handleLoad = React.useCallback(() => {
     setIsLoading(false);
@@ -114,24 +93,39 @@ export const BannerImage: React.FC<BannerImageProps> = ({
    * Handle image load error
    */
   const handleError = React.useCallback(() => {
-    setImageError(true);
     setIsLoading(false);
+    setHasError(true);
     onError?.();
   }, [onError]);
 
-  if (imageError) {
+  if (hasError) {
     return (
       <div
         className={cn(
-          'flex items-center justify-center bg-muted text-muted-foreground',
-          'w-full h-[200px] md:h-[300px] lg:h-[400px]',
+          'relative w-full bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900',
+          'flex items-center justify-center',
           className
         )}
+        style={{ height: `${height}px` }}
         role="img"
         aria-label={alt}
       >
-        <div className="text-center p-4">
-          <p className="text-sm font-medium">Unable to load banner image</p>
+        <div className="text-center text-gray-500 dark:text-gray-400">
+          <svg
+            className="mx-auto h-12 w-12 mb-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
+          </svg>
+          <p className="text-sm">Image unavailable</p>
         </div>
       </div>
     );
@@ -141,14 +135,17 @@ export const BannerImage: React.FC<BannerImageProps> = ({
     <div
       className={cn(
         'relative w-full overflow-hidden',
-        'h-[200px] md:h-[300px] lg:h-[400px]',
+        'rounded-lg shadow-md',
+        'transition-all duration-300 ease-in-out',
+        'hover:shadow-lg',
         className
       )}
+      style={{ height: `${height}px` }}
     >
       {isLoading && (
         <div
-          className="absolute inset-0 bg-muted animate-pulse"
-          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse"
+          aria-label="Loading image"
         />
       )}
       <Image
@@ -158,7 +155,6 @@ export const BannerImage: React.FC<BannerImageProps> = ({
         height={height}
         quality={quality}
         priority={priority}
-        loading={loading}
         onLoad={handleLoad}
         onError={handleError}
         className={cn(
@@ -167,11 +163,10 @@ export const BannerImage: React.FC<BannerImageProps> = ({
         )}
         style={{
           objectFit,
-          objectPosition,
           width: '100%',
           height: '100%',
         }}
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1920px"
       />
     </div>
   );
