@@ -1,74 +1,120 @@
 import * as cdk from 'aws-cdk-lib';
-import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as logs from 'aws-cdk-lib/aws-logs';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 import * as path from 'path';
 
 /**
- * Props for LoginStack configuration
+ * Properties for the LoginStack
  */
 export interface LoginStackProps extends cdk.StackProps {
   /**
-   * Environment name (dev, staging, prod)
+   * Environment name (e.g., dev, staging, prod)
    */
-  readonly environment: string;
-  
+  readonly environment?: string;
+
   /**
-   * API Gateway stage name
+   * Custom domain name for CloudFront distribution
    */
-  readonly stageName?: string;
-  
+  readonly domainName?: string;
+
   /**
    * Lambda function timeout in seconds
+   * @default 30
    */
   readonly lambdaTimeout?: number;
-  
+
   /**
    * Lambda function memory size in MB
+   * @default 512
    */
   readonly lambdaMemorySize?: number;
 }
 
 /**
- * CDK Stack for Login Page and Authentication Infrastructure
+ * CDK Stack for provisioning login page infrastructure
+ * Includes Lambda function, API Gateway endpoint, and CloudFront distribution
  * 
- * This stack defines:
- * - API Gateway REST API for login endpoints
- * - Lambda functions for authentication logic
- * - Routing configuration for login page and auth endpoints
- * - IAM roles and permissions
- * - CloudWatch log groups for monitoring
- * 
- * @ticket PM-105
+ * @remarks
+ * This stack provisions the infrastructure for PM-105: Member benefits login page
+ * with responsive design and red button CTA
  */
 export class LoginStack extends cdk.Stack {
+  public readonly loginFunction: lambda.Function;
   public readonly api: apigateway.RestApi;
-  public readonly loginPageFunction: lambda.Function;
-  public readonly authenticateFunction: lambda.Function;
-  public readonly validateTokenFunction: lambda.Function;
+  public readonly distribution: cloudfront.Distribution;
+  public readonly staticBucket: s3.Bucket;
 
-  constructor(scope: Construct, id: string, props: LoginStackProps) {
+  constructor(scope: Construct, id: string, props?: LoginStackProps) {
     super(scope, id, props);
 
-    const {
-      environment,
-      stageName = 'prod',
-      lambdaTimeout = 30,
-      lambdaMemorySize = 512,
-    } = props;
+    const environment = props?.environment || 'dev';
+    const lambdaTimeout = props?.lambdaTimeout || 30;
+    const lambdaMemorySize = props?.lambdaMemorySize || 512;
 
-    // Create API Gateway REST API
+    // S3 bucket for static assets (login page HTML, CSS, JS)
+    this.staticBucket = new s3.Bucket(this, 'LoginStaticBucket', {
+      bucketName: `login-static-${environment}-${this.account}`,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      autoDeleteObjects: false,
+      versioned: true,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      cors: [
+        {
+          allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.HEAD],
+          allowedOrigins: ['*'],
+          allowedHeaders: ['*'],
+          maxAge: 3600,
+        },
+      ],
+    });
+
+    // Lambda execution role
+    const lambdaRole = new iam.Role(this, 'LoginLambdaRole', {
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      description: 'Execution role for login Lambda function',
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+      ],
+    });
+
+    // Lambda function for login authentication
+    this.loginFunction = new lambda.Function(this, 'LoginFunction', {
+      functionName: `login-handler-${environment}`,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda/login')),
+      timeout: cdk.Duration.seconds(lambdaTimeout),
+      memorySize: lambdaMemorySize,
+      role: lambdaRole,
+      environment: {
+        ENVIRONMENT: environment,
+        NODE_ENV: environment === 'prod' ? 'production' : 'development',
+        LOG_LEVEL: environment === 'prod' ? 'info' : 'debug',
+      },
+      logRetention: logs.RetentionDays.ONE_WEEK,
+      tracing: lambda.Tracing.ACTIVE,
+      description: 'Lambda function for member benefits login authentication',
+    });
+
+    // API Gateway REST API
     this.api = new apigateway.RestApi(this, 'LoginApi', {
-      restApiName: `member-benefits-login-api-${environment}`,
-      description: 'API Gateway for member benefits login and authentication',
+      restApiName: `login-api-${environment}`,
+      description: 'API Gateway for member benefits login',
       deployOptions: {
-        stageName,
+        stageName: environment,
+        throttlingRateLimit: 100,
+        throttlingBurstLimit: 200,
         loggingLevel: apigateway.MethodLoggingLevel.INFO,
-        dataTraceEnabled: true,
+        dataTraceEnabled: environment !== 'prod',
         metricsEnabled: true,
-        tracingEnabled: true,
       },
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
@@ -87,198 +133,163 @@ export class LoginStack extends cdk.Stack {
       },
     });
 
-    // Create Lambda execution role
-    const lambdaExecutionRole = new iam.Role(this, 'LoginLambdaExecutionRole', {
-      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-      description: 'Execution role for login Lambda functions',
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
-      ],
-    });
-
-    // Create CloudWatch Log Groups
-    const loginPageLogGroup = new logs.LogGroup(this, 'LoginPageLogGroup', {
-      logGroupName: `/aws/lambda/login-page-${environment}`,
-      retention: logs.RetentionDays.ONE_WEEK,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
-
-    const authenticateLogGroup = new logs.LogGroup(this, 'AuthenticateLogGroup', {
-      logGroupName: `/aws/lambda/authenticate-${environment}`,
-      retention: logs.RetentionDays.ONE_WEEK,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
-
-    const validateTokenLogGroup = new logs.LogGroup(this, 'ValidateTokenLogGroup', {
-      logGroupName: `/aws/lambda/validate-token-${environment}`,
-      retention: logs.RetentionDays.ONE_WEEK,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
-
-    // Lambda function for serving login page
-    this.loginPageFunction = new lambda.Function(this, 'LoginPageFunction', {
-      functionName: `login-page-${environment}`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda/login-page')),
-      timeout: cdk.Duration.seconds(lambdaTimeout),
-      memorySize: lambdaMemorySize,
-      role: lambdaExecutionRole,
-      environment: {
-        ENVIRONMENT: environment,
-        LOG_LEVEL: 'INFO',
-      },
-      logGroup: loginPageLogGroup,
-      description: 'Lambda function to serve the login page for member benefits',
-    });
-
-    // Lambda function for authentication
-    this.authenticateFunction = new lambda.Function(this, 'AuthenticateFunction', {
-      functionName: `authenticate-${environment}`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda/authenticate')),
-      timeout: cdk.Duration.seconds(lambdaTimeout),
-      memorySize: lambdaMemorySize,
-      role: lambdaExecutionRole,
-      environment: {
-        ENVIRONMENT: environment,
-        LOG_LEVEL: 'INFO',
-      },
-      logGroup: authenticateLogGroup,
-      description: 'Lambda function to handle user authentication',
-    });
-
-    // Lambda function for token validation
-    this.validateTokenFunction = new lambda.Function(this, 'ValidateTokenFunction', {
-      functionName: `validate-token-${environment}`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda/validate-token')),
-      timeout: cdk.Duration.seconds(lambdaTimeout),
-      memorySize: lambdaMemorySize,
-      role: lambdaExecutionRole,
-      environment: {
-        ENVIRONMENT: environment,
-        LOG_LEVEL: 'INFO',
-      },
-      logGroup: validateTokenLogGroup,
-      description: 'Lambda function to validate authentication tokens',
-    });
-
-    // Create Lambda integrations
-    const loginPageIntegration = new apigateway.LambdaIntegration(this.loginPageFunction, {
+    // API Gateway Lambda integration
+    const loginIntegration = new apigateway.LambdaIntegration(this.loginFunction, {
       proxy: true,
       allowTestInvoke: true,
+      timeout: cdk.Duration.seconds(29),
     });
 
-    const authenticateIntegration = new apigateway.LambdaIntegration(this.authenticateFunction, {
-      proxy: true,
-      allowTestInvoke: true,
-    });
-
-    const validateTokenIntegration = new apigateway.LambdaIntegration(this.validateTokenFunction, {
-      proxy: true,
-      allowTestInvoke: true,
-    });
-
-    // Define API resources and methods
+    // API Gateway resources and methods
     const loginResource = this.api.root.addResource('login');
-    loginResource.addMethod('GET', loginPageIntegration, {
-      methodResponses: [
-        {
-          statusCode: '200',
-          responseParameters: {
-            'method.response.header.Content-Type': true,
-          },
-        },
-      ],
+    loginResource.addMethod('POST', loginIntegration, {
+      authorizationType: apigateway.AuthorizationType.NONE,
+      apiKeyRequired: false,
     });
 
-    const authResource = this.api.root.addResource('auth');
-    
-    const authenticateResource = authResource.addResource('authenticate');
-    authenticateResource.addMethod('POST', authenticateIntegration, {
-      methodResponses: [
-        {
-          statusCode: '200',
-        },
-        {
-          statusCode: '400',
-        },
-        {
-          statusCode: '401',
-        },
-      ],
-    });
-
-    const validateResource = authResource.addResource('validate');
-    validateResource.addMethod('POST', validateTokenIntegration, {
-      methodResponses: [
-        {
-          statusCode: '200',
-        },
-        {
-          statusCode: '401',
-        },
-      ],
-    });
-
-    // Add health check endpoint
+    // Health check endpoint
     const healthResource = this.api.root.addResource('health');
-    healthResource.addMethod('GET', new apigateway.MockIntegration({
-      integrationResponses: [
-        {
-          statusCode: '200',
-          responseTemplates: {
-            'application/json': JSON.stringify({
-              status: 'healthy',
-              timestamp: '$context.requestTime',
-            }),
-          },
-        },
-      ],
-      requestTemplates: {
-        'application/json': '{"statusCode": 200}',
+    healthResource.addMethod('GET', loginIntegration);
+
+    // Origin Access Identity for CloudFront to access S3
+    const originAccessIdentity = new cloudfront.OriginAccessIdentity(this, 'LoginOAI', {
+      comment: 'OAI for login page CloudFront distribution',
+    });
+
+    this.staticBucket.grantRead(originAccessIdentity);
+
+    // CloudFront cache policy for static assets
+    const staticCachePolicy = new cloudfront.CachePolicy(this, 'StaticCachePolicy', {
+      cachePolicyName: `login-static-cache-${environment}`,
+      comment: 'Cache policy for login page static assets',
+      defaultTtl: cdk.Duration.days(1),
+      minTtl: cdk.Duration.seconds(0),
+      maxTtl: cdk.Duration.days(365),
+      enableAcceptEncodingGzip: true,
+      enableAcceptEncodingBrotli: true,
+      headerBehavior: cloudfront.CacheHeaderBehavior.none(),
+      queryStringBehavior: cloudfront.CacheQueryStringBehavior.none(),
+      cookieBehavior: cloudfront.CacheCookieBehavior.none(),
+    });
+
+    // CloudFront cache policy for API requests
+    const apiCachePolicy = new cloudfront.CachePolicy(this, 'ApiCachePolicy', {
+      cachePolicyName: `login-api-cache-${environment}`,
+      comment: 'Cache policy for login API requests',
+      defaultTtl: cdk.Duration.seconds(0),
+      minTtl: cdk.Duration.seconds(0),
+      maxTtl: cdk.Duration.seconds(1),
+      enableAcceptEncodingGzip: true,
+      enableAcceptEncodingBrotli: true,
+      headerBehavior: cloudfront.CacheHeaderBehavior.allowList(
+        'Authorization',
+        'Content-Type',
+        'Accept'
+      ),
+      queryStringBehavior: cloudfront.CacheQueryStringBehavior.all(),
+      cookieBehavior: cloudfront.CacheCookieBehavior.all(),
+    });
+
+    // CloudFront origin request policy for API
+    const apiOriginRequestPolicy = new cloudfront.OriginRequestPolicy(this, 'ApiOriginRequestPolicy', {
+      originRequestPolicyName: `login-api-origin-${environment}`,
+      comment: 'Origin request policy for login API',
+      headerBehavior: cloudfront.OriginRequestHeaderBehavior.allowList(
+        'Authorization',
+        'Content-Type',
+        'Accept',
+        'Origin',
+        'Referer'
+      ),
+      queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.all(),
+      cookieBehavior: cloudfront.OriginRequestCookieBehavior.all(),
+    });
+
+    // CloudFront distribution
+    this.distribution = new cloudfront.Distribution(this, 'LoginDistribution', {
+      comment: `Login page distribution for ${environment}`,
+      defaultRootObject: 'index.html',
+      priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
+      enableLogging: true,
+      enabled: true,
+      httpVersion: cloudfront.HttpVersion.HTTP2_AND_3,
+      minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
+      defaultBehavior: {
+        origin: new origins.S3Origin(this.staticBucket, {
+          originAccessIdentity,
+        }),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+        cachedMethods: cloudfront.CachedMethods.CACHE_GET_HEAD_OPTIONS,
+        compress: true,
+        cachePolicy: staticCachePolicy,
       },
-    }), {
-      methodResponses: [
+      additionalBehaviors: {
+        '/api/*': {
+          origin: new origins.RestApiOrigin(this.api, {
+            originPath: `/${environment}`,
+          }),
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+          cachedMethods: cloudfront.CachedMethods.CACHE_GET_HEAD_OPTIONS,
+          compress: true,
+          cachePolicy: apiCachePolicy,
+          originRequestPolicy: apiOriginRequestPolicy,
+        },
+      },
+      errorResponses: [
         {
-          statusCode: '200',
+          httpStatus: 403,
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html',
+          ttl: cdk.Duration.seconds(300),
+        },
+        {
+          httpStatus: 404,
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html',
+          ttl: cdk.Duration.seconds(300),
         },
       ],
     });
 
-    // Output API Gateway URL
+    // CloudFormation outputs
+    new cdk.CfnOutput(this, 'LoginFunctionArn', {
+      value: this.loginFunction.functionArn,
+      description: 'ARN of the login Lambda function',
+      exportName: `login-function-arn-${environment}`,
+    });
+
     new cdk.CfnOutput(this, 'LoginApiUrl', {
       value: this.api.url,
-      description: 'Login API Gateway URL',
-      exportName: `LoginApiUrl-${environment}`,
+      description: 'URL of the login API Gateway',
+      exportName: `login-api-url-${environment}`,
     });
 
-    new cdk.CfnOutput(this, 'LoginPageUrl', {
-      value: `${this.api.url}login`,
-      description: 'Login Page URL',
-      exportName: `LoginPageUrl-${environment}`,
+    new cdk.CfnOutput(this, 'LoginDistributionUrl', {
+      value: `https://${this.distribution.distributionDomainName}`,
+      description: 'CloudFront distribution URL for login page',
+      exportName: `login-distribution-url-${environment}`,
     });
 
-    new cdk.CfnOutput(this, 'AuthenticateEndpoint', {
-      value: `${this.api.url}auth/authenticate`,
-      description: 'Authentication Endpoint URL',
-      exportName: `AuthenticateEndpoint-${environment}`,
+    new cdk.CfnOutput(this, 'LoginDistributionId', {
+      value: this.distribution.distributionId,
+      description: 'CloudFront distribution ID',
+      exportName: `login-distribution-id-${environment}`,
     });
 
-    new cdk.CfnOutput(this, 'ValidateTokenEndpoint', {
-      value: `${this.api.url}auth/validate`,
-      description: 'Token Validation Endpoint URL',
-      exportName: `ValidateTokenEndpoint-${environment}`,
+    new cdk.CfnOutput(this, 'LoginStaticBucketName', {
+      value: this.staticBucket.bucketName,
+      description: 'S3 bucket name for login static assets',
+      exportName: `login-static-bucket-${environment}`,
     });
 
-    // Add tags to all resources
-    cdk.Tags.of(this).add('Environment', environment);
+    // Tags
     cdk.Tags.of(this).add('Project', 'MemberBenefits');
-    cdk.Tags.of(this).add('Ticket', 'PM-105');
+    cdk.Tags.of(this).add('Component', 'Login');
+    cdk.Tags.of(this).add('Environment', environment);
     cdk.Tags.of(this).add('ManagedBy', 'CDK');
+    cdk.Tags.of(this).add('Ticket', 'PM-105');
   }
 }
 ```
