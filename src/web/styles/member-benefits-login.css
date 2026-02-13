@@ -1,0 +1,463 @@
+/* Mobile-first responsive design for Member Benefits Login Page */
+
+/* ============================================
+   CSS Reset & Base Styles
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ============================================
+   Root Variables
+   ============================================ */
+
+:root {
+  --primary-red: #dc2626;
+  --primary-red-hover: #b91c1c;
+  --primary-red-active: #991b1b;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --background-primary: #ffffff;
+  --background-secondary: #f9fafb;
+  --border-color: #e5e7eb;
+  --error-color: #ef4444;
+  --success-color: #10b981;
+  --focus-ring: rgba(220, 38, 38, 0.3);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --transition-base: all 0.2s ease-in-out;
+}
+
+/* ============================================
+   Container & Layout (Mobile First)
+   ============================================ */
+
+.member-benefits-login-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  background-color: var(--background-secondary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.member-benefits-login-wrapper {
+  width: 100%;
+  max-width: 400px;
+  background-color: var(--background-primary);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  padding: 2rem 1.5rem;
+}
+
+/* ============================================
+   Header Section
+   ============================================ */
+
+.member-benefits-login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.member-benefits-login-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+.member-benefits-login-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ============================================
+   Form Styles
+   ============================================ */
+
+.member-benefits-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.member-benefits-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.member-benefits-form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  display: block;
+}
+
+.member-benefits-form-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background-color: var(--background-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  transition: var(--transition-base);
+  outline: none;
+}
+
+.member-benefits-form-input:focus {
+  border-color: var(--primary-red);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.member-benefits-form-input:disabled {
+  background-color: var(--background-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.member-benefits-form-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.member-benefits-form-input.error {
+  border-color: var(--error-color);
+}
+
+.member-benefits-form-error {
+  font-size: 0.75rem;
+  color: var(--error-color);
+  margin-top: 0.25rem;
+  display: block;
+}
+
+/* ============================================
+   Red Button Styles (Primary CTA)
+   ============================================ */
+
+.member-benefits-btn-red {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: var(--primary-red);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition-base);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  line-height: 1.5;
+  outline: none;
+}
+
+.member-benefits-btn-red:hover {
+  background-color: var(--primary-red-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.member-benefits-btn-red:active {
+  background-color: var(--primary-red-active);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(0);
+}
+
+.member-benefits-btn-red:focus {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.member-benefits-btn-red:disabled {
+  background-color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+/* ============================================
+   Secondary Button Styles
+   ============================================ */
+
+.member-benefits-btn-secondary {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition-base);
+  text-align: center;
+  line-height: 1.5;
+  outline: none;
+}
+
+.member-benefits-btn-secondary:hover {
+  background-color: var(--background-secondary);
+  border-color: var(--text-secondary);
+}
+
+.member-benefits-btn-secondary:focus {
+  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.2);
+}
+
+/* ============================================
+   Additional Elements
+   ============================================ */
+
+.member-benefits-checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.member-benefits-checkbox {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  accent-color: var(--primary-red);
+}
+
+.member-benefits-checkbox-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.member-benefits-link {
+  color: var(--primary-red);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: var(--transition-base);
+}
+
+.member-benefits-link:hover {
+  color: var(--primary-red-hover);
+  text-decoration: underline;
+}
+
+.member-benefits-link:focus {
+  outline: 2px solid var(--primary-red);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.member-benefits-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.member-benefits-divider::before,
+.member-benefits-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.member-benefits-divider-text {
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.member-benefits-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.member-benefits-alert {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.member-benefits-alert-error {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.member-benefits-alert-success {
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+/* ============================================
+   Loading State
+   ============================================ */
+
+.member-benefits-loading {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: member-benefits-spin 0.6s linear infinite;
+}
+
+@keyframes member-benefits-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   Tablet Breakpoint (768px and up)
+   ============================================ */
+
+@media (min-width: 768px) {
+  .member-benefits-login-container {
+    padding: 2rem;
+  }
+
+  .member-benefits-login-wrapper {
+    max-width: 450px;
+    padding: 2.5rem 2rem;
+  }
+
+  .member-benefits-login-title {
+    font-size: 1.875rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .member-benefits-login-subtitle {
+    font-size: 1rem;
+  }
+
+  .member-benefits-form-group {
+    gap: 0.625rem;
+  }
+
+  .member-benefits-form-label {
+    font-size: 0.9375rem;
+  }
+
+  .member-benefits-form-input {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+
+  .member-benefits-btn-red,
+  .member-benefits-btn-secondary {
+    padding: 0.875rem 1.75rem;
+    font-size: 1rem;
+  }
+
+  .member-benefits-checkbox-label,
+  .member-benefits-link,
+  .member-benefits-footer {
+    font-size: 0.9375rem;
+  }
+}
+
+/* ============================================
+   Desktop Breakpoint (1024px and up)
+   ============================================ */
+
+@media (min-width: 1024px) {
+  .member-benefits-login-wrapper {
+    max-width: 480px;
+    padding: 3rem 2.5rem;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .member-benefits-login-title {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .member-benefits-login-subtitle {
+    font-size: 1.0625rem;
+  }
+
+  .member-benefits-form-input {
+    padding: 0.875rem 1.125rem;
+  }
+
+  .member-benefits-btn-red:hover {
+    transform: translateY(-2px);
+  }
+
+  .member-benefits-btn-red,
+  .member-benefits-btn-secondary {
+    padding: 1rem 2rem;
+    font-size: 1.0625rem;
+  }
+}
+
+/* ============================================
+   Large Desktop Breakpoint (1440px and up)
+   ============================================ */
+
+@media (min-width: 1440px) {
+  .member-benefits-login-wrapper {
+    max-width: 520px;
+    padding: 3.5rem 3rem;
+  }
+
+  .member-benefits-login-title {
+    font-size: 2.25rem;
+  }
+}
+
+/* ============================================
+   Accessibility & Print Styles
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  .member-benefits-login-container {
+    background-color: white;
+  }
+
+  .member-benefits-login-wrapper {
+    box-shadow: none;
+    border: 1px solid var(--border-color);
+  }
+}
+
+/* ============================================
+   High Contrast Mode Support
+   ============================================ */
+
+@media (prefers-contrast: high) {
+  .member-benefits-btn-red {
+    border: 2px solid currentColor;
+  }
+
+  .member-benefits-form-input:focus {
+    outline: 2px solid currentColor;
+  }
+}
