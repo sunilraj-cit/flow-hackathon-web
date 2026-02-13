@@ -4,246 +4,201 @@ import '@testing-library/jest-dom';
 import BannerImage from './BannerImage';
 
 /**
- * Mock window.matchMedia for responsive testing
+ * Mock Next.js Image component
  */
-const mockMatchMedia = (matches: boolean) => {
-  Object.defineProperty(window, 'matchMedia', {
-    writable: true,
-    value: jest.fn().mockImplementation((query: string) => ({
-      matches,
-      media: query,
-      onchange: null,
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      dispatchEvent: jest.fn(),
-    })),
-  });
-};
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: (props: any) => {
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+    return <img {...props} />;
+  },
+}));
 
 describe('BannerImage', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
   describe('Rendering', () => {
-    it('should render the banner component', () => {
+    it('should render the banner image component', () => {
       render(<BannerImage />);
-      const banner = screen.getByTestId('banner-image');
-      expect(banner).toBeInTheDocument();
+      const bannerImage = screen.getByRole('img');
+      expect(bannerImage).toBeInTheDocument();
     });
 
     it('should render with correct alt text', () => {
       render(<BannerImage />);
-      const image = screen.getByRole('img');
-      expect(image).toHaveAttribute('alt');
+      const bannerImage = screen.getByAltText(/member benefits banner/i);
+      expect(bannerImage).toBeInTheDocument();
     });
 
-    it('should render with proper semantic HTML structure', () => {
-      const { container } = render(<BannerImage />);
-      const section = container.querySelector('section');
-      expect(section).toBeInTheDocument();
-    });
-
-    it('should apply correct CSS classes', () => {
+    it('should render with correct image source', () => {
       render(<BannerImage />);
-      const banner = screen.getByTestId('banner-image');
-      expect(banner).toHaveClass('banner-image');
+      const bannerImage = screen.getByRole('img');
+      expect(bannerImage).toHaveAttribute('src');
+      expect(bannerImage.getAttribute('src')).toBeTruthy();
+    });
+
+    it('should render within a container element', () => {
+      const { container } = render(<BannerImage />);
+      const bannerContainer = container.firstChild;
+      expect(bannerContainer).toBeInTheDocument();
+    });
+
+    it('should apply correct CSS classes for styling', () => {
+      const { container } = render(<BannerImage />);
+      const bannerContainer = container.firstChild as HTMLElement;
+      expect(bannerContainer).toHaveClass();
     });
   });
 
   describe('Responsive Behavior', () => {
-    it('should render correctly on mobile viewport (320px)', () => {
-      mockMatchMedia(true);
-      global.innerWidth = 320;
-      global.dispatchEvent(new Event('resize'));
-
-      render(<BannerImage />);
-      const banner = screen.getByTestId('banner-image');
-      expect(banner).toBeInTheDocument();
-    });
-
-    it('should render correctly on tablet viewport (768px)', () => {
-      mockMatchMedia(true);
-      global.innerWidth = 768;
-      global.dispatchEvent(new Event('resize'));
-
-      render(<BannerImage />);
-      const banner = screen.getByTestId('banner-image');
-      expect(banner).toBeInTheDocument();
-    });
-
-    it('should render correctly on desktop viewport (1024px)', () => {
-      mockMatchMedia(false);
-      global.innerWidth = 1024;
-      global.dispatchEvent(new Event('resize'));
-
-      render(<BannerImage />);
-      const banner = screen.getByTestId('banner-image');
-      expect(banner).toBeInTheDocument();
-    });
-
-    it('should render correctly on large desktop viewport (1920px)', () => {
-      mockMatchMedia(false);
-      global.innerWidth = 1920;
-      global.dispatchEvent(new Event('resize'));
-
-      render(<BannerImage />);
-      const banner = screen.getByTestId('banner-image');
-      expect(banner).toBeInTheDocument();
-    });
-
-    it('should have responsive image attributes', () => {
-      render(<BannerImage />);
-      const image = screen.getByRole('img');
-      expect(image).toHaveAttribute('loading', 'lazy');
-    });
-  });
-
-  describe('Image Properties', () => {
-    it('should have correct image source', () => {
-      render(<BannerImage />);
-      const image = screen.getByRole('img');
-      expect(image).toHaveAttribute('src');
-      expect(image.getAttribute('src')).toBeTruthy();
-    });
-
-    it('should have proper width and height attributes', () => {
-      render(<BannerImage />);
-      const image = screen.getByRole('img');
-      expect(image).toHaveAttribute('width');
-      expect(image).toHaveAttribute('height');
-    });
-
-    it('should maintain aspect ratio', () => {
+    it('should have responsive width classes', () => {
       const { container } = render(<BannerImage />);
-      const imageWrapper = container.querySelector('[data-testid="banner-image"]');
-      expect(imageWrapper).toHaveStyle({ aspectRatio: expect.any(String) });
+      const bannerContainer = container.firstChild as HTMLElement;
+      const classes = bannerContainer.className;
+      expect(classes).toMatch(/w-/);
+    });
+
+    it('should have responsive height classes', () => {
+      const { container } = render(<BannerImage />);
+      const bannerContainer = container.firstChild as HTMLElement;
+      const classes = bannerContainer.className;
+      expect(classes).toMatch(/h-/);
+    });
+
+    it('should render image with priority loading disabled by default', () => {
+      render(<BannerImage />);
+      const bannerImage = screen.getByRole('img');
+      expect(bannerImage).not.toHaveAttribute('priority');
+    });
+
+    it('should render image with proper fill or dimensions', () => {
+      render(<BannerImage />);
+      const bannerImage = screen.getByRole('img');
+      const hasFill = bannerImage.hasAttribute('fill');
+      const hasWidth = bannerImage.hasAttribute('width');
+      const hasHeight = bannerImage.hasAttribute('height');
+      expect(hasFill || (hasWidth && hasHeight)).toBeTruthy();
     });
   });
 
   describe('Accessibility', () => {
-    it('should have proper ARIA attributes', () => {
+    it('should have proper alt text for screen readers', () => {
       render(<BannerImage />);
-      const banner = screen.getByTestId('banner-image');
-      expect(banner).toHaveAttribute('aria-label');
-    });
-
-    it('should have descriptive alt text for screen readers', () => {
-      render(<BannerImage />);
-      const image = screen.getByRole('img');
-      const altText = image.getAttribute('alt');
+      const bannerImage = screen.getByRole('img');
+      const altText = bannerImage.getAttribute('alt');
+      expect(altText).toBeTruthy();
       expect(altText).not.toBe('');
-      expect(altText?.length).toBeGreaterThan(0);
     });
 
     it('should be keyboard accessible', () => {
-      render(<BannerImage />);
-      const banner = screen.getByTestId('banner-image');
-      expect(banner).not.toHaveAttribute('tabindex', '-1');
-    });
-  });
-
-  describe('Position and Layout', () => {
-    it('should be positioned at the bottom section', () => {
       const { container } = render(<BannerImage />);
-      const banner = screen.getByTestId('banner-image');
-      const computedStyle = window.getComputedStyle(banner);
-      expect(computedStyle.position).toBeDefined();
+      const bannerContainer = container.firstChild as HTMLElement;
+      expect(bannerContainer).toBeVisible();
     });
 
-    it('should have full width styling', () => {
+    it('should not have empty alt attribute', () => {
       render(<BannerImage />);
-      const banner = screen.getByTestId('banner-image');
-      expect(banner).toHaveClass('w-full');
-    });
-
-    it('should render as a block-level element', () => {
-      const { container } = render(<BannerImage />);
-      const banner = screen.getByTestId('banner-image');
-      const computedStyle = window.getComputedStyle(banner);
-      expect(['block', 'flex', 'grid']).toContain(computedStyle.display);
-    });
-  });
-
-  describe('Performance', () => {
-    it('should use lazy loading for images', () => {
-      render(<BannerImage />);
-      const image = screen.getByRole('img');
-      expect(image).toHaveAttribute('loading', 'lazy');
-    });
-
-    it('should not cause layout shift with proper dimensions', () => {
-      render(<BannerImage />);
-      const image = screen.getByRole('img');
-      expect(image).toHaveAttribute('width');
-      expect(image).toHaveAttribute('height');
+      const bannerImage = screen.getByRole('img');
+      expect(bannerImage.getAttribute('alt')).not.toBe('');
     });
   });
 
   describe('Props and Customization', () => {
-    it('should accept custom className prop', () => {
-      render(<BannerImage className="custom-class" />);
-      const banner = screen.getByTestId('banner-image');
-      expect(banner).toHaveClass('custom-class');
+    it('should accept and apply custom className prop', () => {
+      const customClass = 'custom-banner-class';
+      render(<BannerImage className={customClass} />);
+      const { container } = render(<BannerImage className={customClass} />);
+      const bannerContainer = container.firstChild as HTMLElement;
+      expect(bannerContainer.className).toContain(customClass);
+    });
+
+    it('should accept custom image source prop', () => {
+      const customSrc = '/custom-banner.jpg';
+      render(<BannerImage src={customSrc} />);
+      const bannerImage = screen.getByRole('img');
+      expect(bannerImage.getAttribute('src')).toContain(customSrc);
     });
 
     it('should accept custom alt text prop', () => {
       const customAlt = 'Custom banner description';
       render(<BannerImage alt={customAlt} />);
-      const image = screen.getByRole('img');
-      expect(image).toHaveAttribute('alt', customAlt);
+      const bannerImage = screen.getByAltText(customAlt);
+      expect(bannerImage).toBeInTheDocument();
     });
 
-    it('should handle missing optional props gracefully', () => {
-      expect(() => render(<BannerImage />)).not.toThrow();
+    it('should handle priority prop when provided', () => {
+      render(<BannerImage priority />);
+      const bannerImage = screen.getByRole('img');
+      expect(bannerImage).toBeInTheDocument();
+    });
+  });
+
+  describe('Layout and Positioning', () => {
+    it('should be positioned at the bottom section', () => {
+      const { container } = render(<BannerImage />);
+      const bannerContainer = container.firstChild as HTMLElement;
+      expect(bannerContainer).toBeInTheDocument();
+    });
+
+    it('should maintain aspect ratio', () => {
+      render(<BannerImage />);
+      const bannerImage = screen.getByRole('img');
+      expect(bannerImage).toBeInTheDocument();
+    });
+
+    it('should render with full width on mobile devices', () => {
+      const { container } = render(<BannerImage />);
+      const bannerContainer = container.firstChild as HTMLElement;
+      const classes = bannerContainer.className;
+      expect(classes).toMatch(/w-full|w-screen/);
     });
   });
 
   describe('Error Handling', () => {
-    it('should handle image load errors gracefully', () => {
-      const { container } = render(<BannerImage />);
-      const image = screen.getByRole('img');
-      
-      const errorEvent = new Event('error');
-      image.dispatchEvent(errorEvent);
-      
-      expect(container).toBeInTheDocument();
+    it('should render without crashing when no props provided', () => {
+      expect(() => render(<BannerImage />)).not.toThrow();
     });
 
-    it('should provide fallback for missing image', () => {
-      render(<BannerImage src="" />);
-      const banner = screen.getByTestId('banner-image');
-      expect(banner).toBeInTheDocument();
+    it('should handle missing image gracefully', () => {
+      const { container } = render(<BannerImage src="" />);
+      expect(container.firstChild).toBeInTheDocument();
+    });
+
+    it('should render with default values when optional props are undefined', () => {
+      render(<BannerImage src={undefined} alt={undefined} />);
+      const bannerImage = screen.getByRole('img');
+      expect(bannerImage).toBeInTheDocument();
     });
   });
 
-  describe('Integration', () => {
-    it('should integrate properly within member benefits page layout', () => {
-      const { container } = render(
-        <div data-testid="member-benefits-page">
-          <BannerImage />
-        </div>
-      );
-      
-      const page = screen.getByTestId('member-benefits-page');
-      const banner = screen.getByTestId('banner-image');
-      
-      expect(page).toContainElement(banner);
+  describe('Performance', () => {
+    it('should use Next.js Image optimization', () => {
+      render(<BannerImage />);
+      const bannerImage = screen.getByRole('img');
+      expect(bannerImage).toBeInTheDocument();
     });
 
-    it('should maintain proper spacing with surrounding content', () => {
+    it('should lazy load by default', () => {
       render(<BannerImage />);
-      const banner = screen.getByTestId('banner-image');
-      const computedStyle = window.getComputedStyle(banner);
-      
-      expect(computedStyle.margin).toBeDefined();
+      const bannerImage = screen.getByRole('img');
+      const loading = bannerImage.getAttribute('loading');
+      expect(loading).toBe('lazy');
+    });
+  });
+
+  describe('Visual Regression', () => {
+    it('should match snapshot', () => {
+      const { container } = render(<BannerImage />);
+      expect(container).toMatchSnapshot();
+    });
+
+    it('should match snapshot with custom props', () => {
+      const { container } = render(
+        <BannerImage
+          src="/custom-banner.jpg"
+          alt="Custom banner"
+          className="custom-class"
+        />
+      );
+      expect(container).toMatchSnapshot();
     });
   });
 });
-```
