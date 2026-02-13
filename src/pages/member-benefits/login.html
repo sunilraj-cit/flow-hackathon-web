@@ -34,14 +34,14 @@
         h1 {
             font-size: 1.5rem;
             font-weight: 600;
-            color: #333;
+            color: #333333;
             margin-bottom: 0.5rem;
             text-align: center;
         }
 
         .subtitle {
             font-size: 0.875rem;
-            color: #666;
+            color: #666666;
             margin-bottom: 2rem;
             text-align: center;
         }
@@ -54,7 +54,7 @@
             display: block;
             font-size: 0.875rem;
             font-weight: 500;
-            color: #333;
+            color: #333333;
             margin-bottom: 0.5rem;
         }
 
@@ -63,7 +63,7 @@
             width: 100%;
             padding: 0.75rem;
             font-size: 1rem;
-            border: 1px solid #ddd;
+            border: 1px solid #d1d5db;
             border-radius: 4px;
             transition: border-color 0.2s ease;
         }
@@ -76,10 +76,24 @@
 
         input[type="email"]::placeholder,
         input[type="password"]::placeholder {
-            color: #999;
+            color: #9ca3af;
         }
 
-        .submit-button {
+        .forgot-password {
+            display: block;
+            text-align: right;
+            font-size: 0.875rem;
+            color: #666666;
+            text-decoration: none;
+            margin-top: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .forgot-password:hover {
+            color: #dc2626;
+        }
+
+        .login-button {
             width: 100%;
             padding: 0.875rem;
             font-size: 1rem;
@@ -92,40 +106,64 @@
             transition: background-color 0.2s ease;
         }
 
-        .submit-button:hover {
+        .login-button:hover {
             background-color: #b91c1c;
         }
 
-        .submit-button:active {
+        .login-button:active {
             background-color: #991b1b;
         }
 
-        .submit-button:disabled {
+        .login-button:disabled {
             background-color: #fca5a5;
             cursor: not-allowed;
         }
 
-        .forgot-password {
-            text-align: right;
-            margin-top: 0.5rem;
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
         }
 
-        .forgot-password a {
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .divider span {
+            padding: 0 1rem;
             font-size: 0.875rem;
-            color: #666;
-            text-decoration: none;
+            color: #9ca3af;
         }
 
-        .forgot-password a:hover {
+        .signup-link {
+            text-align: center;
+            font-size: 0.875rem;
+            color: #666666;
+            margin-top: 1.5rem;
+        }
+
+        .signup-link a {
             color: #dc2626;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .signup-link a:hover {
             text-decoration: underline;
         }
 
         .error-message {
             display: none;
-            color: #dc2626;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
             font-size: 0.875rem;
-            margin-top: 0.5rem;
+            color: #991b1b;
+            background-color: #fee2e2;
+            border: 1px solid #fecaca;
+            border-radius: 4px;
         }
 
         .error-message.show {
@@ -143,7 +181,7 @@
 
             input[type="email"],
             input[type="password"],
-            .submit-button {
+            .login-button {
                 font-size: 0.9375rem;
             }
         }
@@ -159,7 +197,9 @@
     <div class="login-container">
         <h1>Member Benefits Login</h1>
         <p class="subtitle">Sign in to access your member benefits</p>
-        
+
+        <div id="errorMessage" class="error-message" role="alert"></div>
+
         <form id="loginForm" novalidate>
             <div class="form-group">
                 <label for="email">Email Address</label>
@@ -171,9 +211,7 @@
                     required
                     autocomplete="email"
                     aria-required="true"
-                    aria-describedby="email-error"
-                />
-                <div id="email-error" class="error-message" role="alert"></div>
+                >
             </div>
 
             <div class="form-group">
@@ -186,141 +224,122 @@
                     required
                     autocomplete="current-password"
                     aria-required="true"
-                    aria-describedby="password-error"
-                />
-                <div id="password-error" class="error-message" role="alert"></div>
-                <div class="forgot-password">
-                    <a href="/member-benefits/forgot-password">Forgot password?</a>
-                </div>
+                >
             </div>
 
-            <button type="submit" class="submit-button">
-                Sign In
+            <a href="#" class="forgot-password">Forgot password?</a>
+
+            <button type="submit" class="login-button">
+                Log In
             </button>
         </form>
+
+        <div class="divider">
+            <span>or</span>
+        </div>
+
+        <div class="signup-link">
+            Don't have an account? <a href="#">Sign up</a>
+        </div>
     </div>
 
     <script>
-        (function() {
-            'use strict';
+        /**
+         * Validates email format
+         * @param {string} email - Email address to validate
+         * @returns {boolean} True if email is valid
+         */
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
 
+        /**
+         * Displays error message to user
+         * @param {string} message - Error message to display
+         */
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+        }
+
+        /**
+         * Hides error message
+         */
+        function hideError() {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.classList.remove('show');
+        }
+
+        /**
+         * Handles form submission
+         * @param {Event} event - Form submit event
+         */
+        async function handleSubmit(event) {
+            event.preventDefault();
+            hideError();
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const submitButton = event.target.querySelector('button[type="submit"]');
+
+            // Validation
+            if (!email) {
+                showError('Please enter your email address');
+                return;
+            }
+
+            if (!isValidEmail(email)) {
+                showError('Please enter a valid email address');
+                return;
+            }
+
+            if (!password) {
+                showError('Please enter your password');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters');
+                return;
+            }
+
+            // Disable button during submission
+            submitButton.disabled = true;
+            submitButton.textContent = 'Logging in...';
+
+            try {
+                // TODO: Implement actual authentication logic
+                // This is a placeholder for the authentication API call
+                console.log('Login attempt:', { email });
+                
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // On success, redirect or handle accordingly
+                // window.location.href = '/member-benefits/dashboard';
+                
+            } catch (error) {
+                showError('Login failed. Please check your credentials and try again.');
+                console.error('Login error:', error);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Log In';
+            }
+        }
+
+        // Initialize form
+        document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('loginForm');
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-            const emailError = document.getElementById('email-error');
-            const passwordError = document.getElementById('password-error');
-            const submitButton = form.querySelector('.submit-button');
-
-            /**
-             * Validates email format
-             * @param {string} email - Email address to validate
-             * @returns {boolean} True if valid, false otherwise
-             */
-            function isValidEmail(email) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                return emailRegex.test(email);
-            }
-
-            /**
-             * Shows error message for a field
-             * @param {HTMLElement} errorElement - Error message element
-             * @param {string} message - Error message to display
-             */
-            function showError(errorElement, message) {
-                errorElement.textContent = message;
-                errorElement.classList.add('show');
-            }
-
-            /**
-             * Hides error message for a field
-             * @param {HTMLElement} errorElement - Error message element
-             */
-            function hideError(errorElement) {
-                errorElement.textContent = '';
-                errorElement.classList.remove('show');
-            }
-
-            /**
-             * Validates the login form
-             * @returns {boolean} True if form is valid, false otherwise
-             */
-            function validateForm() {
-                let isValid = true;
-
-                hideError(emailError);
-                hideError(passwordError);
-
-                const email = emailInput.value.trim();
-                const password = passwordInput.value;
-
-                if (!email) {
-                    showError(emailError, 'Email address is required');
-                    isValid = false;
-                } else if (!isValidEmail(email)) {
-                    showError(emailError, 'Please enter a valid email address');
-                    isValid = false;
-                }
-
-                if (!password) {
-                    showError(passwordError, 'Password is required');
-                    isValid = false;
-                } else if (password.length < 6) {
-                    showError(passwordError, 'Password must be at least 6 characters');
-                    isValid = false;
-                }
-
-                return isValid;
-            }
-
-            /**
-             * Handles form submission
-             * @param {Event} event - Form submit event
-             */
-            function handleSubmit(event) {
-                event.preventDefault();
-
-                if (!validateForm()) {
-                    return;
-                }
-
-                submitButton.disabled = true;
-                submitButton.textContent = 'Signing In...';
-
-                // Simulate form submission
-                setTimeout(function() {
-                    console.log('Form submitted successfully');
-                    // In production, this would make an API call
-                    // window.location.href = '/member-benefits/dashboard';
-                    
-                    submitButton.disabled = false;
-                    submitButton.textContent = 'Sign In';
-                }, 1500);
-            }
-
-            // Event listeners
             form.addEventListener('submit', handleSubmit);
 
-            emailInput.addEventListener('blur', function() {
-                const email = emailInput.value.trim();
-                if (email && !isValidEmail(email)) {
-                    showError(emailError, 'Please enter a valid email address');
-                } else {
-                    hideError(emailError);
-                }
+            // Clear error on input
+            const inputs = form.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('input', hideError);
             });
-
-            emailInput.addEventListener('input', function() {
-                if (emailError.classList.contains('show')) {
-                    hideError(emailError);
-                }
-            });
-
-            passwordInput.addEventListener('input', function() {
-                if (passwordError.classList.contains('show')) {
-                    hideError(passwordError);
-                }
-            });
-        })();
+        });
     </script>
 </body>
 </html>
