@@ -20,7 +20,7 @@
             --text-secondary: #6b7280;
             --border-color: #d1d5db;
             --background: #ffffff;
-            --input-background: #f9fafb;
+            --background-secondary: #f9fafb;
             --error-color: #ef4444;
             --focus-ring: rgba(220, 38, 38, 0.2);
         }
@@ -29,34 +29,23 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            background-color: var(--background-secondary);
+            color: var(--text-primary);
+            line-height: 1.5;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 1rem;
-            color: var(--text-primary);
         }
 
         .login-container {
             width: 100%;
             max-width: 400px;
-            background: var(--background);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background-color: var(--background);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             padding: 2rem;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .login-header {
@@ -79,7 +68,7 @@
         .login-form {
             display: flex;
             flex-direction: column;
-            gap: 1.25rem;
+            gap: 1.5rem;
         }
 
         .form-group {
@@ -96,18 +85,18 @@
 
         .form-input {
             width: 100%;
-            padding: 0.75rem 1rem;
+            padding: 0.625rem 0.875rem;
             font-size: 1rem;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            background: var(--input-background);
-            transition: all 0.2s ease;
-            outline: none;
+            border-radius: 6px;
+            background-color: var(--background);
+            color: var(--text-primary);
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         }
 
         .form-input:focus {
+            outline: none;
             border-color: var(--primary-red);
-            background: var(--background);
             box-shadow: 0 0 0 3px var(--focus-ring);
         }
 
@@ -116,35 +105,55 @@
         }
 
         .form-input:disabled {
-            opacity: 0.6;
+            background-color: var(--background-secondary);
             cursor: not-allowed;
+            opacity: 0.6;
         }
 
-        .form-options {
+        .form-error {
+            font-size: 0.75rem;
+            color: var(--error-color);
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .form-input.error {
+            border-color: var(--error-color);
+        }
+
+        .form-input.error:focus {
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+        }
+
+        .form-input.error + .form-error {
+            display: block;
+        }
+
+        .form-footer {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 0.5rem;
+            margin-top: -0.5rem;
         }
 
-        .checkbox-group {
+        .remember-me {
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
-        .checkbox-group input[type="checkbox"] {
+        .remember-me input[type="checkbox"] {
             width: 1rem;
             height: 1rem;
             cursor: pointer;
             accent-color: var(--primary-red);
         }
 
-        .checkbox-group label {
+        .remember-me label {
             font-size: 0.875rem;
             color: var(--text-secondary);
             cursor: pointer;
+            user-select: none;
         }
 
         .forgot-password {
@@ -152,7 +161,7 @@
             color: var(--primary-red);
             text-decoration: none;
             font-weight: 500;
-            transition: color 0.2s ease;
+            transition: color 0.15s ease-in-out;
         }
 
         .forgot-password:hover {
@@ -162,38 +171,36 @@
 
         .btn-login {
             width: 100%;
-            padding: 0.875rem 1.5rem;
+            padding: 0.75rem 1rem;
             font-size: 1rem;
             font-weight: 600;
             color: #ffffff;
-            background: var(--primary-red);
+            background-color: var(--primary-red);
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            outline: none;
+            transition: background-color 0.15s ease-in-out, transform 0.1s ease-in-out;
             margin-top: 0.5rem;
         }
 
         .btn-login:hover {
-            background: var(--primary-red-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3);
+            background-color: var(--primary-red-hover);
         }
 
         .btn-login:active {
-            background: var(--primary-red-active);
-            transform: translateY(0);
+            background-color: var(--primary-red-active);
+            transform: scale(0.98);
         }
 
         .btn-login:focus {
+            outline: none;
             box-shadow: 0 0 0 3px var(--focus-ring);
         }
 
         .btn-login:disabled {
-            opacity: 0.6;
+            background-color: var(--text-secondary);
             cursor: not-allowed;
-            transform: none;
+            opacity: 0.6;
         }
 
         .divider {
@@ -225,8 +232,8 @@
         .signup-link a {
             color: var(--primary-red);
             text-decoration: none;
-            font-weight: 600;
-            transition: color 0.2s ease;
+            font-weight: 500;
+            transition: color 0.15s ease-in-out;
         }
 
         .signup-link a:hover {
@@ -234,50 +241,56 @@
             text-decoration: underline;
         }
 
-        .error-message {
-            display: none;
-            padding: 0.75rem 1rem;
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            border-radius: 8px;
-            color: var(--error-color);
-            font-size: 0.875rem;
-            margin-bottom: 1rem;
-        }
+        /* Mobile First - Base styles above are for mobile */
 
-        .error-message.show {
-            display: block;
-        }
-
-        /* Tablet styles */
+        /* Tablet breakpoint */
         @media (min-width: 640px) {
+            body {
+                padding: 2rem;
+            }
+
             .login-container {
                 padding: 2.5rem;
-            }
-
-            .login-header h1 {
-                font-size: 2rem;
-            }
-        }
-
-        /* Desktop styles */
-        @media (min-width: 768px) {
-            .login-container {
-                max-width: 450px;
-                padding: 3rem;
             }
 
             .login-header h1 {
                 font-size: 2.25rem;
             }
 
+            .login-header p {
+                font-size: 1rem;
+            }
+
             .form-input {
-                padding: 0.875rem 1.125rem;
+                padding: 0.75rem 1rem;
             }
 
             .btn-login {
-                padding: 1rem 1.5rem;
+                padding: 0.875rem 1.25rem;
                 font-size: 1.0625rem;
+            }
+        }
+
+        /* Desktop breakpoint */
+        @media (min-width: 1024px) {
+            .login-container {
+                max-width: 450px;
+                padding: 3rem;
+            }
+
+            .login-header {
+                margin-bottom: 2.5rem;
+            }
+
+            .login-form {
+                gap: 1.75rem;
+            }
+        }
+
+        /* Large desktop breakpoint */
+        @media (min-width: 1280px) {
+            .login-container {
+                max-width: 480px;
             }
         }
 
@@ -290,21 +303,36 @@
             }
         }
 
-        /* Focus visible for keyboard navigation */
-        *:focus-visible {
-            outline: 2px solid var(--primary-red);
-            outline-offset: 2px;
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text-primary: #f9fafb;
+                --text-secondary: #9ca3af;
+                --border-color: #374151;
+                --background: #1f2937;
+                --background-secondary: #111827;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background-color: white;
+            }
+
+            .login-container {
+                box-shadow: none;
+                border: 1px solid var(--border-color);
+            }
         }
     </style>
 </head>
 <body>
     <div class="login-container">
         <div class="login-header">
-            <h1>Member Benefits</h1>
-            <p>Sign in to access your account</p>
+            <h1>Welcome Back</h1>
+            <p>Sign in to access your member benefits</p>
         </div>
-
-        <div id="errorMessage" class="error-message" role="alert" aria-live="polite"></div>
 
         <form class="login-form" id="loginForm" novalidate>
             <div class="form-group">
@@ -314,12 +342,12 @@
                     id="email" 
                     name="email" 
                     class="form-input" 
-                    placeholder="Enter your email"
+                    placeholder="you@example.com"
                     required
                     autocomplete="email"
-                    aria-required="true"
-                    aria-describedby="emailError"
+                    aria-describedby="email-error"
                 />
+                <span class="form-error" id="email-error" role="alert">Please enter a valid email address</span>
             </div>
 
             <div class="form-group">
@@ -332,13 +360,13 @@
                     placeholder="Enter your password"
                     required
                     autocomplete="current-password"
-                    aria-required="true"
-                    aria-describedby="passwordError"
+                    aria-describedby="password-error"
                 />
+                <span class="form-error" id="password-error" role="alert">Password is required</span>
             </div>
 
-            <div class="form-options">
-                <div class="checkbox-group">
+            <div class="form-footer">
+                <div class="remember-me">
                     <input 
                         type="checkbox" 
                         id="remember" 
@@ -350,7 +378,7 @@
                 <a href="#" class="forgot-password">Forgot password?</a>
             </div>
 
-            <button type="submit" class="btn-login" id="loginButton">
+            <button type="submit" class="btn-login" aria-label="Sign in to your account">
                 Sign In
             </button>
         </form>
@@ -371,31 +399,11 @@
             const form = document.getElementById('loginForm');
             const emailInput = document.getElementById('email');
             const passwordInput = document.getElementById('password');
-            const loginButton = document.getElementById('loginButton');
-            const errorMessage = document.getElementById('errorMessage');
 
             /**
-             * Display error message to user
-             * @param {string} message - Error message to display
-             */
-            function showError(message) {
-                errorMessage.textContent = message;
-                errorMessage.classList.add('show');
-                errorMessage.setAttribute('role', 'alert');
-            }
-
-            /**
-             * Hide error message
-             */
-            function hideError() {
-                errorMessage.textContent = '';
-                errorMessage.classList.remove('show');
-            }
-
-            /**
-             * Validate email format
-             * @param {string} email - Email to validate
-             * @returns {boolean} - True if valid
+             * Validates email format
+             * @param {string} email - Email address to validate
+             * @returns {boolean} True if valid email format
              */
             function isValidEmail(email) {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -403,68 +411,76 @@
             }
 
             /**
-             * Handle form submission
+             * Validates a form field
+             * @param {HTMLInputElement} input - Input element to validate
+             * @returns {boolean} True if field is valid
+             */
+            function validateField(input) {
+                const value = input.value.trim();
+                let isValid = true;
+
+                if (input.type === 'email') {
+                    isValid = value !== '' && isValidEmail(value);
+                } else if (input.type === 'password') {
+                    isValid = value !== '';
+                }
+
+                if (isValid) {
+                    input.classList.remove('error');
+                } else {
+                    input.classList.add('error');
+                }
+
+                return isValid;
+            }
+
+            /**
+             * Handles form submission
              * @param {Event} event - Form submit event
              */
             function handleSubmit(event) {
                 event.preventDefault();
-                hideError();
 
-                const email = emailInput.value.trim();
-                const password = passwordInput.value;
+                const isEmailValid = validateField(emailInput);
+                const isPasswordValid = validateField(passwordInput);
 
-                // Validation
-                if (!email) {
-                    showError('Please enter your email address');
-                    emailInput.focus();
-                    return;
+                if (isEmailValid && isPasswordValid) {
+                    // Form is valid - handle submission
+                    console.log('Form submitted successfully');
+                    // Add your form submission logic here
+                } else {
+                    // Focus on first invalid field
+                    if (!isEmailValid) {
+                        emailInput.focus();
+                    } else if (!isPasswordValid) {
+                        passwordInput.focus();
+                    }
                 }
-
-                if (!isValidEmail(email)) {
-                    showError('Please enter a valid email address');
-                    emailInput.focus();
-                    return;
-                }
-
-                if (!password) {
-                    showError('Please enter your password');
-                    passwordInput.focus();
-                    return;
-                }
-
-                if (password.length < 6) {
-                    showError('Password must be at least 6 characters');
-                    passwordInput.focus();
-                    return;
-                }
-
-                // Disable button during submission
-                loginButton.disabled = true;
-                loginButton.textContent = 'Signing in...';
-
-                // Simulate API call (replace with actual authentication logic)
-                setTimeout(function() {
-                    // Re-enable button
-                    loginButton.disabled = false;
-                    loginButton.textContent = 'Sign In';
-                    
-                    // Example: Show success or redirect
-                    console.log('Login attempt:', { email: email });
-                    // window.location.href = '/dashboard';
-                }, 1500);
             }
 
             // Event listeners
             form.addEventListener('submit', handleSubmit);
 
-            // Clear error on input
-            emailInput.addEventListener('input', hideError);
-            passwordInput.addEventListener('input', hideError);
+            emailInput.addEventListener('blur', function() {
+                validateField(emailInput);
+            });
 
-            // Prevent form resubmission on page refresh
-            if (window.history.replaceState) {
-                window.history.replaceState(null, null, window.location.href);
-            }
+            passwordInput.addEventListener('blur', function() {
+                validateField(passwordInput);
+            });
+
+            // Clear error state on input
+            emailInput.addEventListener('input', function() {
+                if (emailInput.classList.contains('error')) {
+                    emailInput.classList.remove('error');
+                }
+            });
+
+            passwordInput.addEventListener('input', function() {
+                if (passwordInput.classList.contains('error')) {
+                    passwordInput.classList.remove('error');
+                }
+            });
         })();
     </script>
 </body>
