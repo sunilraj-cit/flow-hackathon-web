@@ -2,7 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
 /**
  * Generates the HTML content for the login page
- * @returns {string} The complete HTML document for the login page
+ * @returns {string} The complete HTML document as a string
  */
 const generateLoginPageHTML = (): string => {
   return `<!DOCTYPE html>
@@ -32,7 +32,7 @@ const generateLoginPageHTML = (): string => {
         .login-container {
             background: white;
             border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             padding: 40px;
             width: 100%;
             max-width: 400px;
@@ -44,9 +44,9 @@ const generateLoginPageHTML = (): string => {
         }
 
         .login-header h1 {
-            font-size: 28px;
+            font-size: 24px;
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .login-header p {
@@ -77,27 +77,7 @@ const generateLoginPageHTML = (): string => {
 
         .form-group input:focus {
             outline: none;
-            border-color: #dc143c;
-        }
-
-        .form-group input::placeholder {
-            color: #999;
-        }
-
-        .forgot-password {
-            text-align: right;
-            margin-bottom: 20px;
-        }
-
-        .forgot-password a {
-            font-size: 13px;
-            color: #666;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .forgot-password a:hover {
-            color: #dc143c;
+            border-color: #dc2626;
         }
 
         .login-button {
@@ -106,15 +86,16 @@ const generateLoginPageHTML = (): string => {
             font-size: 16px;
             font-weight: 600;
             color: white;
-            background-color: #dc143c;
+            background-color: #dc2626;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.1s ease;
+            margin-top: 10px;
         }
 
         .login-button:hover {
-            background-color: #b8112f;
+            background-color: #b91c1c;
         }
 
         .login-button:active {
@@ -122,60 +103,33 @@ const generateLoginPageHTML = (): string => {
         }
 
         .login-button:disabled {
-            background-color: #ccc;
+            background-color: #fca5a5;
             cursor: not-allowed;
         }
 
-        .divider {
+        .forgot-password {
             text-align: center;
-            margin: 25px 0;
-            position: relative;
+            margin-top: 16px;
         }
 
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background-color: #ddd;
-        }
-
-        .divider span {
-            position: relative;
-            background: white;
-            padding: 0 15px;
-            color: #666;
-            font-size: 13px;
-        }
-
-        .signup-link {
-            text-align: center;
-            margin-top: 20px;
+        .forgot-password a {
             font-size: 14px;
-            color: #666;
-        }
-
-        .signup-link a {
-            color: #dc143c;
+            color: #dc2626;
             text-decoration: none;
-            font-weight: 600;
-            transition: color 0.3s ease;
         }
 
-        .signup-link a:hover {
-            color: #b8112f;
+        .forgot-password a:hover {
+            text-decoration: underline;
         }
 
         .error-message {
-            background-color: #fee;
-            color: #c33;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 13px;
-            margin-bottom: 20px;
             display: none;
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 20px;
         }
 
         .error-message.show {
@@ -188,7 +142,7 @@ const generateLoginPageHTML = (): string => {
             }
 
             .login-header h1 {
-                font-size: 24px;
+                font-size: 20px;
             }
 
             .form-group input {
@@ -201,13 +155,9 @@ const generateLoginPageHTML = (): string => {
             }
         }
 
-        @media (max-width: 360px) {
+        @media (min-width: 768px) {
             .login-container {
-                padding: 25px 15px;
-            }
-
-            .login-header h1 {
-                font-size: 22px;
+                padding: 50px;
             }
         }
     </style>
@@ -246,66 +196,53 @@ const generateLoginPageHTML = (): string => {
                 />
             </div>
 
-            <div class="forgot-password">
-                <a href="/forgot-password">Forgot password?</a>
-            </div>
-
             <button type="submit" class="login-button" id="loginButton">
                 Sign In
             </button>
         </form>
 
-        <div class="divider">
-            <span>or</span>
-        </div>
-
-        <div class="signup-link">
-            Don't have an account? <a href="/signup">Sign up</a>
+        <div class="forgot-password">
+            <a href="#" id="forgotPasswordLink">Forgot your password?</a>
         </div>
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        const loginForm = document.getElementById('loginForm');
+        const loginButton = document.getElementById('loginButton');
+        const errorMessage = document.getElementById('errorMessage');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const button = document.getElementById('loginButton');
-            const errorMessage = document.getElementById('errorMessage');
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            // Hide previous error messages
             errorMessage.classList.remove('show');
-            errorMessage.textContent = '';
+            loginButton.disabled = true;
+            loginButton.textContent = 'Signing in...';
 
-            // Disable button during submission
-            button.disabled = true;
-            button.textContent = 'Signing in...';
-
-            // Simulate form submission (replace with actual API call)
-            setTimeout(function() {
-                // Example validation
-                if (email && password) {
-                    // Success - redirect or handle login
-                    console.log('Login attempt:', { email });
-                    // window.location.href = '/dashboard';
-                } else {
-                    // Show error
-                    errorMessage.textContent = 'Please enter valid credentials.';
-                    errorMessage.classList.add('show');
-                }
-
-                // Re-enable button
-                button.disabled = false;
-                button.textContent = 'Sign In';
-            }, 1000);
+            try {
+                // Placeholder for actual authentication logic
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // This is where you would integrate with your authentication service
+                console.log('Login attempt:', { email });
+                
+                // Simulate error for demonstration
+                throw new Error('Authentication service not configured');
+            } catch (error) {
+                errorMessage.textContent = error.message || 'An error occurred during login. Please try again.';
+                errorMessage.classList.add('show');
+            } finally {
+                loginButton.disabled = false;
+                loginButton.textContent = 'Sign In';
+            }
         });
 
-        // Clear error message on input
-        document.querySelectorAll('input').forEach(function(input) {
-            input.addEventListener('input', function() {
-                const errorMessage = document.getElementById('errorMessage');
-                errorMessage.classList.remove('show');
-            });
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('Password reset functionality will be implemented soon.');
         });
     </script>
 </body>
@@ -314,15 +251,24 @@ const generateLoginPageHTML = (): string => {
 
 /**
  * Lambda handler function to serve the login page
- * @param {APIGatewayProxyEvent} event - The API Gateway event
+ * @param {APIGatewayProxyEvent} event - The API Gateway event object
  * @returns {Promise<APIGatewayProxyResult>} The API Gateway response with HTML content
  */
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    // Log the incoming request for monitoring
+    console.log('Serving login page', {
+      requestId: event.requestContext.requestId,
+      sourceIp: event.requestContext.identity.sourceIp,
+      userAgent: event.headers['User-Agent'] || event.headers['user-agent'],
+    });
+
+    // Generate the HTML content
     const htmlContent = generateLoginPageHTML();
 
+    // Return the response with proper headers
     return {
       statusCode: 200,
       headers: {
@@ -338,17 +284,49 @@ export const handler = async (
       body: htmlContent,
     };
   } catch (error) {
+    // Log the error for debugging
     console.error('Error serving login page:', error);
 
+    // Return a generic error response
     return {
       statusCode: 500,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'text/html; charset=utf-8',
       },
-      body: JSON.stringify({
-        error: 'Internal Server Error',
-        message: 'Failed to serve login page',
-      }),
+      body: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .error-container {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #dc2626; margin-bottom: 16px; }
+        p { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1>Something went wrong</h1>
+        <p>We're unable to load the login page at this time. Please try again later.</p>
+    </div>
+</body>
+</html>`,
     };
   }
 };
