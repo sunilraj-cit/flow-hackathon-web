@@ -1,254 +1,327 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { sign } from 'jsonwebtoken';
-import { hash, compare } from 'bcryptjs';
+import { z } from 'zod';
+import * as crypto from 'crypto';
 
 /**
- * Interface for login request body
+ * Environment variables interface
  */
-interface LoginRequest {
-  email: string;
-  password: string;
+interface EnvironmentVariables {
+  JWT_SECRET: string;
+  TOKEN_EXPIRY_HOURS?: string;
+  ALLOWED_ORIGINS?: string;
 }
 
 /**
- * Interface for JWT payload
+ * Login request schema validation
+ */
+const loginRequestSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+/**
+ * JWT payload interface
  */
 interface JWTPayload {
-  userId: string;
+  sub: string;
   email: string;
-  memberBenefits: boolean;
+  iat: number;
+  exp: number;
 }
 
 /**
- * Interface for user data (mock - replace with actual database integration)
+ * User credentials interface (mock - replace with actual database lookup)
  */
-interface User {
+interface UserCredentials {
   id: string;
   email: string;
   passwordHash: string;
-  hasMemberBenefits: boolean;
+  firstName?: string;
+  lastName?: string;
 }
 
 /**
- * CORS headers for API responses
+ * Response body interface
  */
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-  'Access-Control-Allow-Methods': 'POST,OPTIONS',
-  'Content-Type': 'application/json',
-};
-
-/**
- * Validates email format
- * @param email - Email address to validate
- * @returns True if email is valid, false otherwise
- */
-const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
-/**
- * Validates password requirements
- * @param password - Password to validate
- * @returns True if password meets requirements, false otherwise
- */
-const isValidPassword = (password: string): boolean => {
-  return password && password.length >= 8;
-};
-
-/**
- * Retrieves user from database by email
- * TODO: Replace with actual database query (DynamoDB, RDS, etc.)
- * @param email - User email address
- * @returns User object or null if not found
- */
-const getUserByEmail = async (email: string): Promise<User | null> => {
-  // Mock implementation - replace with actual database query
-  // Example: const result = await dynamoDB.get({ TableName: 'Users', Key: { email } }).promise();
-  
-  // For demonstration purposes only
-  if (process.env.NODE_ENV === 'development') {
-    // Mock user for testing
-    return {
-      id: 'mock-user-id',
-      email: email,
-      passwordHash: await hash('password123', 10),
-      hasMemberBenefits: true,
-    };
-  }
-  
-  return null;
-};
-
-/**
- * Generates JWT token for authenticated user
- * @param payload - JWT payload data
- * @returns Signed JWT token
- */
-const generateToken = (payload: JWTPayload): string => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is not set');
-  }
-
-  const expiresIn = process.env.JWT_EXPIRES_IN || '24h';
-
-  return sign(payload, secret, {
-    expiresIn,
-    issuer: 'member-benefits-auth',
-    audience: 'member-benefits-portal',
-  });
-};
-
-/**
- * Creates API Gateway response
- * @param statusCode - HTTP status code
- * @param body - Response body object
- * @returns API Gateway proxy result
- */
-const createResponse = (
-  statusCode: number,
-  body: Record<string, any>
-): APIGatewayProxyResult => {
-  return {
-    statusCode,
-    headers: CORS_HEADERS,
-    body: JSON.stringify(body),
+interface LoginResponse {
+  success: boolean;
+  token?: string;
+  expiresIn?: number;
+  user?: {
+    id: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
   };
-};
+  error?: string;
+  message?: string;
+}
 
 /**
- * Validates and parses request body
- * @param event - API Gateway proxy event
- * @returns Parsed login request or null if invalid
+ * Base64 URL encode
  */
-const parseRequestBody = (event: APIGatewayProxyEvent): LoginRequest | null => {
-  try {
-    if (!event.body) {
-      return null;
-    }
+function base64UrlEncode(str: string): string {
+  return Buffer.from(str)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+}
 
-    const body = JSON.parse(event.body) as LoginRequest;
+/**
+ * Create HMAC SHA256 signature
+ */
+function createSignature(data: string, secret: string): string {
+  return crypto
+    .createHmac('sha256', secret)
+    .update(data)
+    .digest('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+}
 
-    if (!body.email || !body.password) {
-      return null;
-    }
+/**
+ * Generate JWT token
+ */
+function generateJWT(payload: JWTPayload, secret: string): string {
+  const header = {
+    alg: 'HS256',
+    typ: 'JWT',
+  };
 
-    return body;
-  } catch (error) {
+  const encodedHeader = base64UrlEncode(JSON.stringify(header));
+  const encodedPayload = base64UrlEncode(JSON.stringify(payload));
+  const signature = createSignature(`${encodedHeader}.${encodedPayload}`, secret);
+
+  return `${encodedHeader}.${encodedPayload}.${signature}`;
+}
+
+/**
+ * Hash password using SHA256 (for comparison)
+ * Note: In production, use bcrypt or similar
+ */
+function hashPassword(password: string): string {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+/**
+ * Mock user lookup function
+ * Replace with actual database query in production
+ */
+async function getUserByEmail(email: string): Promise<UserCredentials | null> {
+  // TODO: Replace with actual database lookup
+  // This is a mock implementation for demonstration
+  const mockUsers: Record<string, UserCredentials> = {
+    'member@example.com': {
+      id: 'user-123',
+      email: 'member@example.com',
+      passwordHash: hashPassword('Password123!'),
+      firstName: 'John',
+      lastName: 'Doe',
+    },
+  };
+
+  return mockUsers[email] || null;
+}
+
+/**
+ * Verify user credentials
+ */
+async function verifyCredentials(
+  email: string,
+  password: string
+): Promise<UserCredentials | null> {
+  const user = await getUserByEmail(email);
+  
+  if (!user) {
     return null;
   }
-};
+
+  const passwordHash = hashPassword(password);
+  
+  if (passwordHash !== user.passwordHash) {
+    return null;
+  }
+
+  return user;
+}
 
 /**
- * Lambda handler for member benefits login authentication
- * Validates user credentials and returns JWT token upon successful authentication
- * 
- * @param event - API Gateway proxy event containing login credentials
- * @returns API Gateway proxy result with JWT token or error message
+ * Get CORS headers
  */
-export const handler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
-  try {
-    // Handle preflight OPTIONS request
-    if (event.httpMethod === 'OPTIONS') {
-      return createResponse(200, { message: 'OK' });
-    }
+function getCorsHeaders(origin?: string): Record<string, string> {
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*').split(',');
+  const allowOrigin = origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
 
-    // Only accept POST requests
-    if (event.httpMethod !== 'POST') {
-      return createResponse(405, {
-        error: 'Method not allowed',
-        message: 'Only POST requests are accepted',
-      });
-    }
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+    'Access-Control-Allow-Methods': 'POST,OPTIONS',
+    'Access-Control-Allow-Credentials': 'true',
+  };
+}
+
+/**
+ * Create API Gateway response
+ */
+function createResponse(
+  statusCode: number,
+  body: LoginResponse,
+  origin?: string
+): APIGatewayProxyResult {
+  return {
+    statusCode,
+    headers: {
+      'Content-Type': 'application/json',
+      ...getCorsHeaders(origin),
+    },
+    body: JSON.stringify(body),
+  };
+}
+
+/**
+ * Validate environment variables
+ */
+function validateEnvironment(): EnvironmentVariables {
+  const jwtSecret = process.env.JWT_SECRET;
+  
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+
+  return {
+    JWT_SECRET: jwtSecret,
+    TOKEN_EXPIRY_HOURS: process.env.TOKEN_EXPIRY_HOURS || '24',
+    ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS || '*',
+  };
+}
+
+/**
+ * Lambda handler for member benefits login
+ * 
+ * @param event - API Gateway proxy event
+ * @returns API Gateway proxy result with JWT token or error
+ */
+export async function handler(
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  const origin = event.headers.origin || event.headers.Origin;
+
+  // Handle preflight OPTIONS request
+  if (event.httpMethod === 'OPTIONS') {
+    return createResponse(200, { success: true }, origin);
+  }
+
+  try {
+    // Validate environment variables
+    const env = validateEnvironment();
 
     // Parse and validate request body
-    const loginRequest = parseRequestBody(event);
-    if (!loginRequest) {
-      return createResponse(400, {
-        error: 'Invalid request',
-        message: 'Request body must contain email and password',
-      });
+    if (!event.body) {
+      return createResponse(
+        400,
+        {
+          success: false,
+          error: 'Bad Request',
+          message: 'Request body is required',
+        },
+        origin
+      );
     }
 
-    const { email, password } = loginRequest;
-
-    // Validate email format
-    if (!isValidEmail(email)) {
-      return createResponse(400, {
-        error: 'Invalid email',
-        message: 'Please provide a valid email address',
-      });
+    let requestBody: unknown;
+    try {
+      requestBody = JSON.parse(event.body);
+    } catch (error) {
+      return createResponse(
+        400,
+        {
+          success: false,
+          error: 'Bad Request',
+          message: 'Invalid JSON in request body',
+        },
+        origin
+      );
     }
 
-    // Validate password requirements
-    if (!isValidPassword(password)) {
-      return createResponse(400, {
-        error: 'Invalid password',
-        message: 'Password must be at least 8 characters long',
-      });
+    // Validate request schema
+    const validationResult = loginRequestSchema.safeParse(requestBody);
+    
+    if (!validationResult.success) {
+      const errors = validationResult.error.errors.map((err) => err.message).join(', ');
+      return createResponse(
+        400,
+        {
+          success: false,
+          error: 'Validation Error',
+          message: errors,
+        },
+        origin
+      );
     }
 
-    // Retrieve user from database
-    const user = await getUserByEmail(email.toLowerCase().trim());
+    const { email, password } = validationResult.data;
+
+    // Verify credentials
+    const user = await verifyCredentials(email, password);
+
     if (!user) {
-      return createResponse(401, {
-        error: 'Authentication failed',
-        message: 'Invalid email or password',
-      });
-    }
-
-    // Verify password
-    const isPasswordValid = await compare(password, user.passwordHash);
-    if (!isPasswordValid) {
-      return createResponse(401, {
-        error: 'Authentication failed',
-        message: 'Invalid email or password',
-      });
-    }
-
-    // Check if user has member benefits access
-    if (!user.hasMemberBenefits) {
-      return createResponse(403, {
-        error: 'Access denied',
-        message: 'You do not have access to member benefits',
-      });
+      // Use generic error message to prevent user enumeration
+      return createResponse(
+        401,
+        {
+          success: false,
+          error: 'Unauthorized',
+          message: 'Invalid email or password',
+        },
+        origin
+      );
     }
 
     // Generate JWT token
-    const tokenPayload: JWTPayload = {
-      userId: user.id,
+    const tokenExpiryHours = parseInt(env.TOKEN_EXPIRY_HOURS || '24', 10);
+    const now = Math.floor(Date.now() / 1000);
+    const expiresIn = tokenExpiryHours * 60 * 60;
+
+    const payload: JWTPayload = {
+      sub: user.id,
       email: user.email,
-      memberBenefits: user.hasMemberBenefits,
+      iat: now,
+      exp: now + expiresIn,
     };
 
-    const token = generateToken(tokenPayload);
+    const token = generateJWT(payload, env.JWT_SECRET);
 
-    // Return success response with token
-    return createResponse(200, {
-      success: true,
-      message: 'Login successful',
-      data: {
+    // Return success response
+    return createResponse(
+      200,
+      {
+        success: true,
         token,
+        expiresIn,
         user: {
           id: user.id,
           email: user.email,
-          memberBenefits: user.hasMemberBenefits,
+          firstName: user.firstName,
+          lastName: user.lastName,
         },
       },
-    });
+      origin
+    );
   } catch (error) {
     console.error('Login error:', error);
 
-    // Return generic error response
-    return createResponse(500, {
-      error: 'Internal server error',
-      message: 'An unexpected error occurred during login',
-    });
+    // Return generic error to client
+    return createResponse(
+      500,
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'An unexpected error occurred during login',
+      },
+      origin
+    );
   }
-};
+}
 ```
