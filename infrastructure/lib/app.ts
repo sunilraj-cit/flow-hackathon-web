@@ -24,10 +24,11 @@ const stage = app.node.tryGetContext('stage') || process.env.STAGE || 'dev';
  */
 const infraStack = new InfraStack(app, `InfraStack-${stage}`, {
   env,
-  description: 'Main infrastructure stack for the application',
+  stackName: `member-benefits-infra-${stage}`,
+  description: 'Core infrastructure stack for member benefits application',
   tags: {
     Environment: stage,
-    Project: 'MemberBenefits',
+    Application: 'MemberBenefits',
     ManagedBy: 'CDK',
   },
 });
@@ -38,18 +39,23 @@ const infraStack = new InfraStack(app, `InfraStack-${stage}`, {
  */
 const loginStack = new LoginStack(app, `LoginStack-${stage}`, {
   env,
-  description: 'Infrastructure stack for member benefits login page',
+  stackName: `member-benefits-login-${stage}`,
+  description: 'Login page infrastructure for member benefits application (PM-105)',
   tags: {
     Environment: stage,
-    Project: 'MemberBenefits',
+    Application: 'MemberBenefits',
     Feature: 'Login',
     Ticket: 'PM-105',
     ManagedBy: 'CDK',
   },
 });
 
-// Add dependencies if login stack depends on main infrastructure
+// Add dependency if login stack depends on infra stack resources
 // loginStack.addDependency(infraStack);
 
-// Synthesize the CloudFormation templates
+// Add stack outputs
+cdk.Tags.of(app).add('Project', 'MemberBenefits');
+cdk.Tags.of(app).add('Owner', 'Engineering');
+
 app.synth();
+```
