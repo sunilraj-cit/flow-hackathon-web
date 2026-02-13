@@ -16,7 +16,7 @@ interface BannerSectionProps {
    */
   title?: string;
   /**
-   * Optional description or subtitle text
+   * Optional description text to display on the banner
    */
   description?: string;
   /**
@@ -24,18 +24,15 @@ interface BannerSectionProps {
    */
   className?: string;
   /**
-   * Height of the banner in pixels
-   * @default 400
+   * Height of the banner in pixels (default: 400)
    */
   height?: number;
   /**
-   * Whether to display the banner with full width
-   * @default true
+   * Whether to display the banner in full width mode
    */
   fullWidth?: boolean;
   /**
    * Priority loading for the image (useful for above-the-fold content)
-   * @default false
    */
   priority?: boolean;
 }
@@ -43,8 +40,8 @@ interface BannerSectionProps {
 /**
  * BannerSection Component
  * 
- * Displays a banner image at the bottom of the member benefits section.
- * Supports customizable image, text overlay, and responsive design.
+ * Displays a responsive banner image at the bottom section of the member benefits page.
+ * Supports both image-only and image with text overlay configurations.
  * 
  * @component
  * @example
@@ -64,7 +61,7 @@ export const BannerSection: React.FC<BannerSectionProps> = ({
   description,
   className,
   height = 400,
-  fullWidth = true,
+  fullWidth = false,
   priority = false,
 }) => {
   const hasOverlay = title || description;
@@ -72,37 +69,44 @@ export const BannerSection: React.FC<BannerSectionProps> = ({
   return (
     <section
       className={cn(
-        'relative overflow-hidden rounded-lg',
-        fullWidth ? 'w-full' : 'max-w-7xl mx-auto',
+        'relative w-full overflow-hidden',
+        !fullWidth && 'container mx-auto px-4 sm:px-6 lg:px-8',
         className
       )}
       aria-label="Member benefits banner"
     >
       <div
-        className="relative"
+        className={cn(
+          'relative rounded-lg overflow-hidden',
+          fullWidth && 'rounded-none'
+        )}
         style={{ height: `${height}px` }}
       >
-        <Image
-          src={imageUrl}
-          alt={imageAlt}
-          fill
-          priority={priority}
-          className="object-cover"
-          sizes="100vw"
-          quality={90}
-        />
-        
+        {/* Banner Image */}
+        <div className="relative w-full h-full">
+          <Image
+            src={imageUrl}
+            alt={imageAlt}
+            fill
+            priority={priority}
+            className="object-cover object-center"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
+            quality={90}
+          />
+        </div>
+
+        {/* Overlay Content */}
         {hasOverlay && (
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent">
-            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 lg:p-12">
-              <div className="max-w-4xl">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
+            <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 lg:p-12">
+              <div className="max-w-4xl mx-auto text-white">
                 {title && (
-                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4">
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">
                     {title}
                   </h2>
                 )}
                 {description && (
-                  <p className="text-base md:text-lg lg:text-xl text-white/90 max-w-2xl">
+                  <p className="text-base sm:text-lg lg:text-xl text-gray-200 max-w-2xl">
                     {description}
                   </p>
                 )}
@@ -115,6 +119,36 @@ export const BannerSection: React.FC<BannerSectionProps> = ({
   );
 };
 
-BannerSection.displayName = 'BannerSection';
+/**
+ * BannerSectionSkeleton Component
+ * 
+ * Loading skeleton for the BannerSection component
+ * 
+ * @component
+ */
+export const BannerSectionSkeleton: React.FC<{
+  height?: number;
+  fullWidth?: boolean;
+  className?: string;
+}> = ({ height = 400, fullWidth = false, className }) => {
+  return (
+    <section
+      className={cn(
+        'relative w-full overflow-hidden',
+        !fullWidth && 'container mx-auto px-4 sm:px-6 lg:px-8',
+        className
+      )}
+      aria-label="Loading banner"
+    >
+      <div
+        className={cn(
+          'relative rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800 animate-pulse',
+          fullWidth && 'rounded-none'
+        )}
+        style={{ height: `${height}px` }}
+      />
+    </section>
+  );
+};
 
 export default BannerSection;
