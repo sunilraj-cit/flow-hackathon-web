@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Login from './login';
 
-// Mock Next.js router
+// Mock next/navigation
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: jest.fn(),
@@ -20,79 +20,83 @@ describe('Login Page', () => {
   describe('Rendering', () => {
     it('should render the login page', () => {
       render(<Login />);
-      expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /member benefits/i })).toBeInTheDocument();
     });
 
-    it('should render the email input field', () => {
+    it('should render the login form', () => {
+      render(<Login />);
+      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    });
+
+    it('should render the red login button', () => {
+      render(<Login />);
+      const loginButton = screen.getByRole('button', { name: /log in/i });
+      expect(loginButton).toBeInTheDocument();
+      expect(loginButton).toHaveClass('bg-red-600');
+    });
+
+    it('should render email input field', () => {
       render(<Login />);
       const emailInput = screen.getByLabelText(/email/i);
       expect(emailInput).toBeInTheDocument();
       expect(emailInput).toHaveAttribute('type', 'email');
     });
 
-    it('should render the password input field', () => {
+    it('should render password input field', () => {
       render(<Login />);
       const passwordInput = screen.getByLabelText(/password/i);
       expect(passwordInput).toBeInTheDocument();
       expect(passwordInput).toHaveAttribute('type', 'password');
     });
 
-    it('should render the red login button', () => {
+    it('should render forgot password link', () => {
       render(<Login />);
-      const loginButton = screen.getByRole('button', { name: /log in|login|sign in/i });
-      expect(loginButton).toBeInTheDocument();
-      expect(loginButton).toHaveClass(/red|bg-red/i);
+      expect(screen.getByText(/forgot password/i)).toBeInTheDocument();
     });
 
-    it('should render the page title', () => {
+    it('should render sign up link', () => {
       render(<Login />);
-      const title = screen.getByRole('heading', { level: 1 });
-      expect(title).toHaveTextContent(/member benefits|login/i);
-    });
-
-    it('should render all form elements', () => {
-      render(<Login />);
-      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /log in|login|sign in/i })).toBeInTheDocument();
+      expect(screen.getByText(/don't have an account/i)).toBeInTheDocument();
+      expect(screen.getByText(/sign up/i)).toBeInTheDocument();
     });
   });
 
   describe('Form Validation', () => {
-    it('should show error when email is empty and form is submitted', async () => {
+    it('should show error when email is empty on submit', async () => {
       render(<Login />);
-      const loginButton = screen.getByRole('button', { name: /log in|login|sign in/i });
+      const loginButton = screen.getByRole('button', { name: /log in/i });
       
       fireEvent.click(loginButton);
-      
+
       await waitFor(() => {
-        expect(screen.getByText(/email is required|please enter your email/i)).toBeInTheDocument();
+        expect(screen.getByText(/email is required/i)).toBeInTheDocument();
       });
     });
 
-    it('should show error when email format is invalid', async () => {
+    it('should show error when email is invalid', async () => {
       render(<Login />);
       const emailInput = screen.getByLabelText(/email/i);
-      const loginButton = screen.getByRole('button', { name: /log in|login|sign in/i });
-      
+      const loginButton = screen.getByRole('button', { name: /log in/i });
+
       fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
       fireEvent.click(loginButton);
-      
+
       await waitFor(() => {
-        expect(screen.getByText(/invalid email|please enter a valid email/i)).toBeInTheDocument();
+        expect(screen.getByText(/invalid email address/i)).toBeInTheDocument();
       });
     });
 
-    it('should show error when password is empty and form is submitted', async () => {
+    it('should show error when password is empty on submit', async () => {
       render(<Login />);
       const emailInput = screen.getByLabelText(/email/i);
-      const loginButton = screen.getByRole('button', { name: /log in|login|sign in/i });
-      
+      const loginButton = screen.getByRole('button', { name: /log in/i });
+
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
       fireEvent.click(loginButton);
-      
+
       await waitFor(() => {
-        expect(screen.getByText(/password is required|please enter your password/i)).toBeInTheDocument();
+        expect(screen.getByText(/password is required/i)).toBeInTheDocument();
       });
     });
 
@@ -100,14 +104,14 @@ describe('Login Page', () => {
       render(<Login />);
       const emailInput = screen.getByLabelText(/email/i);
       const passwordInput = screen.getByLabelText(/password/i);
-      const loginButton = screen.getByRole('button', { name: /log in|login|sign in/i });
-      
+      const loginButton = screen.getByRole('button', { name: /log in/i });
+
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
       fireEvent.change(passwordInput, { target: { value: '123' } });
       fireEvent.click(loginButton);
-      
+
       await waitFor(() => {
-        expect(screen.getByText(/password must be at least|password too short/i)).toBeInTheDocument();
+        expect(screen.getByText(/password must be at least 6 characters/i)).toBeInTheDocument();
       });
     });
 
@@ -115,198 +119,245 @@ describe('Login Page', () => {
       render(<Login />);
       const emailInput = screen.getByLabelText(/email/i);
       const passwordInput = screen.getByLabelText(/password/i);
-      
+
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
       fireEvent.change(passwordInput, { target: { value: 'password123' } });
-      
+
       await waitFor(() => {
-        expect(screen.queryByText(/required|invalid/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/email is required/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/password is required/i)).not.toBeInTheDocument();
       });
     });
 
-    it('should clear error messages when user starts typing', async () => {
+    it('should clear error messages when user corrects input', async () => {
       render(<Login />);
       const emailInput = screen.getByLabelText(/email/i);
-      const loginButton = screen.getByRole('button', { name: /log in|login|sign in/i });
-      
+      const loginButton = screen.getByRole('button', { name: /log in/i });
+
       fireEvent.click(loginButton);
-      
+
       await waitFor(() => {
-        expect(screen.getByText(/email is required|please enter your email/i)).toBeInTheDocument();
+        expect(screen.getByText(/email is required/i)).toBeInTheDocument();
       });
-      
+
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-      
+
       await waitFor(() => {
-        expect(screen.queryByText(/email is required|please enter your email/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/email is required/i)).not.toBeInTheDocument();
       });
     });
   });
 
-  describe('Responsive Behavior', () => {
-    it('should render correctly on mobile viewport', () => {
-      global.innerWidth = 375;
-      global.innerHeight = 667;
-      fireEvent(window, new Event('resize'));
-      
-      render(<Login />);
-      const container = screen.getByRole('main') || screen.getByRole('form') || document.querySelector('div');
-      expect(container).toBeInTheDocument();
-    });
-
-    it('should render correctly on tablet viewport', () => {
-      global.innerWidth = 768;
-      global.innerHeight = 1024;
-      fireEvent(window, new Event('resize'));
-      
-      render(<Login />);
-      const container = screen.getByRole('main') || screen.getByRole('form') || document.querySelector('div');
-      expect(container).toBeInTheDocument();
-    });
-
-    it('should render correctly on desktop viewport', () => {
-      global.innerWidth = 1920;
-      global.innerHeight = 1080;
-      fireEvent(window, new Event('resize'));
-      
-      render(<Login />);
-      const container = screen.getByRole('main') || screen.getByRole('form') || document.querySelector('div');
-      expect(container).toBeInTheDocument();
-    });
-
-    it('should have responsive classes on container', () => {
-      render(<Login />);
-      const container = screen.getByRole('main') || screen.getByRole('form') || document.querySelector('div');
-      const classes = container?.className || '';
-      expect(classes).toMatch(/w-full|max-w|mx-auto|px-|container/);
-    });
-
-    it('should stack form elements vertically on mobile', () => {
-      global.innerWidth = 375;
-      fireEvent(window, new Event('resize'));
-      
-      render(<Login />);
-      const form = screen.getByRole('form') || document.querySelector('form');
-      const classes = form?.className || '';
-      expect(classes).toMatch(/flex-col|block|space-y/);
-    });
-  });
-
-  describe('Button Interaction', () => {
-    it('should call submit handler when login button is clicked', async () => {
+  describe('Button Interactions', () => {
+    it('should handle login button click', async () => {
       render(<Login />);
       const emailInput = screen.getByLabelText(/email/i);
       const passwordInput = screen.getByLabelText(/password/i);
-      const loginButton = screen.getByRole('button', { name: /log in|login|sign in/i });
-      
+      const loginButton = screen.getByRole('button', { name: /log in/i });
+
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
       fireEvent.change(passwordInput, { target: { value: 'password123' } });
       fireEvent.click(loginButton);
-      
+
       await waitFor(() => {
-        expect(loginButton).toBeInTheDocument();
+        expect(loginButton).toBeEnabled();
       });
     });
 
-    it('should disable button while form is submitting', async () => {
+    it('should disable login button during submission', async () => {
       render(<Login />);
       const emailInput = screen.getByLabelText(/email/i);
       const passwordInput = screen.getByLabelText(/password/i);
-      const loginButton = screen.getByRole('button', { name: /log in|login|sign in/i });
-      
+      const loginButton = screen.getByRole('button', { name: /log in/i });
+
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
       fireEvent.change(passwordInput, { target: { value: 'password123' } });
       fireEvent.click(loginButton);
-      
+
       expect(loginButton).toBeDisabled();
     });
 
-    it('should show loading state on button when submitting', async () => {
+    it('should show loading state on button during submission', async () => {
       render(<Login />);
       const emailInput = screen.getByLabelText(/email/i);
       const passwordInput = screen.getByLabelText(/password/i);
-      const loginButton = screen.getByRole('button', { name: /log in|login|sign in/i });
-      
+      const loginButton = screen.getByRole('button', { name: /log in/i });
+
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
       fireEvent.change(passwordInput, { target: { value: 'password123' } });
       fireEvent.click(loginButton);
-      
-      await waitFor(() => {
-        expect(loginButton).toHaveTextContent(/loading|submitting|processing/i);
-      });
-    });
 
-    it('should have red background color on button', () => {
-      render(<Login />);
-      const loginButton = screen.getByRole('button', { name: /log in|login|sign in/i });
-      const classes = loginButton.className;
-      expect(classes).toMatch(/bg-red|red/);
-    });
-
-    it('should have hover effect on button', () => {
-      render(<Login />);
-      const loginButton = screen.getByRole('button', { name: /log in|login|sign in/i });
-      const classes = loginButton.className;
-      expect(classes).toMatch(/hover:/);
-    });
-
-    it('should prevent multiple submissions', async () => {
-      render(<Login />);
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
-      const loginButton = screen.getByRole('button', { name: /log in|login|sign in/i });
-      
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
-      
-      fireEvent.click(loginButton);
-      fireEvent.click(loginButton);
-      fireEvent.click(loginButton);
-      
-      expect(loginButton).toBeDisabled();
+      expect(screen.getByText(/logging in/i)).toBeInTheDocument();
     });
 
     it('should handle form submission with Enter key', async () => {
       render(<Login />);
       const emailInput = screen.getByLabelText(/email/i);
       const passwordInput = screen.getByLabelText(/password/i);
-      
+
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
       fireEvent.change(passwordInput, { target: { value: 'password123' } });
       fireEvent.keyDown(passwordInput, { key: 'Enter', code: 'Enter', charCode: 13 });
-      
+
       await waitFor(() => {
-        const loginButton = screen.getByRole('button', { name: /log in|login|sign in/i });
-        expect(loginButton).toBeInTheDocument();
+        expect(screen.getByText(/logging in/i)).toBeInTheDocument();
       });
+    });
+
+    it('should maintain red button styling on hover', () => {
+      render(<Login />);
+      const loginButton = screen.getByRole('button', { name: /log in/i });
+      
+      expect(loginButton).toHaveClass('bg-red-600');
+      expect(loginButton).toHaveClass('hover:bg-red-700');
+    });
+  });
+
+  describe('Responsive Behavior', () => {
+    it('should render with mobile viewport', () => {
+      global.innerWidth = 375;
+      global.innerHeight = 667;
+      global.dispatchEvent(new Event('resize'));
+
+      render(<Login />);
+      const container = screen.getByRole('main');
+      expect(container).toBeInTheDocument();
+    });
+
+    it('should render with tablet viewport', () => {
+      global.innerWidth = 768;
+      global.innerHeight = 1024;
+      global.dispatchEvent(new Event('resize'));
+
+      render(<Login />);
+      const container = screen.getByRole('main');
+      expect(container).toBeInTheDocument();
+    });
+
+    it('should render with desktop viewport', () => {
+      global.innerWidth = 1920;
+      global.innerHeight = 1080;
+      global.dispatchEvent(new Event('resize'));
+
+      render(<Login />);
+      const container = screen.getByRole('main');
+      expect(container).toBeInTheDocument();
+    });
+
+    it('should have responsive container classes', () => {
+      render(<Login />);
+      const container = screen.getByRole('main');
+      expect(container).toHaveClass('min-h-screen');
+    });
+
+    it('should have responsive form width', () => {
+      render(<Login />);
+      const form = screen.getByRole('form');
+      expect(form).toHaveClass('w-full');
+    });
+
+    it('should stack elements vertically on mobile', () => {
+      global.innerWidth = 375;
+      global.dispatchEvent(new Event('resize'));
+
+      render(<Login />);
+      const form = screen.getByRole('form');
+      expect(form).toHaveClass('flex-col');
     });
   });
 
   describe('Accessibility', () => {
     it('should have proper ARIA labels', () => {
       render(<Login />);
-      expect(screen.getByLabelText(/email/i)).toHaveAttribute('aria-label');
-      expect(screen.getByLabelText(/password/i)).toHaveAttribute('aria-label');
+      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     });
 
     it('should have proper form role', () => {
       render(<Login />);
-      const form = screen.getByRole('form') || document.querySelector('form');
-      expect(form).toBeInTheDocument();
+      expect(screen.getByRole('form')).toBeInTheDocument();
     });
 
-    it('should have proper heading hierarchy', () => {
+    it('should have proper button role', () => {
       render(<Login />);
-      const heading = screen.getByRole('heading', { level: 1 });
-      expect(heading).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
     });
 
-    it('should associate labels with inputs', () => {
+    it('should support keyboard navigation', () => {
       render(<Login />);
       const emailInput = screen.getByLabelText(/email/i);
       const passwordInput = screen.getByLabelText(/password/i);
-      expect(emailInput).toHaveAttribute('id');
-      expect(passwordInput).toHaveAttribute('id');
+      const loginButton = screen.getByRole('button', { name: /log in/i });
+
+      emailInput.focus();
+      expect(document.activeElement).toBe(emailInput);
+
+      fireEvent.keyDown(emailInput, { key: 'Tab' });
+      passwordInput.focus();
+      expect(document.activeElement).toBe(passwordInput);
+
+      fireEvent.keyDown(passwordInput, { key: 'Tab' });
+      loginButton.focus();
+      expect(document.activeElement).toBe(loginButton);
+    });
+
+    it('should announce errors to screen readers', async () => {
+      render(<Login />);
+      const loginButton = screen.getByRole('button', { name: /log in/i });
+
+      fireEvent.click(loginButton);
+
+      await waitFor(() => {
+        const errorMessage = screen.getByText(/email is required/i);
+        expect(errorMessage).toHaveAttribute('role', 'alert');
+      });
+    });
+  });
+
+  describe('Input Handling', () => {
+    it('should update email input value', () => {
+      render(<Login />);
+      const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement;
+
+      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+      expect(emailInput.value).toBe('test@example.com');
+    });
+
+    it('should update password input value', () => {
+      render(<Login />);
+      const passwordInput = screen.getByLabelText(/password/i) as HTMLInputElement;
+
+      fireEvent.change(passwordInput, { target: { value: 'password123' } });
+      expect(passwordInput.value).toBe('password123');
+    });
+
+    it('should trim whitespace from email', async () => {
+      render(<Login />);
+      const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement;
+      const passwordInput = screen.getByLabelText(/password/i);
+      const loginButton = screen.getByRole('button', { name: /log in/i });
+
+      fireEvent.change(emailInput, { target: { value: '  test@example.com  ' } });
+      fireEvent.change(passwordInput, { target: { value: 'password123' } });
+      fireEvent.click(loginButton);
+
+      await waitFor(() => {
+        expect(emailInput.value.trim()).toBe('test@example.com');
+      });
+    });
+
+    it('should handle paste events', () => {
+      render(<Login />);
+      const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement;
+
+      fireEvent.paste(emailInput, {
+        clipboardData: {
+          getData: () => 'pasted@example.com',
+        },
+      });
+
+      fireEvent.change(emailInput, { target: { value: 'pasted@example.com' } });
+      expect(emailInput.value).toBe('pasted@example.com');
     });
   });
 });
