@@ -54,8 +54,8 @@ const validateLoginRequest = (body: any): { valid: boolean; error?: string } => 
     return { valid: false, error: 'Password is required and must be a string' };
   }
 
-  if (body.password.length < 6) {
-    return { valid: false, error: 'Password must be at least 6 characters long' };
+  if (body.password.length < 8) {
+    return { valid: false, error: 'Password must be at least 8 characters long' };
   }
 
   return { valid: true };
@@ -73,34 +73,34 @@ const authenticateUser = async (
 ): Promise<AuthResponse> => {
   try {
     // TODO: Implement actual authentication logic
-    // This should integrate with your authentication service (e.g., Cognito, DynamoDB, etc.)
+    // This should integrate with your authentication service (Cognito, Auth0, etc.)
     // For now, this is a placeholder implementation
     
-    // Example: Query user from database
-    // const user = await getUserByEmail(email);
-    // if (!user) {
-    //   return { success: false, message: 'Invalid credentials' };
-    // }
-    
-    // Example: Verify password
-    // const isPasswordValid = await verifyPassword(password, user.passwordHash);
-    // if (!isPasswordValid) {
-    //   return { success: false, message: 'Invalid credentials' };
-    // }
-    
+    // Example: Query DynamoDB for user
+    // Example: Verify password hash
     // Example: Generate JWT token
-    // const token = await generateToken(user);
     
-    // Placeholder response
+    // Placeholder response - replace with actual authentication
+    if (email && password) {
+      // Simulate authentication delay
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // This is a mock response - replace with real authentication
+      return {
+        success: true,
+        message: 'Authentication successful',
+        token: 'mock-jwt-token', // Replace with actual JWT generation
+        user: {
+          id: 'user-123',
+          email: email,
+          name: 'Member User'
+        }
+      };
+    }
+
     return {
-      success: true,
-      message: 'Authentication successful',
-      token: 'placeholder-jwt-token',
-      user: {
-        id: 'user-id-placeholder',
-        email: email,
-        name: 'User Name',
-      },
+      success: false,
+      message: 'Invalid credentials'
     };
   } catch (error) {
     console.error('Authentication error:', error);
@@ -112,11 +112,11 @@ const authenticateUser = async (
  * Creates API Gateway response
  * @param statusCode - HTTP status code
  * @param body - Response body
- * @returns API Gateway proxy result
+ * @returns Formatted API Gateway response
  */
 const createResponse = (
   statusCode: number,
-  body: Record<string, any>
+  body: AuthResponse | { error: string }
 ): APIGatewayProxyResult => {
   return {
     statusCode,
@@ -124,10 +124,10 @@ const createResponse = (
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Credentials': true,
-      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-      'Access-Control-Allow-Methods': 'OPTIONS,POST',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(body)
   };
 };
 
@@ -141,23 +141,22 @@ const createResponse = (
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  console.log('Authentication request received:', {
+  console.log('Authentication request received', {
     path: event.path,
     method: event.httpMethod,
-    requestId: event.requestContext.requestId,
+    requestId: event.requestContext.requestId
   });
 
   try {
-    // Handle preflight OPTIONS request
+    // Handle CORS preflight
     if (event.httpMethod === 'OPTIONS') {
-      return createResponse(200, { message: 'OK' });
+      return createResponse(200, { error: '' });
     }
 
-    // Only allow POST requests
+    // Validate HTTP method
     if (event.httpMethod !== 'POST') {
       return createResponse(405, {
-        success: false,
-        message: 'Method not allowed',
+        error: 'Method not allowed. Use POST for authentication.'
       });
     }
 
@@ -165,49 +164,52 @@ export const handler = async (
     let requestBody: LoginRequest;
     try {
       requestBody = JSON.parse(event.body || '{}');
-    } catch (error) {
-      console.error('Failed to parse request body:', error);
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError);
       return createResponse(400, {
-        success: false,
-        message: 'Invalid JSON in request body',
+        error: 'Invalid JSON in request body'
       });
     }
 
     // Validate request
     const validation = validateLoginRequest(requestBody);
     if (!validation.valid) {
+      console.warn('Validation failed:', validation.error);
       return createResponse(400, {
-        success: false,
-        message: validation.error,
+        error: validation.error || 'Invalid request'
       });
     }
+
+    // Sanitize email
+    const email = requestBody.email.trim().toLowerCase();
+    const password = requestBody.password;
 
     // Authenticate user
-    const authResult = await authenticateUser(
-      requestBody.email.toLowerCase().trim(),
-      requestBody.password
-    );
+    const authResult = await authenticateUser(email, password);
 
     if (!authResult.success) {
+      console.warn('Authentication failed for email:', email);
       return createResponse(401, {
-        success: false,
-        message: authResult.message,
+        error: authResult.message
       });
     }
 
+    console.log('Authentication successful for email:', email);
+
     // Return success response
-    return createResponse(200, {
-      success: true,
-      message: authResult.message,
-      token: authResult.token,
-      user: authResult.user,
-    });
+    return createResponse(200, authResult);
+
   } catch (error) {
     console.error('Unexpected error in authentication handler:', error);
     
     return createResponse(500, {
-      success: false,
-      message: 'Internal server error',
+      error: 'Internal server error. Please try again later.'
     });
   }
 };
+
+/**
+ * Export handler as default for Lambda
+ */
+export default handler;
+```
