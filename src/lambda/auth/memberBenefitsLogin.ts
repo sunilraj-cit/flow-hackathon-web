@@ -5,7 +5,7 @@ import * as crypto from 'crypto';
 /**
  * Environment variables interface
  */
-interface Environment {
+interface EnvironmentVariables {
   JWT_SECRET: string;
   TOKEN_EXPIRY_HOURS?: string;
   ALLOWED_ORIGINS?: string;
@@ -37,10 +37,11 @@ interface JWTPayload {
 /**
  * Response body interface
  */
-interface ResponseBody {
-  message?: string;
+interface LoginResponse {
+  success: boolean;
   token?: string;
   expiresIn?: number;
+  message?: string;
   errors?: Array<{ field: string; message: string }>;
 }
 
@@ -48,22 +49,22 @@ interface ResponseBody {
  * CORS headers configuration
  */
 const getCorsHeaders = (origin?: string): Record<string, string> => {
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['*'];
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*').split(',');
   const allowOrigin = origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
 
   return {
     'Access-Control-Allow-Origin': allowOrigin,
-    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
     'Access-Control-Allow-Methods': 'POST,OPTIONS',
     'Content-Type': 'application/json',
   };
 };
 
 /**
- * Creates a base64 URL-safe encoded string
+ * Creates a base64url encoded string
  */
-const base64UrlEncode = (str: string): string => {
-  return Buffer.from(str)
+const base64UrlEncode = (input: string): string => {
+  return Buffer.from(input)
     .toString('base64')
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
@@ -98,13 +99,21 @@ const generateJWT = (payload: JWTPayload, secret: string): string => {
  * In production, this should query a database or external authentication service
  */
 const validateCredentials = async (email: string, password: string): Promise<boolean> => {
-  // TODO: Implement actual credential validation against database
-  // This is a placeholder implementation
-  // In production, use proper password hashing (bcrypt, argon2) and database lookup
+  // TODO: Replace with actual database lookup or authentication service
+  // This is a placeholder implementation for demonstration
   
-  // For now, this is a mock validation
-  // Replace with actual authentication logic
-  return email.length > 0 && password.length >= 8;
+  // Simulate async database call
+  await new Promise(resolve => setTimeout(resolve, 100));
+
+  // For development/testing purposes only
+  // In production, implement proper password hashing verification (bcrypt, argon2, etc.)
+  const validUsers = [
+    { email: 'member@example.com', passwordHash: 'hashed_password_here' },
+  ];
+
+  // This is NOT secure - implement proper password verification in production
+  const user = validUsers.find(u => u.email === email);
+  return user !== undefined && password.length >= 8;
 };
 
 /**
@@ -112,7 +121,7 @@ const validateCredentials = async (email: string, password: string): Promise<boo
  */
 const createResponse = (
   statusCode: number,
-  body: ResponseBody,
+  body: LoginResponse,
   headers: Record<string, string> = {}
 ): APIGatewayProxyResult => {
   return {
@@ -126,34 +135,20 @@ const createResponse = (
 };
 
 /**
- * Parses and validates the request body
+ * Validates environment variables
  */
-const parseRequestBody = (event: APIGatewayProxyEvent): LoginRequest => {
-  if (!event.body) {
-    throw new Error('Request body is required');
+const validateEnvironment = (): EnvironmentVariables => {
+  const jwtSecret = process.env.JWT_SECRET;
+
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET environment variable is not set');
   }
 
-  let parsedBody: unknown;
-  try {
-    parsedBody = JSON.parse(event.body);
-  } catch (error) {
-    throw new Error('Invalid JSON in request body');
-  }
-
-  const result = loginRequestSchema.safeParse(parsedBody);
-  
-  if (!result.success) {
-    const errors = result.error.errors.map((err) => ({
-      field: err.path.join('.'),
-      message: err.message,
-    }));
-    
-    const error = new Error('Validation failed');
-    (error as any).validationErrors = errors;
-    throw error;
-  }
-
-  return result.data;
+  return {
+    JWT_SECRET: jwtSecret,
+    TOKEN_EXPIRY_HOURS: process.env.TOKEN_EXPIRY_HOURS || '24',
+    ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
+  };
 };
 
 /**
@@ -173,55 +168,64 @@ export const handler = async (
 
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
-    return createResponse(200, {});
+    return createResponse(200, { success: true });
   }
 
-  // Only allow POST requests
+  // Validate HTTP method
   if (event.httpMethod !== 'POST') {
     return createResponse(405, {
+      success: false,
       message: 'Method not allowed',
     });
   }
 
   try {
     // Validate environment variables
-    const env = process.env as Environment;
-    if (!env.JWT_SECRET) {
-      console.error('JWT_SECRET environment variable is not set');
-      return createResponse(500, {
-        message: 'Internal server error',
+    const env = validateEnvironment();
+
+    // Parse request body
+    if (!event.body) {
+      return createResponse(400, {
+        success: false,
+        message: 'Request body is required',
       });
     }
 
-    // Parse and validate request body
-    let loginRequest: LoginRequest;
+    let requestBody: unknown;
     try {
-      loginRequest = parseRequestBody(event);
-    } catch (error: any) {
-      if (error.validationErrors) {
-        return createResponse(400, {
-          message: 'Validation failed',
-          errors: error.validationErrors,
-        });
-      }
+      requestBody = JSON.parse(event.body);
+    } catch (error) {
       return createResponse(400, {
-        message: error.message || 'Invalid request body',
+        success: false,
+        message: 'Invalid JSON in request body',
       });
     }
+
+    // Validate request schema
+    const validationResult = loginRequestSchema.safeParse(requestBody);
+
+    if (!validationResult.success) {
+      const errors = validationResult.error.errors.map(err => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }));
+
+      return createResponse(400, {
+        success: false,
+        message: 'Validation failed',
+        errors,
+      });
+    }
+
+    const { email, password }: LoginRequest = validationResult.data;
 
     // Validate credentials
-    const isValid = await validateCredentials(
-      loginRequest.email,
-      loginRequest.password
-    );
+    const isValid = await validateCredentials(email, password);
 
     if (!isValid) {
-      console.warn('Invalid login attempt', {
-        email: loginRequest.email,
-        timestamp: new Date().toISOString(),
-      });
-      
+      console.warn('Invalid login attempt', { email });
       return createResponse(401, {
+        success: false,
         message: 'Invalid email or password',
       });
     }
@@ -232,8 +236,8 @@ export const handler = async (
     const expiresIn = tokenExpiryHours * 60 * 60;
 
     const payload: JWTPayload = {
-      sub: crypto.createHash('sha256').update(loginRequest.email).digest('hex'),
-      email: loginRequest.email,
+      sub: email,
+      email,
       iat: now,
       exp: now + expiresIn,
     };
@@ -241,24 +245,26 @@ export const handler = async (
     const token = generateJWT(payload, env.JWT_SECRET);
 
     console.log('Login successful', {
-      email: loginRequest.email,
-      expiresAt: new Date((now + expiresIn) * 1000).toISOString(),
+      email,
+      expiresIn,
     });
 
     return createResponse(200, {
-      message: 'Login successful',
+      success: true,
       token,
       expiresIn,
+      message: 'Login successful',
     });
-  } catch (error: any) {
-    console.error('Unexpected error during login', {
-      error: error.message,
-      stack: error.stack,
+
+  } catch (error) {
+    console.error('Error processing login request', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
     return createResponse(500, {
+      success: false,
       message: 'Internal server error',
     });
   }
 };
-```
