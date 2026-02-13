@@ -1,7 +1,19 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import * as jwt from 'jsonwebtoken';
+import * as bcrypt from 'bcryptjs';
 
 /**
- * Interface for login request body
+ * Environment variables required for the Lambda function
+ */
+interface EnvironmentVariables {
+  JWT_SECRET: string;
+  JWT_EXPIRATION: string;
+  DYNAMODB_TABLE_NAME: string;
+  AWS_REGION: string;
+}
+
+/**
+ * Login request body structure
  */
 interface LoginRequest {
   email: string;
@@ -9,76 +21,190 @@ interface LoginRequest {
 }
 
 /**
- * Interface for login response
+ * Member data structure from database
  */
-interface LoginResponse {
-  success: boolean;
-  message: string;
-  token?: string;
-  user?: {
+interface MemberData {
+  id: string;
+  email: string;
+  passwordHash: string;
+  firstName?: string;
+  lastName?: string;
+  membershipStatus: string;
+  createdAt: string;
+  lastLogin?: string;
+}
+
+/**
+ * JWT payload structure
+ */
+interface JWTPayload {
+  memberId: string;
+  email: string;
+  membershipStatus: string;
+  iat?: number;
+  exp?: number;
+}
+
+/**
+ * Success response structure
+ */
+interface LoginSuccessResponse {
+  success: true;
+  token: string;
+  member: {
     id: string;
     email: string;
-    name?: string;
+    firstName?: string;
+    lastName?: string;
+    membershipStatus: string;
   };
+  expiresIn: string;
 }
 
 /**
- * Interface for error response
+ * Error response structure
  */
-interface ErrorResponse {
+interface LoginErrorResponse {
   success: false;
+  error: string;
   message: string;
-  error?: string;
 }
 
 /**
- * Validates email format
- * @param email - Email address to validate
- * @returns True if email is valid, false otherwise
+ * Validates the login request body
+ * @param body - Request body to validate
+ * @returns Parsed login request or null if invalid
  */
-const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+const validateLoginRequest = (body: string | null): LoginRequest | null => {
+  if (!body) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(body);
+    
+    if (!parsed.email || !parsed.password) {
+      return null;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(parsed.email)) {
+      return null;
+    }
+
+    return {
+      email: parsed.email.toLowerCase().trim(),
+      password: parsed.password,
+    };
+  } catch (error) {
+    return null;
+  }
 };
 
 /**
- * Validates login request body
- * @param body - Request body to validate
- * @returns Validation result with error message if invalid
+ * Retrieves member data from DynamoDB
+ * @param email - Member email address
+ * @returns Member data or null if not found
  */
-const validateLoginRequest = (body: any): { valid: boolean; error?: string } => {
-  if (!body) {
-    return { valid: false, error: 'Request body is required' };
-  }
+const getMemberByEmail = async (email: string): Promise<MemberData | null> => {
+  const AWS = await import('aws-sdk');
+  const dynamodb = new AWS.DynamoDB.DocumentClient({
+    region: process.env.AWS_REGION || 'us-east-1',
+  });
 
-  if (!body.email || typeof body.email !== 'string') {
-    return { valid: false, error: 'Email is required and must be a string' };
-  }
+  const params = {
+    TableName: process.env.DYNAMODB_TABLE_NAME || 'members',
+    IndexName: 'EmailIndex',
+    KeyConditionExpression: 'email = :email',
+    ExpressionAttributeValues: {
+      ':email': email,
+    },
+  };
 
-  if (!isValidEmail(body.email)) {
-    return { valid: false, error: 'Invalid email format' };
-  }
+  try {
+    const result = await dynamodb.query(params).promise();
+    
+    if (!result.Items || result.Items.length === 0) {
+      return null;
+    }
 
-  if (!body.password || typeof body.password !== 'string') {
-    return { valid: false, error: 'Password is required and must be a string' };
+    return result.Items[0] as MemberData;
+  } catch (error) {
+    console.error('Error querying DynamoDB:', error);
+    throw new Error('Database query failed');
   }
+};
 
-  if (body.password.length < 6) {
-    return { valid: false, error: 'Password must be at least 6 characters long' };
+/**
+ * Updates the last login timestamp for a member
+ * @param memberId - Member ID
+ */
+const updateLastLogin = async (memberId: string): Promise<void> => {
+  const AWS = await import('aws-sdk');
+  const dynamodb = new AWS.DynamoDB.DocumentClient({
+    region: process.env.AWS_REGION || 'us-east-1',
+  });
+
+  const params = {
+    TableName: process.env.DYNAMODB_TABLE_NAME || 'members',
+    Key: { id: memberId },
+    UpdateExpression: 'SET lastLogin = :lastLogin',
+    ExpressionAttributeValues: {
+      ':lastLogin': new Date().toISOString(),
+    },
+  };
+
+  try {
+    await dynamodb.update(params).promise();
+  } catch (error) {
+    console.error('Error updating last login:', error);
+    // Non-critical error, don't throw
   }
+};
 
-  return { valid: true };
+/**
+ * Verifies password against stored hash
+ * @param password - Plain text password
+ * @param hash - Stored password hash
+ * @returns True if password matches
+ */
+const verifyPassword = async (password: string, hash: string): Promise<boolean> => {
+  try {
+    return await bcrypt.compare(password, hash);
+  } catch (error) {
+    console.error('Error verifying password:', error);
+    return false;
+  }
+};
+
+/**
+ * Generates JWT token for authenticated member
+ * @param member - Member data
+ * @returns JWT token string
+ */
+const generateToken = (member: MemberData): string => {
+  const payload: JWTPayload = {
+    memberId: member.id,
+    email: member.email,
+    membershipStatus: member.membershipStatus,
+  };
+
+  const secret = process.env.JWT_SECRET || 'default-secret-change-in-production';
+  const expiresIn = process.env.JWT_EXPIRATION || '24h';
+
+  return jwt.sign(payload, secret, { expiresIn });
 };
 
 /**
  * Creates a standardized API Gateway response
  * @param statusCode - HTTP status code
  * @param body - Response body
- * @returns Formatted API Gateway response
+ * @returns API Gateway proxy result
  */
 const createResponse = (
   statusCode: number,
-  body: LoginResponse | ErrorResponse
+  body: LoginSuccessResponse | LoginErrorResponse
 ): APIGatewayProxyResult => {
   return {
     statusCode,
@@ -86,154 +212,131 @@ const createResponse = (
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Credentials': true,
-      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-      'Access-Control-Allow-Methods': 'OPTIONS,POST',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
     body: JSON.stringify(body),
   };
 };
 
 /**
- * Authenticates user credentials
- * This is a placeholder implementation. In production, this should:
- * - Query a database (DynamoDB, RDS, etc.)
- * - Verify password hash using bcrypt or similar
- * - Generate JWT token
- * - Implement rate limiting
- * - Log authentication attempts
- * 
- * @param email - User email
- * @param password - User password
- * @returns Authentication result with user data and token
- */
-const authenticateUser = async (
-  email: string,
-  password: string
-): Promise<LoginResponse> => {
-  // TODO: Implement actual authentication logic
-  // This is a placeholder for demonstration purposes
-  
-  // Simulate database query delay
-  await new Promise(resolve => setTimeout(resolve, 100));
-
-  // In production, replace this with actual database query and password verification
-  // Example:
-  // const user = await getUserByEmail(email);
-  // if (!user || !(await verifyPassword(password, user.passwordHash))) {
-  //   throw new Error('Invalid credentials');
-  // }
-  // const token = generateJWT(user);
-
-  // Placeholder response
-  return {
-    success: true,
-    message: 'Login successful',
-    token: 'placeholder-jwt-token',
-    user: {
-      id: 'user-123',
-      email: email,
-      name: 'Member User',
-    },
-  };
-};
-
-/**
- * Lambda handler for member benefits login authentication
+ * Lambda handler for member login authentication
+ * Validates credentials and returns JWT token on success
  * 
  * @param event - API Gateway proxy event
- * @param context - Lambda execution context
- * @returns API Gateway proxy result
+ * @returns API Gateway proxy result with token or error
  */
 export const handler = async (
-  event: APIGatewayProxyEvent,
-  context: Context
+  event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   console.log('Member login request received', {
-    requestId: context.requestId,
-    httpMethod: event.httpMethod,
     path: event.path,
+    method: event.httpMethod,
   });
 
+  // Handle CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return createResponse(200, {
+      success: true,
+      token: '',
+      member: { id: '', email: '', membershipStatus: '' },
+      expiresIn: '',
+    });
+  }
+
+  // Validate HTTP method
+  if (event.httpMethod !== 'POST') {
+    return createResponse(405, {
+      success: false,
+      error: 'METHOD_NOT_ALLOWED',
+      message: 'Only POST method is allowed',
+    });
+  }
+
   try {
-    // Handle OPTIONS request for CORS preflight
-    if (event.httpMethod === 'OPTIONS') {
-      return createResponse(200, {
-        success: true,
-        message: 'CORS preflight successful',
-      });
-    }
-
-    // Only allow POST requests
-    if (event.httpMethod !== 'POST') {
-      return createResponse(405, {
-        success: false,
-        message: 'Method not allowed. Only POST requests are accepted.',
-      });
-    }
-
-    // Parse request body
-    let requestBody: LoginRequest;
-    try {
-      requestBody = JSON.parse(event.body || '{}');
-    } catch (error) {
-      console.error('Failed to parse request body', error);
+    // Validate request body
+    const loginRequest = validateLoginRequest(event.body);
+    
+    if (!loginRequest) {
       return createResponse(400, {
         success: false,
-        message: 'Invalid JSON in request body',
+        error: 'INVALID_REQUEST',
+        message: 'Invalid email or password format',
       });
     }
 
-    // Validate request
-    const validation = validateLoginRequest(requestBody);
-    if (!validation.valid) {
-      console.warn('Validation failed', { error: validation.error });
-      return createResponse(400, {
+    // Retrieve member from database
+    const member = await getMemberByEmail(loginRequest.email);
+    
+    if (!member) {
+      // Use generic error message to prevent email enumeration
+      return createResponse(401, {
         success: false,
-        message: validation.error || 'Validation failed',
+        error: 'INVALID_CREDENTIALS',
+        message: 'Invalid email or password',
       });
     }
 
-    // Authenticate user
-    const { email, password } = requestBody;
-    const authResult = await authenticateUser(email.toLowerCase().trim(), password);
+    // Verify password
+    const isPasswordValid = await verifyPassword(
+      loginRequest.password,
+      member.passwordHash
+    );
 
-    console.log('Authentication successful', {
-      userId: authResult.user?.id,
-      email: authResult.user?.email,
+    if (!isPasswordValid) {
+      return createResponse(401, {
+        success: false,
+        error: 'INVALID_CREDENTIALS',
+        message: 'Invalid email or password',
+      });
+    }
+
+    // Check membership status
+    if (member.membershipStatus === 'suspended' || member.membershipStatus === 'inactive') {
+      return createResponse(403, {
+        success: false,
+        error: 'ACCOUNT_SUSPENDED',
+        message: 'Your account is currently suspended. Please contact support.',
+      });
+    }
+
+    // Generate JWT token
+    const token = generateToken(member);
+
+    // Update last login timestamp (non-blocking)
+    updateLastLogin(member.id).catch((error) => {
+      console.error('Failed to update last login:', error);
     });
 
-    return createResponse(200, authResult);
+    // Return success response
+    const response: LoginSuccessResponse = {
+      success: true,
+      token,
+      member: {
+        id: member.id,
+        email: member.email,
+        firstName: member.firstName,
+        lastName: member.lastName,
+        membershipStatus: member.membershipStatus,
+      },
+      expiresIn: process.env.JWT_EXPIRATION || '24h',
+    };
+
+    console.log('Login successful', {
+      memberId: member.id,
+      email: member.email,
+    });
+
+    return createResponse(200, response);
 
   } catch (error) {
-    console.error('Login error', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+    console.error('Login error:', error);
 
-    // Check for specific error types
-    if (error instanceof Error) {
-      if (error.message.includes('Invalid credentials')) {
-        return createResponse(401, {
-          success: false,
-          message: 'Invalid email or password',
-        });
-      }
-
-      if (error.message.includes('Account locked')) {
-        return createResponse(403, {
-          success: false,
-          message: 'Account is locked. Please contact support.',
-        });
-      }
-    }
-
-    // Generic error response
+    // Return generic error to client
     return createResponse(500, {
       success: false,
+      error: 'INTERNAL_SERVER_ERROR',
       message: 'An error occurred during login. Please try again later.',
-      error: process.env.NODE_ENV === 'development' 
-        ? (error instanceof Error ? error.message : 'Unknown error')
-        : undefined,
     });
   }
 };
