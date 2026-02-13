@@ -1,16 +1,16 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
 /**
- * Generates the HTML content for the member benefits login page
- * @returns {string} The complete HTML page as a string
+ * HTML template for the member benefits login page
+ * Features a responsive design with a red submit button
  */
-const generateLoginPageHTML = (): string => {
-  return `<!DOCTYPE html>
+const getLoginPageHTML = (): string => {
+  return `
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Member Benefits Login</title>
     <style>
         * {
@@ -20,7 +20,7 @@ const generateLoginPageHTML = (): string => {
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background-color: #f5f5f5;
             display: flex;
             justify-content: center;
@@ -30,7 +30,7 @@ const generateLoginPageHTML = (): string => {
         }
 
         .login-container {
-            background-color: white;
+            background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 40px;
@@ -43,14 +43,12 @@ const generateLoginPageHTML = (): string => {
             font-weight: 600;
             margin-bottom: 8px;
             color: #333;
-            text-align: center;
         }
 
         .subtitle {
             font-size: 14px;
             color: #666;
             margin-bottom: 32px;
-            text-align: center;
         }
 
         .form-group {
@@ -81,7 +79,18 @@ const generateLoginPageHTML = (): string => {
             border-color: #dc2626;
         }
 
-        .login-button {
+        .error-message {
+            color: #dc2626;
+            font-size: 14px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .submit-button {
             width: 100%;
             padding: 12px;
             font-size: 16px;
@@ -95,47 +104,38 @@ const generateLoginPageHTML = (): string => {
             margin-top: 24px;
         }
 
-        .login-button:hover {
+        .submit-button:hover {
             background-color: #b91c1c;
         }
 
-        .login-button:active {
+        .submit-button:active {
             background-color: #991b1b;
         }
 
-        .forgot-password {
-            text-align: center;
-            margin-top: 16px;
+        .submit-button:disabled {
+            background-color: #fca5a5;
+            cursor: not-allowed;
         }
 
-        .forgot-password a {
+        .success-message {
+            color: #16a34a;
             font-size: 14px;
-            color: #666;
-            text-decoration: none;
+            margin-top: 16px;
+            text-align: center;
+            display: none;
         }
 
-        .forgot-password a:hover {
-            color: #dc2626;
-            text-decoration: underline;
+        .success-message.show {
+            display: block;
         }
 
         @media (max-width: 480px) {
             .login-container {
-                padding: 30px 20px;
+                padding: 24px;
             }
 
             h1 {
                 font-size: 20px;
-            }
-
-            .subtitle {
-                font-size: 13px;
-            }
-        }
-
-        @media (min-width: 768px) {
-            .login-container {
-                padding: 50px;
             }
         }
     </style>
@@ -143,7 +143,7 @@ const generateLoginPageHTML = (): string => {
 <body>
     <div class="login-container">
         <h1>Member Benefits Login</h1>
-        <p class="subtitle">Access your member benefits portal</p>
+        <p class="subtitle">Please enter your credentials to continue</p>
         
         <form id="loginForm">
             <div class="form-group">
@@ -153,11 +153,11 @@ const generateLoginPageHTML = (): string => {
                     id="email" 
                     name="email" 
                     required 
-                    placeholder="Enter your email"
                     autocomplete="email"
+                    placeholder="Enter your email"
                 />
             </div>
-            
+
             <div class="form-group">
                 <label for="password">Password</label>
                 <input 
@@ -165,118 +165,230 @@ const generateLoginPageHTML = (): string => {
                     id="password" 
                     name="password" 
                     required 
-                    placeholder="Enter your password"
                     autocomplete="current-password"
+                    placeholder="Enter your password"
                 />
             </div>
-            
-            <button type="submit" class="login-button">
-                Login
+
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <button type="submit" class="submit-button" id="submitButton">
+                Sign In
             </button>
         </form>
-        
-        <div class="forgot-password">
-            <a href="#" id="forgotPasswordLink">Forgot your password?</a>
-        </div>
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            // Placeholder for actual login logic
-            console.log('Login attempt:', { email });
-            alert('Login functionality will be implemented in the next phase.');
-        });
+        const form = document.getElementById('loginForm');
+        const submitButton = document.getElementById('submitButton');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
 
-        document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            alert('Password reset functionality will be implemented in the next phase.');
+            
+            errorMessage.classList.remove('show');
+            successMessage.classList.remove('show');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Signing in...';
+
+            const formData = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const response = await fetch(window.location.pathname, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    successMessage.textContent = data.message || 'Login successful!';
+                    successMessage.classList.add('show');
+                    form.reset();
+                } else {
+                    errorMessage.textContent = data.message || 'Login failed. Please try again.';
+                    errorMessage.classList.add('show');
+                }
+            } catch (error) {
+                errorMessage.textContent = 'An error occurred. Please try again later.';
+                errorMessage.classList.add('show');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Sign In';
+            }
         });
     </script>
 </body>
-</html>`;
+</html>
+  `.trim();
 };
 
 /**
- * Lambda handler for serving the member benefits login page
- * Handles API Gateway requests and returns HTML content with proper CORS headers
- * 
- * @param {APIGatewayProxyEvent} event - The API Gateway event object
- * @returns {Promise<APIGatewayProxyResult>} The API Gateway response with HTML content
+ * Validates login credentials
+ * @param email - User email address
+ * @param password - User password
+ * @returns Validation result with success status and message
  */
-export const handler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+const validateCredentials = (email: string, password: string): { valid: boolean; message?: string } => {
+  if (!email || !password) {
+    return { valid: false, message: 'Email and password are required' };
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return { valid: false, message: 'Invalid email format' };
+  }
+
+  if (password.length < 6) {
+    return { valid: false, message: 'Password must be at least 6 characters' };
+  }
+
+  return { valid: true };
+};
+
+/**
+ * Handles POST request for login form submission
+ * @param body - Request body containing email and password
+ * @returns API Gateway response with login result
+ */
+const handleLoginSubmission = async (body: string | null): Promise<APIGatewayProxyResult> => {
   try {
-    // Log the incoming request for monitoring
-    console.log('Received request:', {
-      path: event.path,
-      httpMethod: event.httpMethod,
-      requestTime: event.requestContext.requestTime,
-    });
-
-    // Handle OPTIONS request for CORS preflight
-    if (event.httpMethod === 'OPTIONS') {
+    if (!body) {
       return {
-        statusCode: 200,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-          'Access-Control-Max-Age': '86400',
-        },
-        body: '',
-      };
-    }
-
-    // Only allow GET requests
-    if (event.httpMethod !== 'GET') {
-      return {
-        statusCode: 405,
+        statusCode: 400,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
         },
         body: JSON.stringify({
-          error: 'Method Not Allowed',
-          message: 'Only GET requests are supported',
+          success: false,
+          message: 'Request body is required',
         }),
       };
     }
 
-    // Generate and return the login page HTML
-    const htmlContent = generateLoginPageHTML();
+    const { email, password } = JSON.parse(body);
 
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-      },
-      body: htmlContent,
-    };
+    const validation = validateCredentials(email, password);
+    if (!validation.valid) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          success: false,
+          message: validation.message,
+        }),
+      };
+    }
+
+    // TODO: Implement actual authentication logic
+    // This is a placeholder for demonstration purposes
+    // In production, integrate with AWS Cognito, DynamoDB, or other auth service
+    
+    // Simulated authentication check
+    const isAuthenticated = true; // Replace with actual auth logic
+
+    if (isAuthenticated) {
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          success: true,
+          message: 'Login successful',
+        }),
+      };
+    } else {
+      return {
+        statusCode: 401,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          success: false,
+          message: 'Invalid credentials',
+        }),
+      };
+    }
   } catch (error) {
-    // Log the error for debugging
-    console.error('Error processing request:', error);
-
-    // Return a generic error response
+    console.error('Error processing login submission:', error);
     return {
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
       },
       body: JSON.stringify({
-        error: 'Internal Server Error',
-        message: 'An unexpected error occurred while processing your request',
+        success: false,
+        message: 'Internal server error',
       }),
     };
   }
 };
-```
+
+/**
+ * Lambda handler for member benefits login page
+ * Serves the login page on GET requests and handles form submission on POST requests
+ * @param event - API Gateway proxy event
+ * @returns API Gateway proxy result with HTML page or JSON response
+ */
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  console.log('Received event:', JSON.stringify(event, null, 2));
+
+  const httpMethod = event.httpMethod;
+
+  try {
+    // Handle GET request - serve login page
+    if (httpMethod === 'GET') {
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'text/html',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+        body: getLoginPageHTML(),
+      };
+    }
+
+    // Handle POST request - process login form submission
+    if (httpMethod === 'POST') {
+      return await handleLoginSubmission(event.body);
+    }
+
+    // Handle unsupported methods
+    return {
+      statusCode: 405,
+      headers: {
+        'Content-Type': 'application/json',
+        'Allow': 'GET, POST',
+      },
+      body: JSON.stringify({
+        success: false,
+        message: 'Method not allowed',
+      }),
+    };
+  } catch (error) {
+    console.error('Unhandled error in handler:', error);
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        success: false,
+        message: 'Internal server error',
+      }),
+    };
+  }
+};
