@@ -1,8 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
-import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as logs from 'aws-cdk-lib/aws-logs';
-import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 import * as path from 'path';
 
@@ -14,16 +13,16 @@ export interface MemberBenefitsStackProps extends cdk.StackProps {
    * Environment name (e.g., 'dev', 'staging', 'prod')
    */
   readonly environment?: string;
-
+  
   /**
-   * API Gateway to add routes to (optional, creates new if not provided)
+   * Log retention period in days
    */
-  readonly api?: apigateway.RestApi;
+  readonly logRetentionDays?: logs.RetentionDays;
 }
 
 /**
  * CDK Stack for Member Benefits infrastructure
- * Provisions API Gateway routes and Lambda functions for member benefits functionality
+ * Provisions API Gateway and Lambda function for serving the login page
  */
 export class MemberBenefitsStack extends cdk.Stack {
   public readonly api: apigateway.RestApi;
@@ -33,9 +32,26 @@ export class MemberBenefitsStack extends cdk.Stack {
     super(scope, id, props);
 
     const environment = props?.environment || 'dev';
+    const logRetention = props?.logRetentionDays || logs.RetentionDays.ONE_WEEK;
 
-    // Create or use existing API Gateway
-    this.api = props?.api || new apigateway.RestApi(this, 'MemberBenefitsApi', {
+    // Lambda function for serving the login page
+    this.loginFunction = new lambda.Function(this, 'MemberBenefitsLoginFunction', {
+      functionName: `member-benefits-login-${environment}`,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda/member-benefits-login')),
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      environment: {
+        ENVIRONMENT: environment,
+        NODE_ENV: environment === 'prod' ? 'production' : 'development',
+      },
+      logRetention,
+      description: 'Lambda function for serving member benefits login page',
+    });
+
+    // API Gateway REST API
+    this.api = new apigateway.RestApi(this, 'MemberBenefitsApi', {
       restApiName: `member-benefits-api-${environment}`,
       description: 'API Gateway for Member Benefits',
       deployOptions: {
@@ -43,6 +59,7 @@ export class MemberBenefitsStack extends cdk.Stack {
         loggingLevel: apigateway.MethodLoggingLevel.INFO,
         dataTraceEnabled: true,
         metricsEnabled: true,
+        tracingEnabled: true,
       },
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
@@ -54,55 +71,10 @@ export class MemberBenefitsStack extends cdk.Stack {
           'X-Api-Key',
           'X-Amz-Security-Token',
         ],
-        allowCredentials: true,
       },
-    });
-
-    // Create Lambda execution role with proper permissions
-    const loginFunctionRole = new iam.Role(this, 'LoginFunctionRole', {
-      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-      description: 'Execution role for member benefits login Lambda function',
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
-      ],
-    });
-
-    // Add additional permissions for login function
-    loginFunctionRole.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: [
-          'logs:CreateLogGroup',
-          'logs:CreateLogStream',
-          'logs:PutLogEvents',
-        ],
-        resources: ['arn:aws:logs:*:*:*'],
-      })
-    );
-
-    // Create CloudWatch Log Group for Lambda function
-    const loginLogGroup = new logs.LogGroup(this, 'LoginFunctionLogGroup', {
-      logGroupName: `/aws/lambda/member-benefits-login-${environment}`,
-      retention: logs.RetentionDays.ONE_WEEK,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
-
-    // Create Lambda function for login endpoint
-    this.loginFunction = new lambda.Function(this, 'LoginFunction', {
-      functionName: `member-benefits-login-${environment}`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda/member-benefits/login')),
-      role: loginFunctionRole,
-      timeout: cdk.Duration.seconds(30),
-      memorySize: 256,
-      environment: {
-        ENVIRONMENT: environment,
-        LOG_LEVEL: 'INFO',
-        NODE_ENV: environment === 'prod' ? 'production' : 'development',
+      endpointConfiguration: {
+        types: [apigateway.EndpointType.REGIONAL],
       },
-      logGroup: loginLogGroup,
-      description: 'Lambda function for member benefits login endpoint',
     });
 
     // Create /member-benefits resource
@@ -111,7 +83,7 @@ export class MemberBenefitsStack extends cdk.Stack {
     // Create /member-benefits/login resource
     const loginResource = memberBenefitsResource.addResource('login');
 
-    // Create Lambda integration
+    // Lambda integration for login endpoint
     const loginIntegration = new apigateway.LambdaIntegration(this.loginFunction, {
       proxy: true,
       allowTestInvoke: true,
@@ -119,57 +91,20 @@ export class MemberBenefitsStack extends cdk.Stack {
         {
           statusCode: '200',
           responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': "'*'",
-          },
-        },
-        {
-          statusCode: '400',
-          selectionPattern: '.*"statusCode":400.*',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': "'*'",
-          },
-        },
-        {
-          statusCode: '401',
-          selectionPattern: '.*"statusCode":401.*',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': "'*'",
-          },
-        },
-        {
-          statusCode: '500',
-          selectionPattern: '.*"statusCode":500.*',
-          responseParameters: {
+            'method.response.header.Content-Type': "'text/html'",
             'method.response.header.Access-Control-Allow-Origin': "'*'",
           },
         },
       ],
     });
 
-    // Add POST method to /member-benefits/login
-    loginResource.addMethod('POST', loginIntegration, {
+    // Add GET method to /member-benefits/login
+    loginResource.addMethod('GET', loginIntegration, {
       methodResponses: [
         {
           statusCode: '200',
           responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': true,
-          },
-        },
-        {
-          statusCode: '400',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': true,
-          },
-        },
-        {
-          statusCode: '401',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': true,
-          },
-        },
-        {
-          statusCode: '500',
-          responseParameters: {
+            'method.response.header.Content-Type': true,
             'method.response.header.Access-Control-Allow-Origin': true,
           },
         },
@@ -177,37 +112,69 @@ export class MemberBenefitsStack extends cdk.Stack {
       apiKeyRequired: false,
     });
 
-    // Grant API Gateway permission to invoke Lambda
-    this.loginFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+    // Add POST method to /member-benefits/login for form submission
+    loginResource.addMethod('POST', loginIntegration, {
+      methodResponses: [
+        {
+          statusCode: '200',
+          responseParameters: {
+            'method.response.header.Content-Type': true,
+            'method.response.header.Access-Control-Allow-Origin': true,
+          },
+        },
+        {
+          statusCode: '400',
+        },
+        {
+          statusCode: '401',
+        },
+      ],
+      apiKeyRequired: false,
+    });
 
-    // CloudFormation Outputs
-    new cdk.CfnOutput(this, 'ApiUrl', {
+    // CloudWatch Log Group for API Gateway
+    new logs.LogGroup(this, 'MemberBenefitsApiLogGroup', {
+      logGroupName: `/aws/apigateway/member-benefits-${environment}`,
+      retention: logRetention,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    // CloudWatch Log Group for Lambda
+    new logs.LogGroup(this, 'MemberBenefitsLoginFunctionLogGroup', {
+      logGroupName: `/aws/lambda/member-benefits-login-${environment}`,
+      retention: logRetention,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    // Stack Outputs
+    new cdk.CfnOutput(this, 'ApiEndpoint', {
       value: this.api.url,
-      description: 'API Gateway URL',
-      exportName: `member-benefits-api-url-${environment}`,
+      description: 'Member Benefits API Gateway endpoint',
+      exportName: `member-benefits-api-endpoint-${environment}`,
     });
 
     new cdk.CfnOutput(this, 'LoginEndpoint', {
       value: `${this.api.url}member-benefits/login`,
-      description: 'Member Benefits Login Endpoint URL',
+      description: 'Member Benefits Login page endpoint',
       exportName: `member-benefits-login-endpoint-${environment}`,
     });
 
     new cdk.CfnOutput(this, 'LoginFunctionArn', {
       value: this.loginFunction.functionArn,
-      description: 'Login Lambda Function ARN',
+      description: 'Member Benefits Login Lambda function ARN',
       exportName: `member-benefits-login-function-arn-${environment}`,
     });
 
-    new cdk.CfnOutput(this, 'LoginFunctionName', {
-      value: this.loginFunction.functionName,
-      description: 'Login Lambda Function Name',
-      exportName: `member-benefits-login-function-name-${environment}`,
+    new cdk.CfnOutput(this, 'ApiId', {
+      value: this.api.restApiId,
+      description: 'Member Benefits API Gateway ID',
+      exportName: `member-benefits-api-id-${environment}`,
     });
 
-    // Add tags for resource management
+    // Tags
     cdk.Tags.of(this).add('Project', 'MemberBenefits');
     cdk.Tags.of(this).add('Environment', environment);
     cdk.Tags.of(this).add('ManagedBy', 'CDK');
   }
 }
+```
