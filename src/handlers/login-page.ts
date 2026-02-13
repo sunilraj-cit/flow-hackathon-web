@@ -32,10 +32,10 @@ const generateLoginPageHTML = (): string => {
         .login-container {
             background: white;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 40px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             width: 100%;
             max-width: 400px;
+            padding: 40px;
         }
 
         .login-header {
@@ -86,7 +86,7 @@ const generateLoginPageHTML = (): string => {
 
         .login-button {
             width: 100%;
-            padding: 14px 16px;
+            padding: 14px;
             font-size: 16px;
             font-weight: 600;
             color: white;
@@ -129,31 +129,28 @@ const generateLoginPageHTML = (): string => {
         }
 
         .divider {
+            display: flex;
+            align-items: center;
             margin: 24px 0;
-            text-align: center;
-            position: relative;
         }
 
-        .divider::before {
+        .divider::before,
+        .divider::after {
             content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
+            flex: 1;
             height: 1px;
             background-color: #e5e7eb;
         }
 
         .divider span {
-            position: relative;
-            background-color: white;
             padding: 0 12px;
             font-size: 14px;
-            color: #666;
+            color: #6b7280;
         }
 
         .signup-link {
             text-align: center;
+            margin-top: 20px;
             font-size: 14px;
             color: #666;
         }
@@ -161,7 +158,7 @@ const generateLoginPageHTML = (): string => {
         .signup-link a {
             color: #dc2626;
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 600;
             transition: color 0.3s ease;
         }
 
@@ -177,7 +174,7 @@ const generateLoginPageHTML = (): string => {
             background-color: #fee2e2;
             border: 1px solid #fecaca;
             border-radius: 4px;
-            color: #991b1b;
+            color: #dc2626;
             font-size: 14px;
         }
 
@@ -199,7 +196,7 @@ const generateLoginPageHTML = (): string => {
             }
 
             .login-button {
-                padding: 12px 16px;
+                padding: 12px;
                 font-size: 15px;
             }
         }
@@ -255,7 +252,7 @@ const generateLoginPageHTML = (): string => {
         </form>
 
         <div class="forgot-password">
-            <a href="#" id="forgotPasswordLink">Forgot your password?</a>
+            <a href="/forgot-password">Forgot your password?</a>
         </div>
 
         <div class="divider">
@@ -263,7 +260,7 @@ const generateLoginPageHTML = (): string => {
         </div>
 
         <div class="signup-link">
-            Don't have an account? <a href="#" id="signupLink">Sign up</a>
+            Don't have an account? <a href="/signup">Sign up</a>
         </div>
     </div>
 
@@ -282,6 +279,7 @@ const generateLoginPageHTML = (): string => {
 
             function hideError() {
                 errorMessage.classList.remove('show');
+                errorMessage.textContent = '';
             }
 
             function validateEmail(email) {
@@ -328,18 +326,11 @@ const generateLoginPageHTML = (): string => {
                     loginButton.disabled = false;
                     loginButton.textContent = 'Sign In';
                     showError('Login functionality not yet implemented');
-                }, 1000);
+                }, 1500);
             });
 
-            document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
-                e.preventDefault();
-                alert('Password reset functionality coming soon!');
-            });
-
-            document.getElementById('signupLink').addEventListener('click', function(e) {
-                e.preventDefault();
-                alert('Sign up functionality coming soon!');
-            });
+            emailInput.addEventListener('input', hideError);
+            passwordInput.addEventListener('input', hideError);
         })();
     </script>
 </body>
@@ -347,68 +338,28 @@ const generateLoginPageHTML = (): string => {
 };
 
 /**
- * Lambda handler to serve the login page HTML
- * @param {APIGatewayProxyEvent} event - The API Gateway event
- * @returns {Promise<APIGatewayProxyResult>} The API Gateway response with HTML content
+ * Lambda handler for serving the login page
+ * @param {APIGatewayProxyEvent} event - The API Gateway proxy event
+ * @returns {Promise<APIGatewayProxyResult>} The API Gateway proxy result with HTML content
  */
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const origin = event.headers.origin || event.headers.Origin || '*';
-    
-    const allowedOrigins = process.env.ALLOWED_ORIGINS
-      ? process.env.ALLOWED_ORIGINS.split(',')
-      : ['*'];
-
-    const corsOrigin = allowedOrigins.includes('*') || allowedOrigins.includes(origin)
-      ? origin
-      : allowedOrigins[0];
-
-    const headers = {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Access-Control-Allow-Origin': corsOrigin,
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Allow-Credentials': 'true',
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0',
-      'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY',
-      'X-XSS-Protection': '1; mode=block',
-      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-    };
-
-    // Handle OPTIONS request for CORS preflight
-    if (event.httpMethod === 'OPTIONS') {
-      return {
-        statusCode: 200,
-        headers,
-        body: '',
-      };
-    }
-
-    // Only allow GET requests
-    if (event.httpMethod !== 'GET') {
-      return {
-        statusCode: 405,
-        headers: {
-          ...headers,
-          'Allow': 'GET, OPTIONS',
-        },
-        body: JSON.stringify({
-          error: 'Method Not Allowed',
-          message: 'Only GET requests are allowed',
-        }),
-      };
-    }
-
     const html = generateLoginPageHTML();
 
     return {
       statusCode: 200,
-      headers,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+      },
       body: html,
     };
   } catch (error) {
@@ -418,11 +369,10 @@ export const handler = async (
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
       },
       body: JSON.stringify({
         error: 'Internal Server Error',
-        message: 'An error occurred while serving the login page',
+        message: 'Failed to load login page',
       }),
     };
   }
