@@ -5,18 +5,17 @@ import { InfraStack } from './infra-stack';
 import { LoginStack } from './login-stack';
 
 /**
- * CDK Application entry point
- * Initializes and configures all infrastructure stacks
+ * Main CDK application entry point
+ * Instantiates and configures all infrastructure stacks
  */
 const app = new cdk.App();
 
-// Get environment configuration
+// Get environment configuration from context or environment variables
 const env = {
-  account: process.env.CDK_DEFAULT_ACCOUNT,
-  region: process.env.CDK_DEFAULT_REGION || 'us-east-1',
+  account: process.env.CDK_DEFAULT_ACCOUNT || process.env.AWS_ACCOUNT_ID,
+  region: process.env.CDK_DEFAULT_REGION || process.env.AWS_REGION || 'us-east-1',
 };
 
-// Get stage from context or default to 'dev'
 const stage = app.node.tryGetContext('stage') || process.env.STAGE || 'dev';
 
 /**
@@ -25,38 +24,32 @@ const stage = app.node.tryGetContext('stage') || process.env.STAGE || 'dev';
  */
 const infraStack = new InfraStack(app, `InfraStack-${stage}`, {
   env,
-  stackName: `member-benefits-infra-${stage}`,
-  description: 'Core infrastructure stack for member benefits application',
+  description: 'Main infrastructure stack for the application',
   tags: {
     Environment: stage,
-    Application: 'MemberBenefits',
+    Project: 'MemberBenefits',
     ManagedBy: 'CDK',
   },
 });
 
 /**
- * Login stack for member benefits
- * Contains resources for the login page functionality
- * Implements PM-105: Responsive login page with red button design
+ * Login page infrastructure stack
+ * Contains resources for the member benefits login page (PM-105)
  */
 const loginStack = new LoginStack(app, `LoginStack-${stage}`, {
   env,
-  stackName: `member-benefits-login-${stage}`,
-  description: 'Login page infrastructure for member benefits application',
+  description: 'Infrastructure stack for member benefits login page',
   tags: {
     Environment: stage,
-    Application: 'MemberBenefits',
+    Project: 'MemberBenefits',
     Feature: 'Login',
-    ManagedBy: 'CDK',
     Ticket: 'PM-105',
+    ManagedBy: 'CDK',
   },
 });
 
-// Add dependencies if login stack depends on infra stack resources
-loginStack.addDependency(infraStack);
+// Add dependencies if login stack depends on main infrastructure
+// loginStack.addDependency(infraStack);
 
-// Add stack outputs
-cdk.Tags.of(app).add('Project', 'MemberBenefits');
-cdk.Tags.of(app).add('Stage', stage);
-
+// Synthesize the CloudFormation templates
 app.synth();
