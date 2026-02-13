@@ -1,7 +1,15 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
 /**
- * Response structure for authentication
+ * Interface for login request body
+ */
+interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+/**
+ * Interface for authentication response
  */
 interface AuthResponse {
   success: boolean;
@@ -11,32 +19,19 @@ interface AuthResponse {
 }
 
 /**
- * Login request body structure
+ * CORS headers for API responses
  */
-interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-/**
- * Validates the login request body
- * @param body - The parsed request body
- * @returns True if valid, false otherwise
- */
-const validateLoginRequest = (body: any): body is LoginRequest => {
-  return (
-    body &&
-    typeof body.email === 'string' &&
-    typeof body.password === 'string' &&
-    body.email.length > 0 &&
-    body.password.length > 0
-  );
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+  'Access-Control-Allow-Methods': 'POST,OPTIONS',
+  'Content-Type': 'application/json',
 };
 
 /**
  * Validates email format
  * @param email - Email address to validate
- * @returns True if valid email format
+ * @returns True if email is valid, false otherwise
  */
 const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -44,31 +39,36 @@ const isValidEmail = (email: string): boolean => {
 };
 
 /**
- * Creates a standardized API Gateway response
- * @param statusCode - HTTP status code
- * @param body - Response body object
- * @returns APIGatewayProxyResult
+ * Validates login request body
+ * @param body - Request body to validate
+ * @returns Validation result with error message if invalid
  */
-const createResponse = (
-  statusCode: number,
-  body: AuthResponse
-): APIGatewayProxyResult => {
-  return {
-    statusCode,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Credentials': true,
-      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-      'Access-Control-Allow-Methods': 'OPTIONS,POST',
-    },
-    body: JSON.stringify(body),
-  };
+const validateLoginRequest = (body: any): { valid: boolean; error?: string } => {
+  if (!body) {
+    return { valid: false, error: 'Request body is required' };
+  }
+
+  if (!body.email || typeof body.email !== 'string') {
+    return { valid: false, error: 'Valid email is required' };
+  }
+
+  if (!isValidEmail(body.email)) {
+    return { valid: false, error: 'Invalid email format' };
+  }
+
+  if (!body.password || typeof body.password !== 'string') {
+    return { valid: false, error: 'Password is required' };
+  }
+
+  if (body.password.length < 8) {
+    return { valid: false, error: 'Password must be at least 8 characters' };
+  }
+
+  return { valid: true };
 };
 
 /**
  * Authenticates user credentials
- * This is a placeholder implementation - replace with actual authentication logic
  * @param email - User email
  * @param password - User password
  * @returns Authentication result with token if successful
@@ -77,30 +77,32 @@ const authenticateUser = async (
   email: string,
   password: string
 ): Promise<AuthResponse> => {
-  // TODO: Implement actual authentication logic
-  // - Query user database (DynamoDB, RDS, etc.)
-  // - Verify password hash (bcrypt, argon2, etc.)
-  // - Generate JWT token or session token
-  // - Return user information
-
-  // Placeholder implementation
   try {
-    // Simulate database lookup delay
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // TODO: Implement actual authentication logic
+    // This should integrate with your authentication service (e.g., Cognito, DynamoDB, etc.)
+    // For now, this is a placeholder implementation
+    
+    // Simulate async authentication call
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Example validation (replace with actual database check)
-    if (email === 'test@example.com' && password === 'password123') {
+    // Placeholder validation - replace with actual authentication
+    if (email && password) {
+      // In production, verify credentials against your auth service
+      // Generate JWT token or session token
+      const token = Buffer.from(`${email}:${Date.now()}`).toString('base64');
+      const userId = Buffer.from(email).toString('base64').substring(0, 16);
+
       return {
         success: true,
         message: 'Authentication successful',
-        token: 'mock-jwt-token-' + Date.now(),
-        userId: 'user-' + Date.now(),
+        token,
+        userId,
       };
     }
 
     return {
       success: false,
-      message: 'Invalid email or password',
+      message: 'Invalid credentials',
     };
   } catch (error) {
     console.error('Authentication error:', error);
@@ -109,108 +111,105 @@ const authenticateUser = async (
 };
 
 /**
+ * Creates API Gateway response
+ * @param statusCode - HTTP status code
+ * @param body - Response body
+ * @returns Formatted API Gateway response
+ */
+const createResponse = (
+  statusCode: number,
+  body: Record<string, any>
+): APIGatewayProxyResult => {
+  return {
+    statusCode,
+    headers: CORS_HEADERS,
+    body: JSON.stringify(body),
+  };
+};
+
+/**
  * Lambda handler for authentication
  * Processes login form submission and handles authentication logic
+ * 
  * @param event - API Gateway proxy event
- * @returns API Gateway proxy result
+ * @returns API Gateway proxy result with authentication response
  */
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  console.log('Authentication request received', {
+  console.log('Authentication request received:', {
     path: event.path,
     method: event.httpMethod,
     requestId: event.requestContext.requestId,
   });
 
   try {
-    // Handle CORS preflight
+    // Handle OPTIONS request for CORS preflight
     if (event.httpMethod === 'OPTIONS') {
-      return createResponse(200, {
-        success: true,
-        message: 'CORS preflight successful',
-      });
+      return createResponse(200, { message: 'OK' });
     }
 
-    // Validate HTTP method
+    // Only allow POST requests
     if (event.httpMethod !== 'POST') {
       return createResponse(405, {
         success: false,
-        message: 'Method not allowed. Use POST.',
+        message: 'Method not allowed',
       });
     }
 
     // Parse request body
-    let requestBody: any;
+    let requestBody: LoginRequest;
     try {
-      if (!event.body) {
-        return createResponse(400, {
-          success: false,
-          message: 'Request body is required',
-        });
-      }
-      requestBody = JSON.parse(event.body);
+      requestBody = JSON.parse(event.body || '{}');
     } catch (error) {
-      console.error('JSON parse error:', error);
+      console.error('Failed to parse request body:', error);
       return createResponse(400, {
         success: false,
         message: 'Invalid JSON in request body',
       });
     }
 
-    // Validate request structure
-    if (!validateLoginRequest(requestBody)) {
+    // Validate request
+    const validation = validateLoginRequest(requestBody);
+    if (!validation.valid) {
       return createResponse(400, {
         success: false,
-        message: 'Invalid request. Email and password are required.',
+        message: validation.error,
       });
     }
-
-    const { email, password } = requestBody;
-
-    // Validate email format
-    if (!isValidEmail(email)) {
-      return createResponse(400, {
-        success: false,
-        message: 'Invalid email format',
-      });
-    }
-
-    // Validate password length
-    if (password.length < 6) {
-      return createResponse(400, {
-        success: false,
-        message: 'Password must be at least 6 characters',
-      });
-    }
-
-    // Sanitize email
-    const sanitizedEmail = email.toLowerCase().trim();
 
     // Authenticate user
-    const authResult = await authenticateUser(sanitizedEmail, password);
+    const authResult = await authenticateUser(
+      requestBody.email.toLowerCase().trim(),
+      requestBody.password
+    );
 
-    if (authResult.success) {
-      console.log('Authentication successful', {
-        userId: authResult.userId,
-        email: sanitizedEmail,
+    if (!authResult.success) {
+      return createResponse(401, {
+        success: false,
+        message: authResult.message,
       });
-
-      return createResponse(200, authResult);
-    } else {
-      console.warn('Authentication failed', {
-        email: sanitizedEmail,
-        reason: authResult.message,
-      });
-
-      return createResponse(401, authResult);
     }
+
+    // Log successful authentication (without sensitive data)
+    console.log('Authentication successful:', {
+      userId: authResult.userId,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Return success response
+    return createResponse(200, {
+      success: true,
+      message: authResult.message,
+      token: authResult.token,
+      userId: authResult.userId,
+    });
   } catch (error) {
     console.error('Unexpected error in authentication handler:', error);
 
     return createResponse(500, {
       success: false,
-      message: 'Internal server error. Please try again later.',
+      message: 'Internal server error',
     });
   }
 };
