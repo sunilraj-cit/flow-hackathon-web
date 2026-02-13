@@ -1,0 +1,248 @@
+.bannerSection {
+  width: 100%;
+  margin-top: 4rem;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.bannerContainer {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  position: relative;
+}
+
+.bannerWrapper {
+  position: relative;
+  width: 100%;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 300px;
+}
+
+.bannerImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.bannerContent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  text-align: center;
+}
+
+.bannerTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.bannerSubtitle {
+  font-size: 1.25rem;
+  font-weight: 400;
+  max-width: 600px;
+  line-height: 1.6;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.bannerOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.4) 100%
+  );
+  pointer-events: none;
+}
+
+.bannerCta {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.bannerButton {
+  padding: 0.875rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.bannerButtonPrimary {
+  background-color: white;
+  color: #667eea;
+}
+
+.bannerButtonPrimary:hover {
+  background-color: #f7fafc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.bannerButtonSecondary {
+  background-color: transparent;
+  color: white;
+  border: 2px solid white;
+}
+
+.bannerButtonSecondary:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .bannerWrapper {
+    min-height: 250px;
+  }
+
+  .bannerTitle {
+    font-size: 2rem;
+  }
+
+  .bannerSubtitle {
+    font-size: 1.125rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .bannerSection {
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .bannerWrapper {
+    min-height: 200px;
+    border-radius: 0.75rem;
+  }
+
+  .bannerContent {
+    padding: 1.5rem;
+  }
+
+  .bannerTitle {
+    font-size: 1.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .bannerSubtitle {
+    font-size: 1rem;
+  }
+
+  .bannerCta {
+    margin-top: 1.5rem;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .bannerButton {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .bannerContainer {
+    padding: 0 0.75rem;
+  }
+
+  .bannerWrapper {
+    min-height: 180px;
+    border-radius: 0.5rem;
+  }
+
+  .bannerContent {
+    padding: 1rem;
+  }
+
+  .bannerTitle {
+    font-size: 1.5rem;
+  }
+
+  .bannerSubtitle {
+    font-size: 0.875rem;
+  }
+
+  .bannerButton {
+    font-size: 0.875rem;
+    padding: 0.625rem 1.25rem;
+  }
+}
+
+/* Animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bannerContent > * {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.bannerTitle {
+  animation-delay: 0.1s;
+}
+
+.bannerSubtitle {
+  animation-delay: 0.2s;
+}
+
+.bannerCta {
+  animation-delay: 0.3s;
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .bannerContent > * {
+    animation: none;
+  }
+
+  .bannerButton:hover {
+    transform: none;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .bannerWrapper {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  .bannerContent {
+    background: rgba(0, 0, 0, 0.5);
+  }
+}
