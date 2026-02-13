@@ -1,10 +1,9 @@
 import React from 'react';
-import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 interface BannerImageProps {
   /**
-   * Source URL or path for the banner image
+   * Source URL for the banner image
    */
   src: string;
   /**
@@ -12,63 +11,53 @@ interface BannerImageProps {
    */
   alt: string;
   /**
-   * Optional priority loading for above-the-fold images
-   * @default false
+   * Optional title text to display on the banner
    */
-  priority?: boolean;
+  title?: string;
   /**
-   * Optional custom CSS classes
+   * Optional subtitle text to display on the banner
+   */
+  subtitle?: string;
+  /**
+   * Additional CSS classes to apply to the container
    */
   className?: string;
   /**
-   * Optional width for the image (in pixels)
-   * @default 1920
-   */
-  width?: number;
-  /**
-   * Optional height for the image (in pixels)
-   * @default 400
-   */
-  height?: number;
-  /**
-   * Optional object fit property
+   * Image object fit style
    * @default 'cover'
    */
-  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
   /**
-   * Optional object position property
+   * Image object position
    * @default 'center'
    */
   objectPosition?: string;
   /**
-   * Optional quality for image optimization (1-100)
-   * @default 85
+   * Priority loading for Next.js Image optimization
+   * @default false
    */
-  quality?: number;
+  priority?: boolean;
   /**
-   * Optional placeholder type
-   * @default 'blur'
+   * Optional click handler for the banner
    */
-  placeholder?: 'blur' | 'empty';
+  onClick?: () => void;
   /**
-   * Optional blur data URL for placeholder
+   * Optional overlay opacity (0-100)
+   * @default 0
    */
-  blurDataURL?: string;
-  /**
-   * Optional callback when image loads successfully
-   */
-  onLoad?: () => void;
-  /**
-   * Optional callback when image fails to load
-   */
-  onError?: () => void;
+  overlayOpacity?: number;
 }
 
 /**
- * BannerImage Component
+ * BannerImage component for displaying a responsive banner image
+ * on the member benefits page bottom section.
  * 
- * A responsive banner image component optimized for the member benefits section.
- * Utilizes Next.js Image component for automatic optimization and lazy loading.
+ * Features:
+ * - Responsive design with mobile-first approach
+ * - Optional text overlay with title and subtitle
+ * - Customizable styling and positioning
+ * - Accessibility compliant
+ * - Performance optimized with lazy loading
  * 
  * @component
  * @example
@@ -76,99 +65,99 @@ interface BannerImageProps {
  * <BannerImage
  *   src="/images/member-benefits-banner.jpg"
  *   alt="Member Benefits Banner"
- *   priority={false}
+ *   title="Exclusive Member Benefits"
+ *   subtitle="Join today and unlock amazing rewards"
  * />
  * ```
  */
 export const BannerImage: React.FC<BannerImageProps> = ({
   src,
   alt,
-  priority = false,
+  title,
+  subtitle,
   className,
-  width = 1920,
-  height = 400,
   objectFit = 'cover',
   objectPosition = 'center',
-  quality = 85,
-  placeholder = 'blur',
-  blurDataURL,
-  onLoad,
-  onError,
+  priority = false,
+  onClick,
+  overlayOpacity = 0,
 }) => {
-  const [imageError, setImageError] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(true);
-
-  /**
-   * Handles successful image load
-   */
-  const handleLoad = React.useCallback(() => {
-    setIsLoading(false);
-    onLoad?.();
-  }, [onLoad]);
-
-  /**
-   * Handles image load error
-   */
-  const handleError = React.useCallback(() => {
-    setImageError(true);
-    setIsLoading(false);
-    onError?.();
-  }, [onError]);
-
-  if (imageError) {
-    return (
-      <div
-        className={cn(
-          'flex items-center justify-center bg-muted',
-          'w-full h-[200px] md:h-[300px] lg:h-[400px]',
-          className
-        )}
-        role="img"
-        aria-label={alt}
-      >
-        <div className="text-center text-muted-foreground">
-          <p className="text-sm">Unable to load banner image</p>
-        </div>
-      </div>
-    );
-  }
+  const hasOverlay = overlayOpacity > 0;
+  const hasTextContent = title || subtitle;
 
   return (
     <div
       className={cn(
-        'relative w-full overflow-hidden',
-        'h-[200px] md:h-[300px] lg:h-[400px]',
+        'relative w-full overflow-hidden rounded-lg',
+        'h-48 sm:h-64 md:h-80 lg:h-96',
+        onClick && 'cursor-pointer transition-transform hover:scale-[1.02]',
         className
       )}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
     >
-      <Image
+      {/* Banner Image */}
+      <img
         src={src}
         alt={alt}
-        width={width}
-        height={height}
-        priority={priority}
-        quality={quality}
-        placeholder={placeholder}
-        blurDataURL={blurDataURL}
-        onLoad={handleLoad}
-        onError={handleError}
+        loading={priority ? 'eager' : 'lazy'}
         className={cn(
-          'transition-opacity duration-300',
-          isLoading ? 'opacity-0' : 'opacity-100'
+          'h-full w-full',
+          objectFit === 'cover' && 'object-cover',
+          objectFit === 'contain' && 'object-contain',
+          objectFit === 'fill' && 'object-fill',
+          objectFit === 'none' && 'object-none',
+          objectFit === 'scale-down' && 'object-scale-down'
         )}
-        style={{
-          objectFit,
-          objectPosition,
-          width: '100%',
-          height: '100%',
-        }}
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
+        style={{ objectPosition }}
       />
-      {isLoading && (
+
+      {/* Optional Overlay */}
+      {hasOverlay && (
         <div
-          className="absolute inset-0 bg-muted animate-pulse"
+          className="absolute inset-0 bg-black"
+          style={{ opacity: overlayOpacity / 100 }}
           aria-hidden="true"
         />
+      )}
+
+      {/* Optional Text Content */}
+      {hasTextContent && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+          {title && (
+            <h2
+              className={cn(
+                'text-2xl font-bold text-white drop-shadow-lg',
+                'sm:text-3xl md:text-4xl lg:text-5xl',
+                'mb-2'
+              )}
+            >
+              {title}
+            </h2>
+          )}
+          {subtitle && (
+            <p
+              className={cn(
+                'text-sm text-white drop-shadow-md',
+                'sm:text-base md:text-lg lg:text-xl',
+                'max-w-2xl'
+              )}
+            >
+              {subtitle}
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
