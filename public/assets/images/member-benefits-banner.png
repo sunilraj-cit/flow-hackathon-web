@@ -1,80 +1,73 @@
-I cannot generate actual binary image file content as code. This is a PNG image file that needs to be created by a designer or obtained from a design tool.
+I cannot generate actual binary image file content as code. This is a PNG image file that requires graphic design work.
 
-However, I can provide you with several options:
+However, I can provide you with a TypeScript utility file to manage this asset and a placeholder generation approach:
 
-**Option 1: Create a placeholder SVG that can be converted to PNG**
-
-Create `public/assets/images/member-benefits-banner.svg` instead:
-
-```svg
-<svg width="1200" height="300" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:rgb(99,102,241);stop-opacity:1" />
-      <stop offset="100%" style="stop-color:rgb(168,85,247);stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  <rect width="1200" height="300" fill="url(#grad1)"/>
-  <text x="600" y="130" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle">
-    Member Benefits
-  </text>
-  <text x="600" y="180" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle" opacity="0.9">
-    Unlock exclusive rewards and perks
-  </text>
-  <text x="600" y="250" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle" opacity="0.7">
-    [PLACEHOLDER - Replace with final design]
-  </text>
-</svg>
-```
-
-**Option 2: Create a TypeScript utility to generate a data URL placeholder**
-
-Create `src/utils/placeholders.ts`:
+**Option 1: Create a TypeScript constant file for the asset path**
 
 ```typescript
+// src/constants/assets.ts
+export const MEMBER_BENEFITS_BANNER = '/assets/images/member-benefits-banner.png';
+```
+
+**Option 2: Create a placeholder SVG that can be converted to PNG**
+
+```typescript
+// scripts/generate-placeholder-banner.ts
+import { writeFileSync, mkdirSync } from 'fs';
+import { join } from 'path';
+
 /**
- * Generates a placeholder data URL for the member benefits banner
- * This should be replaced with the actual image once provided by the design team
+ * Generates a placeholder banner SVG for member benefits
+ * This should be replaced with actual design assets from the design team
  */
-export const MEMBER_BENEFITS_BANNER_PLACEHOLDER = 
-  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwMCIgaGVpZ2h0PSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJncmFkMSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYig5OSwxMDIsMjQxKTtzdG9wLW9wYWNpdHk6MSIgLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigxNjgsODUsMjQ3KTtzdG9wLW9wYWNpdHk6MSIgLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9InVybCgjZ3JhZDEpIi8+PHRleHQgeD0iNjAwIiB5PSIxMzAiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5NZW1iZXIgQmVuZWZpdHM8L3RleHQ+PHRleHQgeD0iNjAwIiB5PSIxODAiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIG9wYWNpdHk9IjAuOSI+VW5sb2NrIGV4Y2x1c2l2ZSByZXdhcmRzIGFuZCBwZXJrczwvdGV4dD48dGV4dCB4PSI2MDAiIHk9IjI1MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgb3BhY2l0eT0iMC43Ij5bUExBQ0VIT0xERVIgLSBSZXBsYWNlIHdpdGggZmluYWwgZGVzaWduXTwvdGV4dD48L3N2Zz4=';
+const generatePlaceholderBanner = (): void => {
+  const width = 1200;
+  const height = 300;
+  
+  const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="${width}" height="${height}" fill="url(#grad)"/>
+  <text x="50%" y="40%" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle">
+    Member Benefits
+  </text>
+  <text x="50%" y="60%" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle" opacity="0.9">
+    Placeholder - Design Asset Needed
+  </text>
+  <text x="50%" y="75%" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle" opacity="0.7">
+    ${width}x${height}px
+  </text>
+</svg>`;
+
+  const outputDir = join(process.cwd(), 'public', 'assets', 'images');
+  mkdirSync(outputDir, { recursive: true });
+  
+  const outputPath = join(outputDir, 'member-benefits-banner.svg');
+  writeFileSync(outputPath, svgContent, 'utf-8');
+  
+  console.log(`✓ Placeholder banner generated at: ${outputPath}`);
+  console.log('⚠ This is a placeholder. Replace with actual design asset from design team.');
+};
+
+generatePlaceholderBanner();
 ```
 
-**Option 3: Add a README for the design team**
+**Action Required:**
 
-Create `public/assets/images/README.md`:
+Since this is a binary PNG image file, you need to:
 
-```markdown
-# Member Benefits Banner Image
+1. Contact the design team to provide the actual banner image
+2. Place the received PNG file at: `public/assets/images/member-benefits-banner.png`
+3. Recommended specifications:
+   - Width: 1200-1920px
+   - Height: 200-400px
+   - Format: PNG with transparency support
+   - File size: < 500KB (optimized)
+   - Resolution: @2x for retina displays
 
-## File: member-benefits-banner.png
-
-### Specifications:
-- **Dimensions**: 1200px × 300px (recommended)
-- **Format**: PNG with transparency support
-- **File size**: < 500KB (optimized for web)
-- **Color mode**: RGB
-- **Resolution**: 72 DPI (web standard)
-
-### Design Requirements:
-- Should align with the overall brand guidelines
-- Must be visually appealing and professional
-- Should complement the member benefits page design
-- Text should be readable and accessible
-- Consider responsive design (image should scale well on mobile devices)
-
-### Placement:
-- Bottom section of the member benefits page
-- Full-width banner
-
-### Status:
-⚠️ **PLACEHOLDER NEEDED** - Awaiting final design from design team
-
-### Related Ticket:
-PM-104: Create banner image on the bottom section of member benefits
-
-### Notes:
-Once the final image is provided, replace any placeholder with the actual PNG file at this location.
-```
-
-**Recommendation**: Use Option 1 (SVG placeholder) or Option 2 (data URL utility) as a temporary solution until the design team provides the actual PNG image. Binary PNG files cannot be generated as TypeScript code.
+For now, create an empty `.gitkeep` file or use the TypeScript script above to generate a placeholder SVG until the design asset is provided.
