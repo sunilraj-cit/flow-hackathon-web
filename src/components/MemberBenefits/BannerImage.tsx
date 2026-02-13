@@ -8,7 +8,7 @@ interface BannerImageProps {
    */
   src: string;
   /**
-   * Alternative text for the image (accessibility)
+   * Alternative text for accessibility
    */
   alt: string;
   /**
@@ -17,7 +17,7 @@ interface BannerImageProps {
    */
   priority?: boolean;
   /**
-   * Optional CSS classes to apply to the container
+   * Optional custom CSS classes
    */
   className?: string;
   /**
@@ -36,10 +36,24 @@ interface BannerImageProps {
    */
   objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
   /**
-   * Optional quality setting for image optimization (1-100)
+   * Optional object position property
+   * @default 'center'
+   */
+  objectPosition?: string;
+  /**
+   * Optional quality for image optimization (1-100)
    * @default 85
    */
   quality?: number;
+  /**
+   * Optional placeholder type
+   * @default 'blur'
+   */
+  placeholder?: 'blur' | 'empty';
+  /**
+   * Optional blur data URL for placeholder
+   */
+  blurDataURL?: string;
   /**
    * Optional callback when image loads successfully
    */
@@ -53,7 +67,7 @@ interface BannerImageProps {
 /**
  * BannerImage Component
  * 
- * A responsive banner image component optimized for the member benefits page.
+ * A responsive banner image component optimized for the member benefits section.
  * Utilizes Next.js Image component for automatic optimization and lazy loading.
  * 
  * @component
@@ -61,7 +75,7 @@ interface BannerImageProps {
  * ```tsx
  * <BannerImage
  *   src="/images/member-benefits-banner.jpg"
- *   alt="Member Benefits"
+ *   alt="Member Benefits Banner"
  *   priority={false}
  * />
  * ```
@@ -74,15 +88,18 @@ export const BannerImage: React.FC<BannerImageProps> = ({
   width = 1920,
   height = 400,
   objectFit = 'cover',
+  objectPosition = 'center',
   quality = 85,
+  placeholder = 'blur',
+  blurDataURL,
   onLoad,
   onError,
 }) => {
+  const [imageError, setImageError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [hasError, setHasError] = React.useState(false);
 
   /**
-   * Handle successful image load
+   * Handles successful image load
    */
   const handleLoad = React.useCallback(() => {
     setIsLoading(false);
@@ -90,42 +107,27 @@ export const BannerImage: React.FC<BannerImageProps> = ({
   }, [onLoad]);
 
   /**
-   * Handle image load error
+   * Handles image load error
    */
   const handleError = React.useCallback(() => {
+    setImageError(true);
     setIsLoading(false);
-    setHasError(true);
     onError?.();
   }, [onError]);
 
-  if (hasError) {
+  if (imageError) {
     return (
       <div
         className={cn(
-          'relative w-full bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900',
-          'flex items-center justify-center',
+          'flex items-center justify-center bg-muted',
+          'w-full h-[200px] md:h-[300px] lg:h-[400px]',
           className
         )}
-        style={{ height: `${height}px` }}
         role="img"
         aria-label={alt}
       >
-        <div className="text-center text-gray-500 dark:text-gray-400">
-          <svg
-            className="mx-auto h-12 w-12 mb-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
-          <p className="text-sm">Image unavailable</p>
+        <div className="text-center text-muted-foreground">
+          <p className="text-sm">Unable to load banner image</p>
         </div>
       </div>
     );
@@ -135,26 +137,19 @@ export const BannerImage: React.FC<BannerImageProps> = ({
     <div
       className={cn(
         'relative w-full overflow-hidden',
-        'rounded-lg shadow-md',
-        'transition-all duration-300 ease-in-out',
-        'hover:shadow-lg',
+        'h-[200px] md:h-[300px] lg:h-[400px]',
         className
       )}
-      style={{ height: `${height}px` }}
     >
-      {isLoading && (
-        <div
-          className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse"
-          aria-label="Loading image"
-        />
-      )}
       <Image
         src={src}
         alt={alt}
         width={width}
         height={height}
-        quality={quality}
         priority={priority}
+        quality={quality}
+        placeholder={placeholder}
+        blurDataURL={blurDataURL}
         onLoad={handleLoad}
         onError={handleError}
         className={cn(
@@ -163,11 +158,18 @@ export const BannerImage: React.FC<BannerImageProps> = ({
         )}
         style={{
           objectFit,
+          objectPosition,
           width: '100%',
           height: '100%',
         }}
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1920px"
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
       />
+      {isLoading && (
+        <div
+          className="absolute inset-0 bg-muted animate-pulse"
+          aria-hidden="true"
+        />
+      )}
     </div>
   );
 };
