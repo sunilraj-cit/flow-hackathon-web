@@ -1,386 +1,443 @@
-/* Member Benefits Login Page Styles */
-/* Mobile-first responsive design */
+/* ============================================
+   Member Benefits Login Page Styles
+   Mobile-First Responsive Design
+   ============================================ */
 
-/* CSS Reset and Base Styles */
+/* ============================================
+   CSS Reset & Base Styles
+   ============================================ */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-.member-benefits-login {
-  min-height: 100vh;
-  width: 100%;
+/* ============================================
+   Container & Layout
+   ============================================ */
+.member-benefits-login-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  min-height: 100vh;
   padding: 1rem;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Login Container */
-.login-container {
+/* ============================================
+   Login Card
+   ============================================ */
+.member-benefits-login-card {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 400px;
   background: #ffffff;
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
   padding: 2rem 1.5rem;
-  display: flex;
-  flex-direction: column;
   gap: 1.5rem;
 }
 
-/* Header Section */
-.login-header {
+/* ============================================
+   Header Section
+   ============================================ */
+.member-benefits-login-header {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 0.5rem;
   text-align: center;
 }
 
-.login-title {
+.member-benefits-login-title {
   font-size: 1.5rem;
   font-weight: 700;
   color: #1a202c;
-  margin: 0;
+  line-height: 1.2;
 }
 
-.login-subtitle {
+.member-benefits-login-subtitle {
   font-size: 0.875rem;
+  font-weight: 400;
   color: #718096;
-  margin: 0;
+  line-height: 1.4;
 }
 
-/* Form Styles */
-.login-form {
+/* ============================================
+   Form Section
+   ============================================ */
+.member-benefits-login-form {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
   width: 100%;
 }
 
-.form-group {
+.member-benefits-form-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.form-label {
+.member-benefits-form-label {
   font-size: 0.875rem;
   font-weight: 600;
   color: #2d3748;
+  line-height: 1.4;
 }
 
-.form-input {
+.member-benefits-form-input {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.75rem 1rem;
   font-size: 1rem;
+  color: #2d3748;
+  background: #ffffff;
   border: 1px solid #cbd5e0;
-  border-radius: 4px;
-  transition: all 0.2s ease-in-out;
+  border-radius: 6px;
   outline: none;
+  transition: all 0.2s ease-in-out;
 }
 
-.form-input:focus {
+.member-benefits-form-input:focus {
   border-color: #dc2626;
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
-.form-input::placeholder {
+.member-benefits-form-input::placeholder {
   color: #a0aec0;
 }
 
-.form-input:disabled {
-  background-color: #f7fafc;
+.member-benefits-form-input:disabled {
+  background: #f7fafc;
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-/* Error Message */
-.form-error {
+/* ============================================
+   Error Message
+   ============================================ */
+.member-benefits-form-error {
   font-size: 0.75rem;
   color: #dc2626;
   margin-top: 0.25rem;
+  line-height: 1.4;
 }
 
-/* Remember Me and Forgot Password Section */
-.form-options {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  font-size: 0.875rem;
-}
-
-.remember-me {
+/* ============================================
+   Checkbox & Remember Me
+   ============================================ */
+.member-benefits-form-checkbox-group {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.remember-me input[type="checkbox"] {
+.member-benefits-form-checkbox {
   width: 1rem;
   height: 1rem;
   cursor: pointer;
   accent-color: #dc2626;
 }
 
-.remember-me label {
+.member-benefits-form-checkbox-label {
+  font-size: 0.875rem;
   color: #4a5568;
   cursor: pointer;
   user-select: none;
 }
 
-.forgot-password {
+/* ============================================
+   Red Button Styling
+   ============================================ */
+.member-benefits-btn-primary {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #dc2626;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  outline: none;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.member-benefits-btn-primary:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+}
+
+.member-benefits-btn-primary:active {
+  background: #991b1b;
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+}
+
+.member-benefits-btn-primary:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+}
+
+.member-benefits-btn-primary:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ============================================
+   Secondary Button (Optional)
+   ============================================ */
+.member-benefits-btn-secondary {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #dc2626;
+  background: #ffffff;
+  border: 2px solid #dc2626;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  outline: none;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.member-benefits-btn-secondary:hover {
+  background: #fef2f2;
+  transform: translateY(-1px);
+}
+
+.member-benefits-btn-secondary:active {
+  background: #fee2e2;
+  transform: translateY(0);
+}
+
+/* ============================================
+   Links & Footer
+   ============================================ */
+.member-benefits-login-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.member-benefits-link {
+  font-size: 0.875rem;
   color: #dc2626;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s ease-in-out;
 }
 
-.forgot-password:hover {
+.member-benefits-link:hover {
   color: #b91c1c;
   text-decoration: underline;
 }
 
-/* Red Button Styling */
-.btn-login {
-  width: 100%;
-  padding: 0.875rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #ffffff;
-  background-color: #dc2626;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
-}
-
-.btn-login:hover {
-  background-color: #b91c1c;
-  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
-  transform: translateY(-1px);
-}
-
-.btn-login:active {
-  background-color: #991b1b;
-  box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2);
-  transform: translateY(0);
-}
-
-.btn-login:disabled {
-  background-color: #9ca3af;
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
-}
-
-.btn-login:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
-}
-
-/* Loading State */
-.btn-login.loading {
-  position: relative;
-  color: transparent;
-  pointer-events: none;
-}
-
-.btn-login.loading::after {
-  content: '';
-  position: absolute;
-  width: 1rem;
-  height: 1rem;
-  top: 50%;
-  left: 50%;
-  margin-left: -0.5rem;
-  margin-top: -0.5rem;
-  border: 2px solid #ffffff;
-  border-radius: 50%;
-  border-top-color: transparent;
-  animation: spinner 0.6s linear infinite;
-}
-
-@keyframes spinner {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Divider */
-.divider {
+.member-benefits-divider {
   display: flex;
   align-items: center;
   text-align: center;
-  color: #718096;
-  font-size: 0.875rem;
   margin: 0.5rem 0;
 }
 
-.divider::before,
-.divider::after {
+.member-benefits-divider::before,
+.member-benefits-divider::after {
   content: '';
   flex: 1;
   border-bottom: 1px solid #e2e8f0;
 }
 
-.divider::before {
-  margin-right: 0.75rem;
+.member-benefits-divider-text {
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  color: #a0aec0;
+  font-weight: 500;
 }
 
-.divider::after {
-  margin-left: 0.75rem;
-}
-
-/* Footer Section */
-.login-footer {
+/* ============================================
+   Utility Classes
+   ============================================ */
+.member-benefits-text-center {
   text-align: center;
-  font-size: 0.875rem;
+}
+
+.member-benefits-text-muted {
   color: #718096;
-}
-
-.signup-link {
-  color: #dc2626;
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s ease-in-out;
-}
-
-.signup-link:hover {
-  color: #b91c1c;
-  text-decoration: underline;
-}
-
-/* Alert Messages */
-.alert {
-  padding: 0.75rem 1rem;
-  border-radius: 4px;
   font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
-.alert-error {
-  background-color: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
+.member-benefits-mt-1 {
+  margin-top: 0.5rem;
 }
 
-.alert-success {
-  background-color: #d1fae5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+.member-benefits-mt-2 {
+  margin-top: 1rem;
 }
 
-.alert-info {
-  background-color: #dbeafe;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
+.member-benefits-mb-1 {
+  margin-bottom: 0.5rem;
 }
 
-/* Tablet Breakpoint (768px and up) */
+.member-benefits-mb-2 {
+  margin-bottom: 1rem;
+}
+
+/* ============================================
+   Loading Spinner
+   ============================================ */
+.member-benefits-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: member-benefits-spin 0.6s linear infinite;
+}
+
+@keyframes member-benefits-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   Tablet Breakpoint (768px and up)
+   ============================================ */
 @media (min-width: 768px) {
-  .member-benefits-login {
+  .member-benefits-login-container {
     padding: 2rem;
   }
 
-  .login-container {
+  .member-benefits-login-card {
     max-width: 450px;
     padding: 2.5rem 2rem;
     gap: 2rem;
   }
 
-  .login-title {
+  .member-benefits-login-title {
     font-size: 1.875rem;
   }
 
-  .login-subtitle {
+  .member-benefits-login-subtitle {
     font-size: 1rem;
   }
 
-  .form-group {
+  .member-benefits-form-group {
     gap: 0.625rem;
   }
 
-  .form-label {
+  .member-benefits-form-label {
+    font-size: 0.9375rem;
+  }
+
+  .member-benefits-form-input {
+    padding: 0.875rem 1.125rem;
     font-size: 1rem;
   }
 
-  .form-input {
-    padding: 0.875rem 1rem;
-  }
-
-  .form-options {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .btn-login {
-    padding: 1rem 1.5rem;
+  .member-benefits-btn-primary,
+  .member-benefits-btn-secondary {
+    padding: 1rem 1.75rem;
     font-size: 1.0625rem;
+  }
+
+  .member-benefits-login-footer {
+    gap: 1rem;
   }
 }
 
-/* Desktop Breakpoint (1024px and up) */
+/* ============================================
+   Desktop Breakpoint (1024px and up)
+   ============================================ */
 @media (min-width: 1024px) {
-  .member-benefits-login {
+  .member-benefits-login-container {
     padding: 3rem;
   }
 
-  .login-container {
+  .member-benefits-login-card {
     max-width: 500px;
     padding: 3rem 2.5rem;
     gap: 2.25rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-                0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
   }
 
-  .login-title {
+  .member-benefits-login-title {
     font-size: 2rem;
   }
 
-  .login-subtitle {
+  .member-benefits-login-subtitle {
     font-size: 1.0625rem;
   }
 
-  .form-input {
-    padding: 1rem;
-    font-size: 1.0625rem;
+  .member-benefits-form-input {
+    padding: 1rem 1.25rem;
   }
 
-  .btn-login {
-    padding: 1.125rem 1.5rem;
-    font-size: 1.125rem;
-  }
-
-  .btn-login:hover {
+  .member-benefits-btn-primary:hover,
+  .member-benefits-btn-secondary:hover {
     transform: translateY(-2px);
+  }
+
+  .member-benefits-login-card:hover {
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15), 0 10px 10px rgba(0, 0, 0, 0.04);
   }
 }
 
-/* Large Desktop Breakpoint (1440px and up) */
+/* ============================================
+   Large Desktop Breakpoint (1440px and up)
+   ============================================ */
 @media (min-width: 1440px) {
-  .login-container {
+  .member-benefits-login-card {
     max-width: 550px;
     padding: 3.5rem 3rem;
   }
 
-  .login-title {
+  .member-benefits-login-title {
     font-size: 2.25rem;
   }
 }
 
-/* Accessibility Improvements */
+/* ============================================
+   Grid Layout Alternative (Optional)
+   ============================================ */
+.member-benefits-login-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .member-benefits-login-grid {
+    gap: 2rem;
+  }
+}
+
+/* ============================================
+   Accessibility Improvements
+   ============================================ */
+.member-benefits-form-input:focus-visible,
+.member-benefits-btn-primary:focus-visible,
+.member-benefits-btn-secondary:focus-visible,
+.member-benefits-link:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -391,55 +448,16 @@
   }
 }
 
-/* High Contrast Mode Support */
-@media (prefers-contrast: high) {
-  .form-input {
-    border-width: 2px;
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+  .member-benefits-login-container {
+    background: #ffffff;
   }
 
-  .btn-login {
-    border: 2px solid #000000;
-  }
-}
-
-/* Dark Mode Support (Optional) */
-@media (prefers-color-scheme: dark) {
-  .member-benefits-login {
-    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-  }
-
-  .login-container {
-    background: #2d3748;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  }
-
-  .login-title {
-    color: #f7fafc;
-  }
-
-  .login-subtitle {
-    color: #cbd5e0;
-  }
-
-  .form-label {
-    color: #e2e8f0;
-  }
-
-  .form-input {
-    background-color: #1a202c;
-    border-color: #4a5568;
-    color: #f7fafc;
-  }
-
-  .form-input::placeholder {
-    color: #718096;
-  }
-
-  .remember-me label {
-    color: #cbd5e0;
-  }
-
-  .login-footer {
-    color: #cbd5e0;
+  .member-benefits-login-card {
+    box-shadow: none;
+    border: 1px solid #e2e8f0;
   }
 }
