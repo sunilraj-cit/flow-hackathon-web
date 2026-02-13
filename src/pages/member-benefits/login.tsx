@@ -54,7 +54,7 @@ const MemberBenefitsLogin: React.FC = () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
       // Handle successful login (redirect, store token, etc.)
-      // Example: router.push('/member-benefits/dashboard');
+      // window.location.href = '/member-benefits/dashboard';
       
     } catch (error) {
       setSubmitError(
@@ -138,12 +138,6 @@ const MemberBenefitsLogin: React.FC = () => {
           <a href="/member-benefits/forgot-password" className={styles.link}>
             Forgot your password?
           </a>
-          <p className={styles.signupText}>
-            Don't have an account?{' '}
-            <a href="/member-benefits/signup" className={styles.link}>
-              Sign up
-            </a>
-          </p>
         </div>
       </div>
     </div>
