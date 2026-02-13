@@ -29,34 +29,23 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            background-color: var(--input-background);
+            color: var(--text-primary);
+            line-height: 1.5;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 1rem;
-            color: var(--text-primary);
         }
 
         .login-container {
             width: 100%;
             max-width: 400px;
-            background: var(--background);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background-color: var(--background);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             padding: 2rem;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .login-header {
@@ -96,11 +85,11 @@
 
         .form-input {
             width: 100%;
-            padding: 0.75rem 1rem;
+            padding: 0.625rem 0.875rem;
             font-size: 1rem;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            background: var(--input-background);
+            border-radius: 6px;
+            background-color: var(--input-background);
             color: var(--text-primary);
             transition: all 0.2s ease;
             outline: none;
@@ -108,7 +97,7 @@
 
         .form-input:focus {
             border-color: var(--primary-red);
-            background: var(--background);
+            background-color: var(--background);
             box-shadow: 0 0 0 3px var(--focus-ring);
         }
 
@@ -121,22 +110,13 @@
             cursor: not-allowed;
         }
 
-        .form-error {
-            font-size: 0.75rem;
-            color: var(--error-color);
-            display: none;
-        }
-
-        .form-error.active {
-            display: block;
-        }
-
         .form-options {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
             flex-wrap: wrap;
-            gap: 0.5rem;
+            gap: 0.75rem;
+            font-size: 0.875rem;
         }
 
         .checkbox-group {
@@ -153,13 +133,12 @@
         }
 
         .checkbox-group label {
-            font-size: 0.875rem;
             color: var(--text-secondary);
             cursor: pointer;
+            user-select: none;
         }
 
         .forgot-password {
-            font-size: 0.875rem;
             color: var(--primary-red);
             text-decoration: none;
             font-weight: 500;
@@ -171,37 +150,36 @@
             text-decoration: underline;
         }
 
-        .login-button {
+        .btn-primary {
             width: 100%;
-            padding: 0.875rem 1.5rem;
+            padding: 0.75rem 1.5rem;
             font-size: 1rem;
             font-weight: 600;
             color: #ffffff;
-            background: var(--primary-red);
+            background-color: var(--primary-red);
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s ease;
             outline: none;
-            margin-top: 0.5rem;
         }
 
-        .login-button:hover {
-            background: var(--primary-red-hover);
+        .btn-primary:hover {
+            background-color: var(--primary-red-hover);
             transform: translateY(-1px);
-            box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
-        .login-button:active {
-            background: var(--primary-red-active);
+        .btn-primary:active {
+            background-color: var(--primary-red-active);
             transform: translateY(0);
         }
 
-        .login-button:focus {
+        .btn-primary:focus {
             box-shadow: 0 0 0 3px var(--focus-ring);
         }
 
-        .login-button:disabled {
+        .btn-primary:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
@@ -223,8 +201,8 @@
 
         .divider span {
             padding: 0 1rem;
-            font-size: 0.875rem;
             color: var(--text-secondary);
+            font-size: 0.875rem;
         }
 
         .signup-link {
@@ -245,32 +223,30 @@
             text-decoration: underline;
         }
 
-        /* Mobile First - Base styles above are for mobile */
-
-        /* Tablet styles */
-        @media (min-width: 640px) {
-            .login-container {
-                padding: 2.5rem;
-            }
-
-            .login-header h1 {
-                font-size: 2rem;
-            }
-
-            .form-input {
-                padding: 0.875rem 1.125rem;
-            }
-
-            .login-button {
-                padding: 1rem 1.5rem;
-            }
+        .error-message {
+            display: none;
+            padding: 0.75rem;
+            background-color: #fee2e2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            color: var(--error-color);
+            font-size: 0.875rem;
         }
 
-        /* Desktop styles */
-        @media (min-width: 1024px) {
+        .error-message.show {
+            display: block;
+        }
+
+        /* Mobile First - Base styles above are for mobile */
+
+        /* Tablet breakpoint */
+        @media (min-width: 640px) {
+            body {
+                padding: 2rem;
+            }
+
             .login-container {
-                max-width: 450px;
-                padding: 3rem;
+                padding: 2.5rem;
             }
 
             .login-header h1 {
@@ -280,21 +256,49 @@
             .login-header p {
                 font-size: 1rem;
             }
-        }
 
-        /* High resolution displays */
-        @media (min-width: 1440px) {
-            body {
-                padding: 2rem;
+            .form-input {
+                padding: 0.75rem 1rem;
+            }
+
+            .btn-primary {
+                padding: 0.875rem 1.5rem;
             }
         }
 
-        /* Accessibility - Reduced motion */
+        /* Desktop breakpoint */
+        @media (min-width: 1024px) {
+            .login-container {
+                max-width: 450px;
+                padding: 3rem;
+            }
+
+            .login-header {
+                margin-bottom: 2.5rem;
+            }
+
+            .login-form {
+                gap: 1.5rem;
+            }
+        }
+
+        /* Reduced motion for accessibility */
         @media (prefers-reduced-motion: reduce) {
             * {
                 animation-duration: 0.01ms !important;
                 animation-iteration-count: 1 !important;
                 transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .form-input {
+                border-width: 2px;
+            }
+
+            .btn-primary {
+                border: 2px solid var(--text-primary);
             }
         }
 
@@ -305,31 +309,20 @@
                 --text-secondary: #d1d5db;
                 --border-color: #4b5563;
                 --background: #1f2937;
-                --input-background: #374151;
+                --input-background: #111827;
             }
 
             body {
-                background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+                background-color: #111827;
             }
 
             .login-container {
                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
             }
-        }
 
-        /* Print styles */
-        @media print {
-            body {
-                background: white;
-            }
-
-            .login-container {
-                box-shadow: none;
-                border: 1px solid var(--border-color);
-            }
-
-            .login-button {
-                background: var(--text-primary);
+            .error-message {
+                background-color: #7f1d1d;
+                border-color: #991b1b;
             }
         }
     </style>
@@ -341,6 +334,8 @@
             <p>Sign in to access your member benefits</p>
         </div>
 
+        <div id="errorMessage" class="error-message" role="alert" aria-live="polite"></div>
+
         <form class="login-form" id="loginForm" novalidate>
             <div class="form-group">
                 <label for="email" class="form-label">Email Address</label>
@@ -349,12 +344,12 @@
                     id="email" 
                     name="email" 
                     class="form-input" 
-                    placeholder="Enter your email"
+                    placeholder="you@example.com"
                     required
                     autocomplete="email"
+                    aria-required="true"
                     aria-describedby="emailError"
                 />
-                <span id="emailError" class="form-error" role="alert"></span>
             </div>
 
             <div class="form-group">
@@ -367,9 +362,9 @@
                     placeholder="Enter your password"
                     required
                     autocomplete="current-password"
+                    aria-required="true"
                     aria-describedby="passwordError"
                 />
-                <span id="passwordError" class="form-error" role="alert"></span>
             </div>
 
             <div class="form-options">
@@ -385,7 +380,7 @@
                 <a href="#" class="forgot-password">Forgot password?</a>
             </div>
 
-            <button type="submit" class="login-button" aria-label="Sign in to your account">
+            <button type="submit" class="btn-primary" id="loginButton">
                 Sign In
             </button>
         </form>
@@ -403,105 +398,120 @@
         (function() {
             'use strict';
 
-            const form = document.getElementById('loginForm');
+            const loginForm = document.getElementById('loginForm');
             const emailInput = document.getElementById('email');
             const passwordInput = document.getElementById('password');
-            const emailError = document.getElementById('emailError');
-            const passwordError = document.getElementById('passwordError');
+            const loginButton = document.getElementById('loginButton');
+            const errorMessage = document.getElementById('errorMessage');
 
             /**
-             * Validates email format
-             * @param {string} email - Email address to validate
-             * @returns {boolean} - True if valid, false otherwise
+             * Display error message to user
+             * @param {string} message - Error message to display
              */
-            function validateEmail(email) {
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.add('show');
+                errorMessage.setAttribute('role', 'alert');
+            }
+
+            /**
+             * Hide error message
+             */
+            function hideError() {
+                errorMessage.textContent = '';
+                errorMessage.classList.remove('show');
+                errorMessage.removeAttribute('role');
+            }
+
+            /**
+             * Validate email format
+             * @param {string} email - Email address to validate
+             * @returns {boolean} - True if valid email format
+             */
+            function isValidEmail(email) {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 return emailRegex.test(email);
             }
 
             /**
-             * Displays error message for a field
-             * @param {HTMLElement} errorElement - Error message element
-             * @param {string} message - Error message to display
-             */
-            function showError(errorElement, message) {
-                errorElement.textContent = message;
-                errorElement.classList.add('active');
-            }
-
-            /**
-             * Clears error message for a field
-             * @param {HTMLElement} errorElement - Error message element
-             */
-            function clearError(errorElement) {
-                errorElement.textContent = '';
-                errorElement.classList.remove('active');
-            }
-
-            /**
-             * Validates the login form
-             * @returns {boolean} - True if form is valid, false otherwise
+             * Validate form inputs
+             * @returns {boolean} - True if form is valid
              */
             function validateForm() {
-                let isValid = true;
-
-                clearError(emailError);
-                clearError(passwordError);
+                hideError();
 
                 const email = emailInput.value.trim();
                 const password = passwordInput.value;
 
                 if (!email) {
-                    showError(emailError, 'Email address is required');
-                    isValid = false;
-                } else if (!validateEmail(email)) {
-                    showError(emailError, 'Please enter a valid email address');
-                    isValid = false;
+                    showError('Please enter your email address');
+                    emailInput.focus();
+                    return false;
+                }
+
+                if (!isValidEmail(email)) {
+                    showError('Please enter a valid email address');
+                    emailInput.focus();
+                    return false;
                 }
 
                 if (!password) {
-                    showError(passwordError, 'Password is required');
-                    isValid = false;
-                } else if (password.length < 6) {
-                    showError(passwordError, 'Password must be at least 6 characters');
-                    isValid = false;
+                    showError('Please enter your password');
+                    passwordInput.focus();
+                    return false;
                 }
 
-                return isValid;
+                if (password.length < 6) {
+                    showError('Password must be at least 6 characters long');
+                    passwordInput.focus();
+                    return false;
+                }
+
+                return true;
             }
 
-            // Form submission handler
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
+            /**
+             * Handle form submission
+             * @param {Event} event - Form submit event
+             */
+            function handleSubmit(event) {
+                event.preventDefault();
 
-                if (validateForm()) {
-                    const submitButton = form.querySelector('.login-button');
-                    submitButton.disabled = true;
-                    submitButton.textContent = 'Signing in...';
+                if (!validateForm()) {
+                    return;
+                }
 
-                    // Simulate form submission
-                    setTimeout(function() {
-                        submitButton.disabled = false;
-                        submitButton.textContent = 'Sign In';
-                        alert('Login functionality would be implemented here');
-                    }, 1500);
+                // Disable button and show loading state
+                loginButton.disabled = true;
+                loginButton.textContent = 'Signing In...';
+
+                // Simulate API call - Replace with actual authentication logic
+                setTimeout(function() {
+                    // Reset button state
+                    loginButton.disabled = false;
+                    loginButton.textContent = 'Sign In';
+
+                    // Example: Show success or redirect
+                    console.log('Login submitted', {
+                        email: emailInput.value,
+                        remember: document.getElementById('remember').checked
+                    });
+
+                    // In production, handle actual authentication here
+                    // window.location.href = '/dashboard';
+                }, 1500);
+            }
+
+            // Event listeners
+            loginForm.addEventListener('submit', handleSubmit);
+
+            // Clear error on input
+            emailInput.addEventListener('input', hideError);
+            passwordInput.addEventListener('input', hideError);
+
+            // Prevent form submission on Enter in input fields (already handled by form submit)
+            emailInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loginForm.dispatchEvent(new Event('submit'));
                 }
             });
-
-            // Real-time validation on blur
-            emailInput.addEventListener('blur', function() {
-                const email = emailInput.value.trim();
-                if (email && !validateEmail(email)) {
-                    showError(emailError, 'Please enter a valid email address');
-                } else {
-                    clearError(emailError);
-                }
-            });
-
-            passwordInput.addEventListener('blur', function() {
-                const password = passwordInput.value;
-                if (password && password.length < 6) {
-                    showError(passwordError, 'Password must be at least 6 characters');
-                } else {
-                    clearError(passwordError);
-                }
