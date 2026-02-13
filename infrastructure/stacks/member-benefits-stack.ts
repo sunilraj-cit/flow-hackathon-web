@@ -1,8 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
-import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as logs from 'aws-cdk-lib/aws-logs';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 import * as path from 'path';
 
@@ -11,29 +11,32 @@ import * as path from 'path';
  */
 export interface MemberBenefitsStackProps extends cdk.StackProps {
   /**
-   * Environment name (dev, staging, prod)
+   * Environment name (e.g., dev, staging, prod)
    */
-  readonly environment: string;
+  readonly environment?: string;
   
   /**
-   * Optional CORS allowed origins
+   * Log retention period in days
    */
-  readonly corsAllowedOrigins?: string[];
+  readonly logRetentionDays?: logs.RetentionDays;
 }
 
 /**
  * CDK Stack for Member Benefits infrastructure
- * Provisions API Gateway and Lambda functions for member benefits login functionality
+ * Provisions Lambda functions and API Gateway routes for member benefits functionality
  */
 export class MemberBenefitsStack extends cdk.Stack {
   public readonly api: apigateway.RestApi;
   public readonly loginFunction: lambda.Function;
 
-  constructor(scope: Construct, id: string, props: MemberBenefitsStackProps) {
+  constructor(scope: Construct, id: string, props?: MemberBenefitsStackProps) {
     super(scope, id, props);
 
-    // Create Lambda execution role
-    const lambdaRole = new iam.Role(this, 'MemberBenefitsLambdaRole', {
+    const environment = props?.environment || 'dev';
+    const logRetention = props?.logRetentionDays || logs.RetentionDays.ONE_WEEK;
+
+    // Create Lambda execution role with appropriate permissions
+    const lambdaExecutionRole = new iam.Role(this, 'MemberBenefitsLambdaRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       description: 'Execution role for Member Benefits Lambda functions',
       managedPolicies: [
@@ -41,37 +44,48 @@ export class MemberBenefitsStack extends cdk.Stack {
       ],
     });
 
-    // Create Lambda function for login route
+    // Add additional permissions for CloudWatch Logs
+    lambdaExecutionRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          'logs:CreateLogGroup',
+          'logs:CreateLogStream',
+          'logs:PutLogEvents',
+        ],
+        resources: ['arn:aws:logs:*:*:*'],
+      })
+    );
+
+    // Create Lambda function for login endpoint
     this.loginFunction = new lambda.Function(this, 'MemberBenefitsLoginFunction', {
+      functionName: `member-benefits-login-${environment}`,
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda/member-benefits-login')),
-      functionName: `member-benefits-login-${props.environment}`,
-      description: 'Handles member benefits login requests',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda/member-benefits/login')),
+      role: lambdaExecutionRole,
       timeout: cdk.Duration.seconds(30),
-      memorySize: 512,
-      role: lambdaRole,
+      memorySize: 256,
       environment: {
-        ENVIRONMENT: props.environment,
-        NODE_ENV: props.environment === 'prod' ? 'production' : 'development',
+        ENVIRONMENT: environment,
+        NODE_ENV: environment === 'prod' ? 'production' : 'development',
       },
-      logRetention: logs.RetentionDays.ONE_WEEK,
-      tracing: lambda.Tracing.ACTIVE,
+      logRetention: logRetention,
+      description: 'Handles member benefits login requests',
     });
 
-    // Create API Gateway
+    // Create API Gateway REST API
     this.api = new apigateway.RestApi(this, 'MemberBenefitsApi', {
-      restApiName: `member-benefits-api-${props.environment}`,
+      restApiName: `member-benefits-api-${environment}`,
       description: 'API Gateway for Member Benefits services',
       deployOptions: {
-        stageName: props.environment,
+        stageName: environment,
         loggingLevel: apigateway.MethodLoggingLevel.INFO,
         dataTraceEnabled: true,
-        tracingEnabled: true,
         metricsEnabled: true,
       },
       defaultCorsPreflightOptions: {
-        allowOrigins: props.corsAllowedOrigins || apigateway.Cors.ALL_ORIGINS,
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
         allowMethods: apigateway.Cors.ALL_METHODS,
         allowHeaders: [
           'Content-Type',
@@ -82,7 +96,6 @@ export class MemberBenefitsStack extends cdk.Stack {
         ],
         allowCredentials: true,
       },
-      cloudWatchRole: true,
     });
 
     // Create /member-benefits resource
@@ -98,27 +111,6 @@ export class MemberBenefitsStack extends cdk.Stack {
       integrationResponses: [
         {
           statusCode: '200',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': "'*'",
-          },
-        },
-        {
-          statusCode: '400',
-          selectionPattern: '.*"statusCode":400.*',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': "'*'",
-          },
-        },
-        {
-          statusCode: '401',
-          selectionPattern: '.*"statusCode":401.*',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': "'*'",
-          },
-        },
-        {
-          statusCode: '500',
-          selectionPattern: '.*"statusCode":500.*',
           responseParameters: {
             'method.response.header.Access-Control-Allow-Origin': "'*'",
           },
@@ -157,41 +149,47 @@ export class MemberBenefitsStack extends cdk.Stack {
       apiKeyRequired: false,
     });
 
-    // Add GET method to /member-benefits/login for health check
-    loginResource.addMethod('GET', loginIntegration, {
-      methodResponses: [
-        {
-          statusCode: '200',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': true,
-          },
-        },
-      ],
-      apiKeyRequired: false,
+    // Grant API Gateway permission to invoke Lambda
+    this.loginFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+
+    // Add CloudWatch alarms for monitoring
+    const loginFunctionErrors = this.loginFunction.metricErrors({
+      period: cdk.Duration.minutes(5),
+      statistic: 'Sum',
     });
 
-    // CloudFormation outputs
+    new cdk.aws_cloudwatch.Alarm(this, 'LoginFunctionErrorAlarm', {
+      metric: loginFunctionErrors,
+      threshold: 5,
+      evaluationPeriods: 1,
+      alarmDescription: 'Alert when login function has more than 5 errors in 5 minutes',
+      alarmName: `member-benefits-login-errors-${environment}`,
+    });
+
+    // Output API endpoint URL
     new cdk.CfnOutput(this, 'ApiEndpoint', {
       value: this.api.url,
       description: 'Member Benefits API Gateway endpoint URL',
-      exportName: `MemberBenefitsApiEndpoint-${props.environment}`,
+      exportName: `MemberBenefitsApiEndpoint-${environment}`,
     });
 
+    // Output Lambda function ARN
     new cdk.CfnOutput(this, 'LoginFunctionArn', {
       value: this.loginFunction.functionArn,
       description: 'Member Benefits Login Lambda function ARN',
-      exportName: `MemberBenefitsLoginFunctionArn-${props.environment}`,
+      exportName: `MemberBenefitsLoginFunctionArn-${environment}`,
     });
 
-    new cdk.CfnOutput(this, 'LoginEndpoint', {
-      value: `${this.api.url}member-benefits/login`,
-      description: 'Member Benefits Login endpoint URL',
-      exportName: `MemberBenefitsLoginEndpoint-${props.environment}`,
+    // Output API Gateway ID
+    new cdk.CfnOutput(this, 'ApiGatewayId', {
+      value: this.api.restApiId,
+      description: 'Member Benefits API Gateway ID',
+      exportName: `MemberBenefitsApiId-${environment}`,
     });
 
-    // Add tags
+    // Add tags for resource management
     cdk.Tags.of(this).add('Project', 'MemberBenefits');
-    cdk.Tags.of(this).add('Environment', props.environment);
+    cdk.Tags.of(this).add('Environment', environment);
     cdk.Tags.of(this).add('ManagedBy', 'CDK');
   }
 }
