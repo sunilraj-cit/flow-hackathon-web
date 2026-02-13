@@ -1,67 +1,57 @@
-/* Member Benefits Login Page Styles */
+/* Mobile-first responsive design for member benefits login page */
 
-/* CSS Reset and Base Styles */
+/* Reset and base styles */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-:root {
-  --primary-red: #dc2626;
-  --primary-red-hover: #b91c1c;
-  --primary-red-active: #991b1b;
-  --text-primary: #1f2937;
-  --text-secondary: #6b7280;
-  --border-color: #d1d5db;
-  --background-white: #ffffff;
-  --background-gray: #f9fafb;
-  --error-color: #ef4444;
-  --focus-ring: rgba(220, 38, 38, 0.2);
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-/* Container and Layout */
+/* Container and layout */
 .member-benefits-login-container {
-  min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: var(--background-gray);
+  min-height: 100vh;
   padding: 1rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f5f5f5;
 }
 
 .member-benefits-login-card {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 400px;
-  background-color: var(--background-white);
+  background-color: #ffffff;
   border-radius: 8px;
-  box-shadow: var(--shadow-lg);
-  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem 1.5rem;
 }
 
 /* Header */
 .member-benefits-login-header {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   margin-bottom: 2rem;
+  text-align: center;
 }
 
 .member-benefits-login-title {
   font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-weight: 600;
+  color: #333333;
   margin-bottom: 0.5rem;
 }
 
 .member-benefits-login-subtitle {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: #666666;
+  line-height: 1.4;
 }
 
-/* Form Styles */
+/* Form */
 .member-benefits-login-form {
   display: flex;
   flex-direction: column;
@@ -77,127 +67,104 @@
 .member-benefits-form-label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: #333333;
 }
 
 .member-benefits-form-input {
   width: 100%;
-  padding: 0.625rem 0.875rem;
+  padding: 0.75rem;
   font-size: 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background-color: var(--background-white);
-  color: var(--text-primary);
+  border: 1px solid #cccccc;
+  border-radius: 4px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .member-benefits-form-input:focus {
   outline: none;
-  border-color: var(--primary-red);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
 .member-benefits-form-input::placeholder {
-  color: var(--text-secondary);
+  color: #999999;
 }
 
 .member-benefits-form-input:disabled {
-  background-color: var(--background-gray);
+  background-color: #f5f5f5;
   cursor: not-allowed;
-  opacity: 0.6;
 }
 
-/* Error State */
-.member-benefits-form-input.error {
-  border-color: var(--error-color);
-}
-
+/* Error message */
 .member-benefits-form-error {
   font-size: 0.75rem;
-  color: var(--error-color);
+  color: #dc2626;
   margin-top: 0.25rem;
 }
 
-/* Red Button Styles */
-.member-benefits-btn-red {
+/* Red button styling */
+.member-benefits-btn-primary {
   width: 100%;
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 1.5rem;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--background-white);
-  background-color: var(--primary-red);
+  color: #ffffff;
+  background-color: #dc2626;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
-  box-shadow: var(--shadow-sm);
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  margin-top: 0.5rem;
 }
 
-.member-benefits-btn-red:hover {
-  background-color: var(--primary-red-hover);
-  box-shadow: var(--shadow-md);
+.member-benefits-btn-primary:hover {
+  background-color: #b91c1c;
 }
 
-.member-benefits-btn-red:active {
-  background-color: var(--primary-red-active);
-  transform: translateY(1px);
-  box-shadow: var(--shadow-sm);
+.member-benefits-btn-primary:active {
+  transform: scale(0.98);
 }
 
-.member-benefits-btn-red:focus {
+.member-benefits-btn-primary:focus {
   outline: none;
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
 }
 
-.member-benefits-btn-red:disabled {
-  background-color: var(--text-secondary);
+.member-benefits-btn-primary:disabled {
+  background-color: #cccccc;
   cursor: not-allowed;
-  opacity: 0.6;
   transform: none;
 }
 
-/* Additional Links */
+/* Secondary actions */
 .member-benefits-login-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
   margin-top: 1.5rem;
-  text-align: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e5e5;
 }
 
-.member-benefits-login-link {
+.member-benefits-link {
   font-size: 0.875rem;
-  color: var(--primary-red);
+  color: #dc2626;
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
-.member-benefits-login-link:hover {
-  color: var(--primary-red-hover);
+.member-benefits-link:hover {
+  color: #b91c1c;
   text-decoration: underline;
 }
 
-.member-benefits-login-divider {
-  display: flex;
-  align-items: center;
-  margin: 1.5rem 0;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
+.member-benefits-link:focus {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
-.member-benefits-login-divider::before,
-.member-benefits-login-divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.member-benefits-login-divider::before {
-  margin-right: 0.75rem;
-}
-
-.member-benefits-login-divider::after {
-  margin-left: 0.75rem;
-}
-
-/* Checkbox Group */
+/* Checkbox group */
 .member-benefits-checkbox-group {
   display: flex;
   align-items: center;
@@ -208,48 +175,22 @@
   width: 1rem;
   height: 1rem;
   cursor: pointer;
-  accent-color: var(--primary-red);
+  accent-color: #dc2626;
 }
 
 .member-benefits-checkbox-label {
   font-size: 0.875rem;
-  color: var(--text-primary);
+  color: #333333;
   cursor: pointer;
   user-select: none;
 }
 
-/* Alert/Message Box */
-.member-benefits-alert {
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
-}
-
-.member-benefits-alert-error {
-  background-color: #fef2f2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
-}
-
-.member-benefits-alert-success {
-  background-color: #f0fdf4;
-  color: #166534;
-  border: 1px solid #bbf7d0;
-}
-
-.member-benefits-alert-info {
-  background-color: #eff6ff;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
-}
-
-/* Loading Spinner */
-.member-benefits-spinner {
+/* Loading state */
+.member-benefits-loading {
   display: inline-block;
   width: 1rem;
   height: 1rem;
-  border: 2px solid var(--background-white);
+  border: 2px solid #ffffff;
   border-top-color: transparent;
   border-radius: 50%;
   animation: member-benefits-spin 0.6s linear infinite;
@@ -261,94 +202,111 @@
   }
 }
 
-/* Mobile Styles (< 768px) */
-@media (max-width: 767px) {
-  .member-benefits-login-container {
-    padding: 0.75rem;
-  }
-
-  .member-benefits-login-card {
-    padding: 1.5rem;
-    max-width: 100%;
-  }
-
-  .member-benefits-login-title {
-    font-size: 1.25rem;
-  }
-
-  .member-benefits-login-subtitle {
-    font-size: 0.8125rem;
-  }
-
-  .member-benefits-form-input {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.9375rem;
-  }
-
-  .member-benefits-btn-red {
-    padding: 0.625rem 1.25rem;
-    font-size: 0.9375rem;
-  }
-
-  .member-benefits-login-footer {
-    margin-top: 1.25rem;
-  }
+/* Alert/Message box */
+.member-benefits-alert {
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
 }
 
-/* Tablet Styles (768px - 1024px) */
-@media (min-width: 768px) and (max-width: 1024px) {
-  .member-benefits-login-container {
-    padding: 1.5rem;
-  }
-
-  .member-benefits-login-card {
-    max-width: 450px;
-    padding: 2.5rem;
-  }
-
-  .member-benefits-login-title {
-    font-size: 1.75rem;
-  }
-
-  .member-benefits-form-input {
-    padding: 0.75rem 1rem;
-  }
-
-  .member-benefits-btn-red {
-    padding: 0.875rem 1.75rem;
-  }
+.member-benefits-alert-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
 }
 
-/* Desktop Styles (> 1024px) */
-@media (min-width: 1025px) {
+.member-benefits-alert-success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.member-benefits-alert-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+/* Tablet breakpoint (768px and up) */
+@media (min-width: 768px) {
   .member-benefits-login-container {
     padding: 2rem;
   }
 
   .member-benefits-login-card {
-    max-width: 480px;
+    padding: 3rem 2.5rem;
+    max-width: 450px;
+  }
+
+  .member-benefits-login-title {
+    font-size: 1.875rem;
+  }
+
+  .member-benefits-login-subtitle {
+    font-size: 1rem;
+  }
+
+  .member-benefits-form-group {
+    gap: 0.625rem;
+  }
+
+  .member-benefits-form-label {
+    font-size: 1rem;
+  }
+
+  .member-benefits-form-input {
+    padding: 0.875rem 1rem;
+  }
+
+  .member-benefits-btn-primary {
+    padding: 1rem 1.5rem;
+    font-size: 1.0625rem;
+  }
+
+  .member-benefits-login-footer {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+/* Desktop breakpoint (1024px and up) */
+@media (min-width: 1024px) {
+  .member-benefits-login-container {
     padding: 3rem;
+  }
+
+  .member-benefits-login-card {
+    padding: 3.5rem 3rem;
+    max-width: 500px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   }
 
   .member-benefits-login-title {
     font-size: 2rem;
   }
 
-  .member-benefits-form-input {
-    padding: 0.75rem 1rem;
+  .member-benefits-form-input:hover {
+    border-color: #999999;
   }
 
-  .member-benefits-btn-red {
-    padding: 0.875rem 2rem;
-    font-size: 1.0625rem;
+  .member-benefits-btn-primary {
+    padding: 1.125rem 1.5rem;
   }
 
-  .member-benefits-login-footer {
-    margin-top: 2rem;
+  .member-benefits-btn-primary:hover {
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
   }
 }
 
-/* Accessibility */
+/* Large desktop breakpoint (1440px and up) */
+@media (min-width: 1440px) {
+  .member-benefits-login-card {
+    max-width: 550px;
+  }
+}
+
+/* Accessibility improvements */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
@@ -357,25 +315,49 @@
   }
 }
 
-/* High Contrast Mode */
+/* High contrast mode support */
 @media (prefers-contrast: high) {
   .member-benefits-form-input {
     border-width: 2px;
   }
 
-  .member-benefits-btn-red {
-    border: 2px solid var(--text-primary);
+  .member-benefits-btn-primary {
+    border: 2px solid #000000;
   }
 }
 
-/* Print Styles */
-@media print {
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
   .member-benefits-login-container {
-    background-color: var(--background-white);
+    background-color: #1a1a1a;
   }
 
   .member-benefits-login-card {
-    box-shadow: none;
-    border: 1px solid var(--border-color);
+    background-color: #2d2d2d;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .member-benefits-login-title,
+  .member-benefits-form-label,
+  .member-benefits-checkbox-label {
+    color: #f5f5f5;
+  }
+
+  .member-benefits-login-subtitle {
+    color: #cccccc;
+  }
+
+  .member-benefits-form-input {
+    background-color: #3d3d3d;
+    border-color: #555555;
+    color: #f5f5f5;
+  }
+
+  .member-benefits-form-input::placeholder {
+    color: #888888;
+  }
+
+  .member-benefits-login-footer {
+    border-top-color: #444444;
   }
 }
