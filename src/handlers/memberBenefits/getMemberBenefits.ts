@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
 /**
- * Interface representing a member benefit
+ * Member benefit interface
  */
 interface MemberBenefit {
   id: string;
@@ -10,7 +10,8 @@ interface MemberBenefit {
   category: string;
   icon?: string;
   isActive: boolean;
-  displayOrder: number;
+  eligibilityTier?: string;
+  expiryDate?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -19,19 +20,21 @@ interface MemberBenefit {
  * Response structure for member benefits
  */
 interface MemberBenefitsResponse {
-  benefits: MemberBenefit[];
-  total: number;
-  timestamp: string;
+  success: boolean;
+  data?: MemberBenefit[];
+  message?: string;
+  error?: string;
 }
 
 /**
- * Error response structure
+ * CORS headers for API responses
  */
-interface ErrorResponse {
-  error: string;
-  message: string;
-  timestamp: string;
-}
+const CORS_HEADERS = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
 
 /**
  * Creates a standardized API Gateway response
@@ -42,120 +45,156 @@ interface ErrorResponse {
  */
 const createResponse = (
   statusCode: number,
-  body: MemberBenefitsResponse | ErrorResponse
+  body: MemberBenefitsResponse
 ): APIGatewayProxyResult => {
   return {
     statusCode,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Credentials': true,
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
+    headers: CORS_HEADERS,
     body: JSON.stringify(body),
   };
 };
 
 /**
- * Creates an error response
- * 
- * @param statusCode - HTTP status code
- * @param error - Error type
- * @param message - Error message
- * @returns Formatted error response
- */
-const createErrorResponse = (
-  statusCode: number,
-  error: string,
-  message: string
-): APIGatewayProxyResult => {
-  return createResponse(statusCode, {
-    error,
-    message,
-    timestamp: new Date().toISOString(),
-  });
-};
-
-/**
  * Fetches member benefits data
- * This is a placeholder implementation that returns mock data.
- * In production, this would fetch from DynamoDB or another data source.
+ * In production, this would query a database or external service
  * 
- * @returns Promise resolving to array of member benefits
+ * @returns Array of member benefits
  */
 const fetchMemberBenefits = async (): Promise<MemberBenefit[]> => {
   // TODO: Replace with actual database query (DynamoDB, RDS, etc.)
-  // Example: const result = await dynamoDb.scan({ TableName: 'MemberBenefits' }).promise();
-  
+  // This is mock data for initial implementation
   const mockBenefits: MemberBenefit[] = [
     {
       id: '1',
-      title: 'Exclusive Discounts',
-      description: 'Get up to 20% off on premium products and services',
-      category: 'Shopping',
-      icon: 'discount',
-      isActive: true,
-      displayOrder: 1,
-      createdAt: '2024-01-01T00:00:00.000Z',
-      updatedAt: '2024-01-01T00:00:00.000Z',
-    },
-    {
-      id: '2',
-      title: 'Priority Support',
-      description: '24/7 dedicated customer support with priority response',
+      title: 'Premium Support',
+      description: 'Access to 24/7 priority customer support with dedicated account managers',
       category: 'Support',
       icon: 'support',
       isActive: true,
-      displayOrder: 2,
-      createdAt: '2024-01-01T00:00:00.000Z',
-      updatedAt: '2024-01-01T00:00:00.000Z',
+      eligibilityTier: 'Premium',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: '2',
+      title: 'Exclusive Discounts',
+      description: 'Up to 20% off on all products and services',
+      category: 'Savings',
+      icon: 'discount',
+      isActive: true,
+      eligibilityTier: 'Standard',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     {
       id: '3',
       title: 'Early Access',
-      description: 'Be the first to access new features and products',
+      description: 'Be the first to access new features and product launches',
       category: 'Access',
       icon: 'early-access',
       isActive: true,
-      displayOrder: 3,
-      createdAt: '2024-01-01T00:00:00.000Z',
-      updatedAt: '2024-01-01T00:00:00.000Z',
+      eligibilityTier: 'Premium',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     {
       id: '4',
       title: 'Free Shipping',
-      description: 'Enjoy free shipping on all orders, no minimum purchase required',
-      category: 'Shopping',
+      description: 'Complimentary shipping on all orders, no minimum purchase required',
+      category: 'Savings',
       icon: 'shipping',
       isActive: true,
-      displayOrder: 4,
-      createdAt: '2024-01-01T00:00:00.000Z',
-      updatedAt: '2024-01-01T00:00:00.000Z',
+      eligibilityTier: 'Standard',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     {
       id: '5',
-      title: 'Rewards Program',
-      description: 'Earn points on every purchase and redeem for exclusive rewards',
-      category: 'Rewards',
-      icon: 'rewards',
+      title: 'Member Events',
+      description: 'Invitations to exclusive member-only events and webinars',
+      category: 'Events',
+      icon: 'events',
       isActive: true,
-      displayOrder: 5,
-      createdAt: '2024-01-01T00:00:00.000Z',
-      updatedAt: '2024-01-01T00:00:00.000Z',
+      eligibilityTier: 'Premium',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
   ];
 
-  // Simulate async operation
-  return Promise.resolve(mockBenefits.filter(benefit => benefit.isActive));
+  return mockBenefits;
 };
 
 /**
- * Lambda handler for retrieving member benefits
- * Implements GET endpoint with error handling and response formatting
+ * Validates query parameters from the request
+ * 
+ * @param event - API Gateway event
+ * @returns Validation result
+ */
+const validateQueryParameters = (event: APIGatewayProxyEvent): { valid: boolean; error?: string } => {
+  const queryParams = event.queryStringParameters;
+
+  if (queryParams?.category) {
+    const validCategories = ['Support', 'Savings', 'Access', 'Events'];
+    if (!validCategories.includes(queryParams.category)) {
+      return {
+        valid: false,
+        error: `Invalid category. Must be one of: ${validCategories.join(', ')}`,
+      };
+    }
+  }
+
+  if (queryParams?.tier) {
+    const validTiers = ['Standard', 'Premium'];
+    if (!validTiers.includes(queryParams.tier)) {
+      return {
+        valid: false,
+        error: `Invalid tier. Must be one of: ${validTiers.join(', ')}`,
+      };
+    }
+  }
+
+  return { valid: true };
+};
+
+/**
+ * Filters benefits based on query parameters
+ * 
+ * @param benefits - Array of member benefits
+ * @param queryParams - Query parameters from request
+ * @returns Filtered array of benefits
+ */
+const filterBenefits = (
+  benefits: MemberBenefit[],
+  queryParams: Record<string, string> | null
+): MemberBenefit[] => {
+  if (!queryParams) {
+    return benefits;
+  }
+
+  let filtered = benefits;
+
+  if (queryParams.category) {
+    filtered = filtered.filter((benefit) => benefit.category === queryParams.category);
+  }
+
+  if (queryParams.tier) {
+    filtered = filtered.filter((benefit) => benefit.eligibilityTier === queryParams.tier);
+  }
+
+  if (queryParams.active !== undefined) {
+    const isActive = queryParams.active === 'true';
+    filtered = filtered.filter((benefit) => benefit.isActive === isActive);
+  }
+
+  return filtered;
+};
+
+/**
+ * Lambda handler for GET /member-benefits endpoint
+ * Retrieves and returns member benefits data with optional filtering
  * 
  * @param event - API Gateway proxy event
- * @returns Promise resolving to API Gateway proxy result
+ * @returns API Gateway proxy result with member benefits data
  */
 export const handler = async (
   event: APIGatewayProxyEvent
@@ -165,57 +204,49 @@ export const handler = async (
   try {
     // Handle OPTIONS request for CORS preflight
     if (event.httpMethod === 'OPTIONS') {
-      return createResponse(200, {
-        benefits: [],
-        total: 0,
-        timestamp: new Date().toISOString(),
-      });
+      return createResponse(200, { success: true });
     }
 
     // Validate HTTP method
     if (event.httpMethod !== 'GET') {
-      return createErrorResponse(
-        405,
-        'MethodNotAllowed',
-        `Method ${event.httpMethod} is not allowed. Only GET requests are supported.`
-      );
+      return createResponse(405, {
+        success: false,
+        error: 'Method not allowed. Only GET requests are supported.',
+      });
+    }
+
+    // Validate query parameters
+    const validation = validateQueryParameters(event);
+    if (!validation.valid) {
+      return createResponse(400, {
+        success: false,
+        error: validation.error,
+      });
     }
 
     // Fetch member benefits
+    console.log('Fetching member benefits...');
     const benefits = await fetchMemberBenefits();
 
-    // Sort benefits by display order
-    const sortedBenefits = benefits.sort(
-      (a, b) => a.displayOrder - b.displayOrder
-    );
+    // Apply filters if query parameters are provided
+    const filteredBenefits = filterBenefits(benefits, event.queryStringParameters);
 
-    // Prepare response
-    const response: MemberBenefitsResponse = {
-      benefits: sortedBenefits,
-      total: sortedBenefits.length,
-      timestamp: new Date().toISOString(),
-    };
+    console.log(`Successfully retrieved ${filteredBenefits.length} member benefits`);
 
-    console.log(`Successfully retrieved ${response.total} member benefits`);
-
-    return createResponse(200, response);
+    return createResponse(200, {
+      success: true,
+      data: filteredBenefits,
+      message: `Successfully retrieved ${filteredBenefits.length} member benefit(s)`,
+    });
   } catch (error) {
-    console.error('Error retrieving member benefits:', error);
+    console.error('Error fetching member benefits:', error);
 
-    // Handle specific error types
-    if (error instanceof Error) {
-      return createErrorResponse(
-        500,
-        'InternalServerError',
-        `Failed to retrieve member benefits: ${error.message}`
-      );
-    }
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
 
-    // Handle unknown errors
-    return createErrorResponse(
-      500,
-      'InternalServerError',
-      'An unexpected error occurred while retrieving member benefits'
-    );
+    return createResponse(500, {
+      success: false,
+      error: 'Internal server error',
+      message: errorMessage,
+    });
   }
 };
