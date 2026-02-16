@@ -89,22 +89,24 @@ const fetchMemberBenefits = async (): Promise<MemberBenefit[]> => {
     {
       id: '1',
       title: 'Premium Support',
-      description: 'Access to 24/7 premium customer support with priority response times',
+      description: 'Access to 24/7 premium customer support with dedicated account managers',
       category: 'Support',
       icon: 'support',
       isActive: true,
       displayOrder: 1,
       eligibilityRequirements: ['Active membership', 'Premium tier'],
+      termsAndConditions: 'Subject to availability and standard terms of service',
     },
     {
       id: '2',
       title: 'Exclusive Discounts',
-      description: 'Save up to 20% on all products and services',
+      description: 'Up to 20% off on all products and services',
       category: 'Savings',
       icon: 'discount',
       isActive: true,
       displayOrder: 2,
       eligibilityRequirements: ['Active membership'],
+      termsAndConditions: 'Discounts cannot be combined with other offers',
     },
     {
       id: '3',
@@ -114,80 +116,47 @@ const fetchMemberBenefits = async (): Promise<MemberBenefit[]> => {
       icon: 'early-access',
       isActive: true,
       displayOrder: 3,
-      eligibilityRequirements: ['Active membership', 'Premium tier'],
+      eligibilityRequirements: ['Active membership', 'Email verification'],
+      termsAndConditions: 'Early access features are subject to change',
     },
     {
       id: '4',
       title: 'Free Shipping',
-      description: 'Enjoy free shipping on all orders with no minimum purchase required',
-      category: 'Shipping',
+      description: 'Enjoy free shipping on all orders with no minimum purchase',
+      category: 'Savings',
       icon: 'shipping',
       isActive: true,
       displayOrder: 4,
       eligibilityRequirements: ['Active membership'],
+      termsAndConditions: 'Applies to standard shipping only',
     },
     {
       id: '5',
       title: 'Member Events',
-      description: 'Exclusive invitations to member-only events and webinars',
+      description: 'Invitations to exclusive member-only events and webinars',
       category: 'Events',
       icon: 'events',
       isActive: true,
       displayOrder: 5,
-      eligibilityRequirements: ['Active membership'],
+      eligibilityRequirements: ['Active membership', 'Event registration'],
+      termsAndConditions: 'Event attendance subject to capacity and registration',
     },
   ];
 
-  return mockBenefits;
-};
-
-/**
- * Validates query parameters
- * 
- * @param queryParams - Query string parameters from the request
- * @returns Validation result
- */
-const validateQueryParameters = (queryParams: Record<string, string | undefined>): { valid: boolean; error?: string } => {
-  if (queryParams.category && typeof queryParams.category !== 'string') {
-    return { valid: false, error: 'Invalid category parameter' };
-  }
-  
-  if (queryParams.activeOnly && !['true', 'false'].includes(queryParams.activeOnly)) {
-    return { valid: false, error: 'Invalid activeOnly parameter. Must be true or false' };
-  }
-
-  return { valid: true };
-};
-
-/**
- * Filters benefits based on query parameters
- * 
- * @param benefits - Array of member benefits
- * @param queryParams - Query string parameters
- * @returns Filtered array of benefits
- */
-const filterBenefits = (benefits: MemberBenefit[], queryParams: Record<string, string | undefined>): MemberBenefit[] => {
-  let filtered = [...benefits];
-
-  if (queryParams.category) {
-    filtered = filtered.filter(benefit => 
-      benefit.category.toLowerCase() === queryParams.category?.toLowerCase()
-    );
-  }
-
-  if (queryParams.activeOnly === 'true') {
-    filtered = filtered.filter(benefit => benefit.isActive);
-  }
-
-  return filtered.sort((a, b) => a.displayOrder - b.displayOrder);
+  // Simulate async operation
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(mockBenefits.filter(benefit => benefit.isActive).sort((a, b) => a.displayOrder - b.displayOrder));
+    }, 100);
+  });
 };
 
 /**
  * Lambda handler for retrieving member benefits
- * Implements GET endpoint with error handling and response formatting
+ * Implements GET endpoint with proper error handling and response formatting
  * 
  * @param event - API Gateway proxy event
- * @returns API Gateway proxy result with member benefits data
+ * @returns API Gateway proxy result with member benefits data or error
  */
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   console.log('Received event:', JSON.stringify(event, null, 2));
@@ -204,32 +173,40 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     // Validate HTTP method
     if (event.httpMethod !== 'GET') {
-      return createErrorResponse(405, 'MethodNotAllowed', `Method ${event.httpMethod} is not allowed`);
+      console.warn(`Invalid HTTP method: ${event.httpMethod}`);
+      return createErrorResponse(
+        405,
+        'MethodNotAllowed',
+        `Method ${event.httpMethod} is not allowed. Only GET requests are supported.`
+      );
     }
 
-    // Extract and validate query parameters
+    // Optional: Extract and validate query parameters
     const queryParams = event.queryStringParameters || {};
-    const validation = validateQueryParameters(queryParams);
+    const category = queryParams.category;
     
-    if (!validation.valid) {
-      return createErrorResponse(400, 'BadRequest', validation.error || 'Invalid request parameters');
-    }
-
-    // Fetch member benefits
     console.log('Fetching member benefits...');
-    const benefits = await fetchMemberBenefits();
+    
+    // Fetch benefits data
+    let benefits = await fetchMemberBenefits();
 
-    // Apply filters
-    const filteredBenefits = filterBenefits(benefits, queryParams);
+    // Optional: Filter by category if provided
+    if (category) {
+      console.log(`Filtering benefits by category: ${category}`);
+      benefits = benefits.filter(benefit => 
+        benefit.category.toLowerCase() === category.toLowerCase()
+      );
+    }
 
     // Prepare response
     const response: MemberBenefitsResponse = {
-      benefits: filteredBenefits,
-      totalCount: filteredBenefits.length,
+      benefits,
+      totalCount: benefits.length,
       timestamp: new Date().toISOString(),
     };
 
-    console.log(`Successfully retrieved ${filteredBenefits.length} member benefits`);
+    console.log(`Successfully retrieved ${benefits.length} member benefits`);
+    
     return createResponse(200, response);
 
   } catch (error) {
@@ -252,3 +229,4 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     );
   }
 };
+```
