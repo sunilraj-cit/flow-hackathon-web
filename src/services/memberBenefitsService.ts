@@ -1,304 +1,286 @@
-import { DateTime } from 'luxon';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, GetCommand, QueryCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
 
 /**
- * Represents a member benefit item
+ * Interface representing a member benefit
  */
 export interface MemberBenefit {
   id: string;
   title: string;
   description: string;
-  category: BenefitCategory;
+  category: string;
+  tier?: string;
   value?: string;
-  icon?: string;
+  imageUrl?: string;
+  expiryDate?: string;
   isActive: boolean;
-  eligibilityRequirements?: string[];
-  expirationDate?: string;
-  termsAndConditions?: string;
-  redemptionUrl?: string;
-  displayOrder: number;
+  displayOrder?: number;
   createdAt: string;
   updatedAt: string;
 }
 
 /**
- * Category types for member benefits
+ * Interface for benefit category grouping
  */
-export enum BenefitCategory {
-  HEALTH = 'health',
-  WELLNESS = 'wellness',
-  FINANCIAL = 'financial',
-  LIFESTYLE = 'lifestyle',
-  TRAVEL = 'travel',
-  EDUCATION = 'education',
-  ENTERTAINMENT = 'entertainment',
-  OTHER = 'other',
+export interface BenefitCategory {
+  category: string;
+  benefits: MemberBenefit[];
+  count: number;
 }
 
 /**
- * Formatted member benefit for display
+ * Interface for formatted benefits response
  */
-export interface FormattedMemberBenefit extends MemberBenefit {
-  formattedExpirationDate?: string;
-  isExpiringSoon: boolean;
-  isExpired: boolean;
-  daysUntilExpiration?: number;
+export interface FormattedBenefitsResponse {
+  benefits: MemberBenefit[];
+  categories: BenefitCategory[];
+  totalCount: number;
 }
 
 /**
- * Filter options for member benefits
+ * Configuration for the member benefits service
  */
-export interface BenefitFilterOptions {
-  category?: BenefitCategory;
-  isActive?: boolean;
-  includeExpired?: boolean;
+interface ServiceConfig {
+  tableName: string;
+  region?: string;
 }
 
 /**
  * Service class for managing member benefits data
  */
-class MemberBenefitsService {
-  private readonly EXPIRING_SOON_THRESHOLD_DAYS = 30;
+export class MemberBenefitsService {
+  private docClient: DynamoDBDocumentClient;
+  private tableName: string;
+
+  constructor(config: ServiceConfig) {
+    const client = new DynamoDBClient({
+      region: config.region || process.env.AWS_REGION || 'us-east-1',
+    });
+
+    this.docClient = DynamoDBDocumentClient.from(client, {
+      marshallOptions: {
+        removeUndefinedValues: true,
+        convertClassInstanceToMap: true,
+      },
+    });
+
+    this.tableName = config.tableName || process.env.BENEFITS_TABLE_NAME || 'MemberBenefits';
+  }
 
   /**
-   * Fetches all member benefits
+   * Retrieves all active member benefits
    * @returns Promise resolving to array of member benefits
+   * @throws Error if retrieval fails
    */
   async getAllBenefits(): Promise<MemberBenefit[]> {
     try {
-      // TODO: Replace with actual DynamoDB or API call
-      // Example: const response = await dynamoDBClient.scan({ TableName: 'MemberBenefits' });
-      
-      // Mock data for development
-      const mockBenefits: MemberBenefit[] = [
-        {
-          id: '1',
-          title: 'Health Insurance Discount',
-          description: 'Get up to 20% discount on health insurance premiums',
-          category: BenefitCategory.HEALTH,
-          value: '20% off',
-          icon: 'heart',
-          isActive: true,
-          eligibilityRequirements: ['Active membership', 'Minimum 6 months tenure'],
-          expirationDate: DateTime.now().plus({ months: 3 }).toISO() || undefined,
-          displayOrder: 1,
-          createdAt: DateTime.now().minus({ months: 6 }).toISO() || '',
-          updatedAt: DateTime.now().toISO() || '',
+      const command = new ScanCommand({
+        TableName: this.tableName,
+        FilterExpression: 'isActive = :isActive',
+        ExpressionAttributeValues: {
+          ':isActive': true,
         },
-        {
-          id: '2',
-          title: 'Gym Membership',
-          description: 'Free access to partner gyms nationwide',
-          category: BenefitCategory.WELLNESS,
-          value: 'Free',
-          icon: 'dumbbell',
-          isActive: true,
-          eligibilityRequirements: ['Active membership'],
-          displayOrder: 2,
-          createdAt: DateTime.now().minus({ months: 6 }).toISO() || '',
-          updatedAt: DateTime.now().toISO() || '',
-        },
-        {
-          id: '3',
-          title: 'Financial Planning Consultation',
-          description: 'One free consultation with certified financial planners',
-          category: BenefitCategory.FINANCIAL,
-          value: '$200 value',
-          icon: 'dollar-sign',
-          isActive: true,
-          eligibilityRequirements: ['Active membership', 'First-time users only'],
-          displayOrder: 3,
-          createdAt: DateTime.now().minus({ months: 6 }).toISO() || '',
-          updatedAt: DateTime.now().toISO() || '',
-        },
-      ];
+      });
 
-      return mockBenefits;
+      const response = await this.docClient.send(command);
+      const benefits = (response.Items || []) as MemberBenefit[];
+
+      return this.sortBenefits(benefits);
     } catch (error) {
-      console.error('Error fetching member benefits:', error);
-      throw new Error('Failed to fetch member benefits');
+      console.error('Error fetching all benefits:', error);
+      throw new Error('Failed to retrieve member benefits');
     }
   }
 
   /**
-   * Fetches a single member benefit by ID
-   * @param benefitId - The ID of the benefit to fetch
-   * @returns Promise resolving to a member benefit or null
+   * Retrieves a specific benefit by ID
+   * @param benefitId - The unique identifier of the benefit
+   * @returns Promise resolving to the member benefit or null if not found
+   * @throws Error if retrieval fails
    */
   async getBenefitById(benefitId: string): Promise<MemberBenefit | null> {
     try {
-      // TODO: Replace with actual DynamoDB or API call
-      // Example: const response = await dynamoDBClient.get({ TableName: 'MemberBenefits', Key: { id: benefitId } });
-      
-      const allBenefits = await this.getAllBenefits();
-      return allBenefits.find(benefit => benefit.id === benefitId) || null;
+      const command = new GetCommand({
+        TableName: this.tableName,
+        Key: {
+          id: benefitId,
+        },
+      });
+
+      const response = await this.docClient.send(command);
+
+      if (!response.Item) {
+        return null;
+      }
+
+      return response.Item as MemberBenefit;
     } catch (error) {
       console.error(`Error fetching benefit ${benefitId}:`, error);
-      throw new Error(`Failed to fetch benefit with ID: ${benefitId}`);
+      throw new Error(`Failed to retrieve benefit with ID: ${benefitId}`);
     }
   }
 
   /**
-   * Fetches member benefits with optional filtering
-   * @param filters - Optional filter criteria
-   * @returns Promise resolving to filtered array of member benefits
+   * Retrieves benefits filtered by category
+   * @param category - The category to filter by
+   * @returns Promise resolving to array of member benefits in the category
+   * @throws Error if retrieval fails
    */
-  async getBenefitsWithFilters(filters?: BenefitFilterOptions): Promise<MemberBenefit[]> {
+  async getBenefitsByCategory(category: string): Promise<MemberBenefit[]> {
     try {
-      let benefits = await this.getAllBenefits();
+      const command = new ScanCommand({
+        TableName: this.tableName,
+        FilterExpression: 'category = :category AND isActive = :isActive',
+        ExpressionAttributeValues: {
+          ':category': category,
+          ':isActive': true,
+        },
+      });
 
-      if (filters?.category) {
-        benefits = benefits.filter(benefit => benefit.category === filters.category);
-      }
+      const response = await this.docClient.send(command);
+      const benefits = (response.Items || []) as MemberBenefit[];
 
-      if (filters?.isActive !== undefined) {
-        benefits = benefits.filter(benefit => benefit.isActive === filters.isActive);
-      }
-
-      if (!filters?.includeExpired) {
-        benefits = benefits.filter(benefit => {
-          if (!benefit.expirationDate) return true;
-          return DateTime.fromISO(benefit.expirationDate) > DateTime.now();
-        });
-      }
-
-      return benefits;
+      return this.sortBenefits(benefits);
     } catch (error) {
-      console.error('Error fetching filtered benefits:', error);
-      throw new Error('Failed to fetch filtered member benefits');
+      console.error(`Error fetching benefits for category ${category}:`, error);
+      throw new Error(`Failed to retrieve benefits for category: ${category}`);
     }
   }
 
   /**
-   * Formats member benefits with additional computed properties
-   * @param benefits - Array of member benefits to format
-   * @returns Array of formatted member benefits
+   * Retrieves benefits filtered by membership tier
+   * @param tier - The membership tier to filter by
+   * @returns Promise resolving to array of member benefits for the tier
+   * @throws Error if retrieval fails
    */
-  formatBenefits(benefits: MemberBenefit[]): FormattedMemberBenefit[] {
-    return benefits.map(benefit => this.formatBenefit(benefit));
+  async getBenefitsByTier(tier: string): Promise<MemberBenefit[]> {
+    try {
+      const command = new ScanCommand({
+        TableName: this.tableName,
+        FilterExpression: '(tier = :tier OR attribute_not_exists(tier)) AND isActive = :isActive',
+        ExpressionAttributeValues: {
+          ':tier': tier,
+          ':isActive': true,
+        },
+      });
+
+      const response = await this.docClient.send(command);
+      const benefits = (response.Items || []) as MemberBenefit[];
+
+      return this.sortBenefits(benefits);
+    } catch (error) {
+      console.error(`Error fetching benefits for tier ${tier}:`, error);
+      throw new Error(`Failed to retrieve benefits for tier: ${tier}`);
+    }
   }
 
   /**
-   * Formats a single member benefit with additional computed properties
-   * @param benefit - Member benefit to format
-   * @returns Formatted member benefit
+   * Retrieves and formats all benefits with category grouping
+   * @returns Promise resolving to formatted benefits response
+   * @throws Error if retrieval or formatting fails
    */
-  formatBenefit(benefit: MemberBenefit): FormattedMemberBenefit {
-    const now = DateTime.now();
-    let formattedExpirationDate: string | undefined;
-    let isExpiringSoon = false;
-    let isExpired = false;
-    let daysUntilExpiration: number | undefined;
+  async getFormattedBenefits(): Promise<FormattedBenefitsResponse> {
+    try {
+      const benefits = await this.getAllBenefits();
+      const categories = this.groupBenefitsByCategory(benefits);
 
-    if (benefit.expirationDate) {
-      const expirationDateTime = DateTime.fromISO(benefit.expirationDate);
-      formattedExpirationDate = expirationDateTime.toLocaleString(DateTime.DATE_MED);
-      
-      const diff = expirationDateTime.diff(now, 'days').days;
-      daysUntilExpiration = Math.floor(diff);
-      
-      isExpired = diff < 0;
-      isExpiringSoon = !isExpired && diff <= this.EXPIRING_SOON_THRESHOLD_DAYS;
+      return {
+        benefits,
+        categories,
+        totalCount: benefits.length,
+      };
+    } catch (error) {
+      console.error('Error formatting benefits:', error);
+      throw new Error('Failed to format member benefits');
     }
-
-    return {
-      ...benefit,
-      formattedExpirationDate,
-      isExpiringSoon,
-      isExpired,
-      daysUntilExpiration,
-    };
   }
 
   /**
    * Groups benefits by category
    * @param benefits - Array of member benefits to group
-   * @returns Record of benefits grouped by category
+   * @returns Array of benefit categories with their benefits
    */
-  groupBenefitsByCategory(benefits: MemberBenefit[]): Record<BenefitCategory, MemberBenefit[]> {
-    const grouped = {} as Record<BenefitCategory, MemberBenefit[]>;
+  private groupBenefitsByCategory(benefits: MemberBenefit[]): BenefitCategory[] {
+    const categoryMap = new Map<string, MemberBenefit[]>();
 
-    Object.values(BenefitCategory).forEach(category => {
-      grouped[category] = [];
-    });
-
-    benefits.forEach(benefit => {
-      if (grouped[benefit.category]) {
-        grouped[benefit.category].push(benefit);
+    benefits.forEach((benefit) => {
+      const category = benefit.category || 'Other';
+      if (!categoryMap.has(category)) {
+        categoryMap.set(category, []);
       }
+      categoryMap.get(category)!.push(benefit);
     });
 
-    return grouped;
+    return Array.from(categoryMap.entries()).map(([category, categoryBenefits]) => ({
+      category,
+      benefits: categoryBenefits,
+      count: categoryBenefits.length,
+    }));
   }
 
   /**
-   * Sorts benefits by display order
-   * @param benefits - Array of member benefits to sort
-   * @returns Sorted array of member benefits
+   * Sorts benefits by display order and creation date
+   * @param benefits - Array of benefits to sort
+   * @returns Sorted array of benefits
    */
-  sortBenefitsByDisplayOrder(benefits: MemberBenefit[]): MemberBenefit[] {
-    return [...benefits].sort((a, b) => a.displayOrder - b.displayOrder);
+  private sortBenefits(benefits: MemberBenefit[]): MemberBenefit[] {
+    return benefits.sort((a, b) => {
+      if (a.displayOrder !== undefined && b.displayOrder !== undefined) {
+        return a.displayOrder - b.displayOrder;
+      }
+      if (a.displayOrder !== undefined) return -1;
+      if (b.displayOrder !== undefined) return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   }
 
   /**
-   * Gets active benefits sorted by display order
-   * @returns Promise resolving to sorted array of active benefits
+   * Filters out expired benefits
+   * @param benefits - Array of benefits to filter
+   * @returns Array of non-expired benefits
    */
-  async getActiveBenefitsSorted(): Promise<FormattedMemberBenefit[]> {
+  filterExpiredBenefits(benefits: MemberBenefit[]): MemberBenefit[] {
+    const now = new Date();
+    return benefits.filter((benefit) => {
+      if (!benefit.expiryDate) return true;
+      return new Date(benefit.expiryDate) > now;
+    });
+  }
+
+  /**
+   * Searches benefits by title or description
+   * @param searchTerm - The term to search for
+   * @returns Promise resolving to array of matching benefits
+   * @throws Error if search fails
+   */
+  async searchBenefits(searchTerm: string): Promise<MemberBenefit[]> {
     try {
-      const benefits = await this.getBenefitsWithFilters({ 
-        isActive: true, 
-        includeExpired: false 
-      });
-      const sorted = this.sortBenefitsByDisplayOrder(benefits);
-      return this.formatBenefits(sorted);
-    } catch (error) {
-      console.error('Error fetching active benefits:', error);
-      throw new Error('Failed to fetch active member benefits');
-    }
-  }
+      const allBenefits = await this.getAllBenefits();
+      const lowerSearchTerm = searchTerm.toLowerCase();
 
-  /**
-   * Gets benefits expiring soon
-   * @returns Promise resolving to array of benefits expiring soon
-   */
-  async getExpiringSoonBenefits(): Promise<FormattedMemberBenefit[]> {
-    try {
-      const benefits = await this.getBenefitsWithFilters({ 
-        isActive: true, 
-        includeExpired: false 
-      });
-      const formatted = this.formatBenefits(benefits);
-      return formatted.filter(benefit => benefit.isExpiringSoon);
+      return allBenefits.filter(
+        (benefit) =>
+          benefit.title.toLowerCase().includes(lowerSearchTerm) ||
+          benefit.description.toLowerCase().includes(lowerSearchTerm)
+      );
     } catch (error) {
-      console.error('Error fetching expiring benefits:', error);
-      throw new Error('Failed to fetch expiring member benefits');
-    }
-  }
-
-  /**
-   * Gets benefits by category
-   * @param category - The category to filter by
-   * @returns Promise resolving to array of benefits in the specified category
-   */
-  async getBenefitsByCategory(category: BenefitCategory): Promise<FormattedMemberBenefit[]> {
-    try {
-      const benefits = await this.getBenefitsWithFilters({ 
-        category, 
-        isActive: true, 
-        includeExpired: false 
-      });
-      const sorted = this.sortBenefitsByDisplayOrder(benefits);
-      return this.formatBenefits(sorted);
-    } catch (error) {
-      console.error(`Error fetching benefits for category ${category}:`, error);
-      throw new Error(`Failed to fetch benefits for category: ${category}`);
+      console.error('Error searching benefits:', error);
+      throw new Error('Failed to search member benefits');
     }
   }
 }
 
-// Export singleton instance
-export const memberBenefitsService = new MemberBenefitsService();
+/**
+ * Factory function to create a MemberBenefitsService instance
+ * @param config - Optional configuration for the service
+ * @returns MemberBenefitsService instance
+ */
+export function createMemberBenefitsService(config?: Partial<ServiceConfig>): MemberBenefitsService {
+  return new MemberBenefitsService({
+    tableName: config?.tableName || process.env.BENEFITS_TABLE_NAME || 'MemberBenefits',
+    region: config?.region || process.env.AWS_REGION || 'us-east-1',
+  });
+}
 
-// Export class for testing purposes
-export { MemberBenefitsService };
+export default MemberBenefitsService;
 ```
