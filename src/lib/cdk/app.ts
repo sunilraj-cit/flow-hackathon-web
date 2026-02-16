@@ -11,12 +11,7 @@ const app = new cdk.App();
 
 /**
  * Member Benefits Stack
- * Deploys infrastructure for the member benefits feature including:
- * - API Gateway endpoints
- * - Lambda functions
- * - DynamoDB tables
- * - CloudFront distribution
- * - S3 buckets for static assets
+ * Deploys infrastructure for the member benefits feature
  */
 new MemberBenefitsStack(app, 'MemberBenefitsStack', {
   env: {
@@ -31,5 +26,3 @@ new MemberBenefitsStack(app, 'MemberBenefitsStack', {
     Ticket: 'PM-106',
   },
 });
-
-app.synth();
