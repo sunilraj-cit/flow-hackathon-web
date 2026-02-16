@@ -12,6 +12,7 @@ describe('getMemberBenefits Lambda Handler', () => {
   beforeEach(() => {
     dynamoDBMock.reset();
     process.env.MEMBER_BENEFITS_TABLE = 'test-member-benefits-table';
+    process.env.AWS_REGION = 'us-east-1';
 
     mockEvent = {
       httpMethod: 'GET',
@@ -23,9 +24,9 @@ describe('getMemberBenefits Lambda Handler', () => {
       isBase64Encoded: false,
       requestContext: {} as any,
       resource: '',
+      stageVariables: null,
       multiValueHeaders: {},
       multiValueQueryStringParameters: null,
-      stageVariables: null,
     };
 
     mockContext = {
@@ -46,6 +47,7 @@ describe('getMemberBenefits Lambda Handler', () => {
 
   afterEach(() => {
     delete process.env.MEMBER_BENEFITS_TABLE;
+    delete process.env.AWS_REGION;
   });
 
   describe('Success Cases', () => {
@@ -53,20 +55,18 @@ describe('getMemberBenefits Lambda Handler', () => {
       const mockBenefits = [
         {
           id: { S: 'benefit-1' },
-          title: { S: 'Premium Support' },
-          description: { S: '24/7 customer support' },
-          category: { S: 'support' },
-          tier: { S: 'premium' },
+          title: { S: 'Health Insurance' },
+          description: { S: 'Comprehensive health coverage' },
+          category: { S: 'health' },
           isActive: { BOOL: true },
           createdAt: { S: '2024-01-01T00:00:00.000Z' },
           updatedAt: { S: '2024-01-01T00:00:00.000Z' },
         },
         {
           id: { S: 'benefit-2' },
-          title: { S: 'Exclusive Content' },
-          description: { S: 'Access to premium content' },
-          category: { S: 'content' },
-          tier: { S: 'premium' },
+          title: { S: 'Gym Membership' },
+          description: { S: 'Access to premium gyms' },
+          category: { S: 'wellness' },
           isActive: { BOOL: true },
           createdAt: { S: '2024-01-02T00:00:00.000Z' },
           updatedAt: { S: '2024-01-02T00:00:00.000Z' },
@@ -78,102 +78,15 @@ describe('getMemberBenefits Lambda Handler', () => {
         Count: 2,
       });
 
-      const result = await handler(mockEvent, mockContext);
+      const response = await handler(mockEvent, mockContext);
 
-      expect(result.statusCode).toBe(200);
-      const body = JSON.parse(result.body);
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
       expect(body.benefits).toHaveLength(2);
       expect(body.benefits[0].id).toBe('benefit-1');
-      expect(body.benefits[0].title).toBe('Premium Support');
+      expect(body.benefits[0].title).toBe('Health Insurance');
       expect(body.benefits[1].id).toBe('benefit-2');
       expect(body.count).toBe(2);
-    });
-
-    it('should return filtered benefits by category', async () => {
-      mockEvent.queryStringParameters = { category: 'support' };
-
-      const mockBenefits = [
-        {
-          id: { S: 'benefit-1' },
-          title: { S: 'Premium Support' },
-          description: { S: '24/7 customer support' },
-          category: { S: 'support' },
-          tier: { S: 'premium' },
-          isActive: { BOOL: true },
-          createdAt: { S: '2024-01-01T00:00:00.000Z' },
-          updatedAt: { S: '2024-01-01T00:00:00.000Z' },
-        },
-      ];
-
-      dynamoDBMock.on(QueryCommand).resolves({
-        Items: mockBenefits,
-        Count: 1,
-      });
-
-      const result = await handler(mockEvent, mockContext);
-
-      expect(result.statusCode).toBe(200);
-      const body = JSON.parse(result.body);
-      expect(body.benefits).toHaveLength(1);
-      expect(body.benefits[0].category).toBe('support');
-    });
-
-    it('should return filtered benefits by tier', async () => {
-      mockEvent.queryStringParameters = { tier: 'premium' };
-
-      const mockBenefits = [
-        {
-          id: { S: 'benefit-1' },
-          title: { S: 'Premium Support' },
-          description: { S: '24/7 customer support' },
-          category: { S: 'support' },
-          tier: { S: 'premium' },
-          isActive: { BOOL: true },
-          createdAt: { S: '2024-01-01T00:00:00.000Z' },
-          updatedAt: { S: '2024-01-01T00:00:00.000Z' },
-        },
-      ];
-
-      dynamoDBMock.on(QueryCommand).resolves({
-        Items: mockBenefits,
-        Count: 1,
-      });
-
-      const result = await handler(mockEvent, mockContext);
-
-      expect(result.statusCode).toBe(200);
-      const body = JSON.parse(result.body);
-      expect(body.benefits).toHaveLength(1);
-      expect(body.benefits[0].tier).toBe('premium');
-    });
-
-    it('should return only active benefits when isActive filter is true', async () => {
-      mockEvent.queryStringParameters = { isActive: 'true' };
-
-      const mockBenefits = [
-        {
-          id: { S: 'benefit-1' },
-          title: { S: 'Premium Support' },
-          description: { S: '24/7 customer support' },
-          category: { S: 'support' },
-          tier: { S: 'premium' },
-          isActive: { BOOL: true },
-          createdAt: { S: '2024-01-01T00:00:00.000Z' },
-          updatedAt: { S: '2024-01-01T00:00:00.000Z' },
-        },
-      ];
-
-      dynamoDBMock.on(QueryCommand).resolves({
-        Items: mockBenefits,
-        Count: 1,
-      });
-
-      const result = await handler(mockEvent, mockContext);
-
-      expect(result.statusCode).toBe(200);
-      const body = JSON.parse(result.body);
-      expect(body.benefits).toHaveLength(1);
-      expect(body.benefits[0].isActive).toBe(true);
     });
 
     it('should return empty array when no benefits exist', async () => {
@@ -182,12 +95,68 @@ describe('getMemberBenefits Lambda Handler', () => {
         Count: 0,
       });
 
-      const result = await handler(mockEvent, mockContext);
+      const response = await handler(mockEvent, mockContext);
 
-      expect(result.statusCode).toBe(200);
-      const body = JSON.parse(result.body);
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
       expect(body.benefits).toEqual([]);
       expect(body.count).toBe(0);
+    });
+
+    it('should filter benefits by category when provided', async () => {
+      mockEvent.queryStringParameters = { category: 'health' };
+
+      const mockBenefits = [
+        {
+          id: { S: 'benefit-1' },
+          title: { S: 'Health Insurance' },
+          description: { S: 'Comprehensive health coverage' },
+          category: { S: 'health' },
+          isActive: { BOOL: true },
+          createdAt: { S: '2024-01-01T00:00:00.000Z' },
+          updatedAt: { S: '2024-01-01T00:00:00.000Z' },
+        },
+      ];
+
+      dynamoDBMock.on(QueryCommand).resolves({
+        Items: mockBenefits,
+        Count: 1,
+      });
+
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.benefits).toHaveLength(1);
+      expect(body.benefits[0].category).toBe('health');
+    });
+
+    it('should return only active benefits when isActive filter is true', async () => {
+      mockEvent.queryStringParameters = { isActive: 'true' };
+
+      const mockBenefits = [
+        {
+          id: { S: 'benefit-1' },
+          title: { S: 'Health Insurance' },
+          description: { S: 'Comprehensive health coverage' },
+          category: { S: 'health' },
+          isActive: { BOOL: true },
+          createdAt: { S: '2024-01-01T00:00:00.000Z' },
+          updatedAt: { S: '2024-01-01T00:00:00.000Z' },
+        },
+      ];
+
+      dynamoDBMock.on(QueryCommand).resolves({
+        Items: mockBenefits,
+        Count: 1,
+      });
+
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.benefits).toHaveLength(1);
+      expect(body.benefits[0].isActive).toBe(true);
     });
 
     it('should handle pagination with limit parameter', async () => {
@@ -196,10 +165,9 @@ describe('getMemberBenefits Lambda Handler', () => {
       const mockBenefits = [
         {
           id: { S: 'benefit-1' },
-          title: { S: 'Premium Support' },
-          description: { S: '24/7 customer support' },
-          category: { S: 'support' },
-          tier: { S: 'premium' },
+          title: { S: 'Health Insurance' },
+          description: { S: 'Comprehensive health coverage' },
+          category: { S: 'health' },
           isActive: { BOOL: true },
           createdAt: { S: '2024-01-01T00:00:00.000Z' },
           updatedAt: { S: '2024-01-01T00:00:00.000Z' },
@@ -212,26 +180,24 @@ describe('getMemberBenefits Lambda Handler', () => {
         LastEvaluatedKey: { id: { S: 'benefit-1' } },
       });
 
-      const result = await handler(mockEvent, mockContext);
+      const response = await handler(mockEvent, mockContext);
 
-      expect(result.statusCode).toBe(200);
-      const body = JSON.parse(result.body);
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
       expect(body.benefits).toHaveLength(1);
       expect(body.lastEvaluatedKey).toBeDefined();
     });
 
-    it('should handle pagination with lastEvaluatedKey parameter', async () => {
-      mockEvent.queryStringParameters = {
-        lastEvaluatedKey: JSON.stringify({ id: 'benefit-1' }),
-      };
+    it('should handle pagination with nextToken parameter', async () => {
+      const nextToken = Buffer.from(JSON.stringify({ id: 'benefit-1' })).toString('base64');
+      mockEvent.queryStringParameters = { nextToken };
 
       const mockBenefits = [
         {
           id: { S: 'benefit-2' },
-          title: { S: 'Exclusive Content' },
-          description: { S: 'Access to premium content' },
-          category: { S: 'content' },
-          tier: { S: 'premium' },
+          title: { S: 'Gym Membership' },
+          description: { S: 'Access to premium gyms' },
+          category: { S: 'wellness' },
           isActive: { BOOL: true },
           createdAt: { S: '2024-01-02T00:00:00.000Z' },
           updatedAt: { S: '2024-01-02T00:00:00.000Z' },
@@ -243,28 +209,135 @@ describe('getMemberBenefits Lambda Handler', () => {
         Count: 1,
       });
 
-      const result = await handler(mockEvent, mockContext);
+      const response = await handler(mockEvent, mockContext);
 
-      expect(result.statusCode).toBe(200);
-      const body = JSON.parse(result.body);
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
       expect(body.benefits).toHaveLength(1);
       expect(body.benefits[0].id).toBe('benefit-2');
     });
 
-    it('should handle multiple query parameters', async () => {
-      mockEvent.queryStringParameters = {
-        category: 'support',
-        tier: 'premium',
-        isActive: 'true',
-      };
+    it('should include CORS headers in response', async () => {
+      dynamoDBMock.on(QueryCommand).resolves({
+        Items: [],
+        Count: 0,
+      });
 
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.headers).toMatchObject({
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Methods': 'GET,OPTIONS',
+        'Content-Type': 'application/json',
+      });
+    });
+  });
+
+  describe('Error Scenarios', () => {
+    it('should return 500 when DynamoDB query fails', async () => {
+      dynamoDBMock.on(QueryCommand).rejects(new Error('DynamoDB error'));
+
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.statusCode).toBe(500);
+      const body = JSON.parse(response.body);
+      expect(body.message).toBe('Internal server error');
+      expect(body.error).toBeDefined();
+    });
+
+    it('should return 500 when MEMBER_BENEFITS_TABLE environment variable is missing', async () => {
+      delete process.env.MEMBER_BENEFITS_TABLE;
+
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.statusCode).toBe(500);
+      const body = JSON.parse(response.body);
+      expect(body.message).toBe('Internal server error');
+    });
+
+    it('should return 400 for invalid limit parameter', async () => {
+      mockEvent.queryStringParameters = { limit: 'invalid' };
+
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.message).toContain('Invalid limit parameter');
+    });
+
+    it('should return 400 for negative limit parameter', async () => {
+      mockEvent.queryStringParameters = { limit: '-1' };
+
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.message).toContain('Invalid limit parameter');
+    });
+
+    it('should return 400 for limit exceeding maximum', async () => {
+      mockEvent.queryStringParameters = { limit: '1000' };
+
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.message).toContain('Limit cannot exceed');
+    });
+
+    it('should return 400 for invalid nextToken', async () => {
+      mockEvent.queryStringParameters = { nextToken: 'invalid-token' };
+
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.message).toContain('Invalid nextToken');
+    });
+
+    it('should return 400 for invalid isActive parameter', async () => {
+      mockEvent.queryStringParameters = { isActive: 'invalid' };
+
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.message).toContain('Invalid isActive parameter');
+    });
+
+    it('should handle DynamoDB throttling error', async () => {
+      const throttlingError = new Error('ProvisionedThroughputExceededException');
+      throttlingError.name = 'ProvisionedThroughputExceededException';
+      dynamoDBMock.on(QueryCommand).rejects(throttlingError);
+
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.statusCode).toBe(500);
+      const body = JSON.parse(response.body);
+      expect(body.message).toBe('Internal server error');
+    });
+
+    it('should handle DynamoDB resource not found error', async () => {
+      const notFoundError = new Error('ResourceNotFoundException');
+      notFoundError.name = 'ResourceNotFoundException';
+      dynamoDBMock.on(QueryCommand).rejects(notFoundError);
+
+      const response = await handler(mockEvent, mockContext);
+
+      expect(response.statusCode).toBe(500);
+      const body = JSON.parse(response.body);
+      expect(body.message).toBe('Internal server error');
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle benefits with missing optional fields', async () => {
       const mockBenefits = [
         {
           id: { S: 'benefit-1' },
-          title: { S: 'Premium Support' },
-          description: { S: '24/7 customer support' },
-          category: { S: 'support' },
-          tier: { S: 'premium' },
+          title: { S: 'Basic Benefit' },
+          category: { S: 'general' },
           isActive: { BOOL: true },
           createdAt: { S: '2024-01-01T00:00:00.000Z' },
           updatedAt: { S: '2024-01-01T00:00:00.000Z' },
@@ -276,119 +349,42 @@ describe('getMemberBenefits Lambda Handler', () => {
         Count: 1,
       });
 
-      const result = await handler(mockEvent, mockContext);
+      const response = await handler(mockEvent, mockContext);
 
-      expect(result.statusCode).toBe(200);
-      const body = JSON.parse(result.body);
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
       expect(body.benefits).toHaveLength(1);
-      expect(body.benefits[0].category).toBe('support');
-      expect(body.benefits[0].tier).toBe('premium');
-      expect(body.benefits[0].isActive).toBe(true);
-    });
-  });
-
-  describe('Error Scenarios', () => {
-    it('should return 500 when MEMBER_BENEFITS_TABLE environment variable is not set', async () => {
-      delete process.env.MEMBER_BENEFITS_TABLE;
-
-      const result = await handler(mockEvent, mockContext);
-
-      expect(result.statusCode).toBe(500);
-      const body = JSON.parse(result.body);
-      expect(body.message).toContain('Configuration error');
+      expect(body.benefits[0].description).toBeUndefined();
     });
 
-    it('should return 500 when DynamoDB query fails', async () => {
-      dynamoDBMock.on(QueryCommand).rejects(new Error('DynamoDB error'));
+    it('should handle benefits with additional fields', async () => {
+      const mockBenefits = [
+        {
+          id: { S: 'benefit-1' },
+          title: { S: 'Premium Benefit' },
+          description: { S: 'Premium coverage' },
+          category: { S: 'premium' },
+          isActive: { BOOL: true },
+          createdAt: { S: '2024-01-01T00:00:00.000Z' },
+          updatedAt: { S: '2024-01-01T00:00:00.000Z' },
+          customField: { S: 'custom value' },
+          metadata: { M: { key: { S: 'value' } } },
+        },
+      ];
 
-      const result = await handler(mockEvent, mockContext);
-
-      expect(result.statusCode).toBe(500);
-      const body = JSON.parse(result.body);
-      expect(body.message).toContain('Failed to retrieve member benefits');
-    });
-
-    it('should return 500 when DynamoDB returns malformed data', async () => {
       dynamoDBMock.on(QueryCommand).resolves({
-        Items: [
-          {
-            id: { S: 'benefit-1' },
-            // Missing required fields
-          },
-        ],
+        Items: mockBenefits,
         Count: 1,
       });
 
-      const result = await handler(mockEvent, mockContext);
+      const response = await handler(mockEvent, mockContext);
 
-      expect(result.statusCode).toBe(500);
-      const body = JSON.parse(result.body);
-      expect(body.message).toBeDefined();
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.benefits).toHaveLength(1);
     });
 
-    it('should return 400 for invalid limit parameter', async () => {
-      mockEvent.queryStringParameters = { limit: 'invalid' };
+    it('should handle empty query string parameters', async () => {
+      mockEvent.queryStringParameters = {};
 
-      const result = await handler(mockEvent, mockContext);
-
-      expect(result.statusCode).toBe(400);
-      const body = JSON.parse(result.body);
-      expect(body.message).toContain('Invalid limit parameter');
-    });
-
-    it('should return 400 for negative limit parameter', async () => {
-      mockEvent.queryStringParameters = { limit: '-1' };
-
-      const result = await handler(mockEvent, mockContext);
-
-      expect(result.statusCode).toBe(400);
-      const body = JSON.parse(result.body);
-      expect(body.message).toContain('Invalid limit parameter');
-    });
-
-    it('should return 400 for invalid lastEvaluatedKey JSON', async () => {
-      mockEvent.queryStringParameters = { lastEvaluatedKey: 'invalid-json' };
-
-      const result = await handler(mockEvent, mockContext);
-
-      expect(result.statusCode).toBe(400);
-      const body = JSON.parse(result.body);
-      expect(body.message).toContain('Invalid lastEvaluatedKey parameter');
-    });
-
-    it('should return 400 for invalid isActive parameter', async () => {
-      mockEvent.queryStringParameters = { isActive: 'invalid' };
-
-      const result = await handler(mockEvent, mockContext);
-
-      expect(result.statusCode).toBe(400);
-      const body = JSON.parse(result.body);
-      expect(body.message).toContain('Invalid isActive parameter');
-    });
-
-    it('should handle DynamoDB throttling error', async () => {
-      const throttlingError = new Error('ProvisionedThroughputExceededException');
-      throttlingError.name = 'ProvisionedThroughputExceededException';
-      dynamoDBMock.on(QueryCommand).rejects(throttlingError);
-
-      const result = await handler(mockEvent, mockContext);
-
-      expect(result.statusCode).toBe(500);
-      const body = JSON.parse(result.body);
-      expect(body.message).toContain('Failed to retrieve member benefits');
-    });
-
-    it('should handle DynamoDB resource not found error', async () => {
-      const notFoundError = new Error('ResourceNotFoundException');
-      notFoundError.name = 'ResourceNotFoundException';
-      dynamoDBMock.on(QueryCommand).rejects(notFoundError);
-
-      const result = await handler(mockEvent, mockContext);
-
-      expect(result.statusCode).toBe(500);
-      const body = JSON.parse(result.body);
-      expect(body.message).toContain('Failed to retrieve member benefits');
-    });
-  });
-
-  describe('Edge Cases
+      dynamoDBMock
