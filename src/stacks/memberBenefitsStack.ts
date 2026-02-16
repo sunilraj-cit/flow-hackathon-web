@@ -1,7 +1,9 @@
 import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 import * as path from 'path';
@@ -11,121 +13,240 @@ import * as path from 'path';
  */
 export interface MemberBenefitsStackProps extends cdk.StackProps {
   /**
-   * Environment name (e.g., 'dev', 'staging', 'prod')
+   * Environment name (dev, staging, prod)
    */
   readonly environment?: string;
   
   /**
-   * Log retention period in days
+   * Enable CORS for API Gateway
    */
-  readonly logRetentionDays?: logs.RetentionDays;
+  readonly enableCors?: boolean;
   
   /**
-   * Lambda memory size in MB
+   * Retention period for CloudWatch logs
    */
-  readonly memorySize?: number;
-  
-  /**
-   * Lambda timeout in seconds
-   */
-  readonly timeout?: cdk.Duration;
+  readonly logRetention?: logs.RetentionDays;
 }
 
 /**
  * CDK Stack for Member Benefits feature
- * 
- * This stack defines:
- * - Lambda function for member benefits endpoint
- * - API Gateway REST API integration
- * - IAM roles and policies
- * - CloudWatch log groups
- * 
- * @see PM-106: Create new page for member benefits
+ * Defines Lambda functions, API Gateway, DynamoDB tables, and S3 buckets
+ * for managing and displaying member benefits data
  */
 export class MemberBenefitsStack extends cdk.Stack {
-  /**
-   * The Lambda function handling member benefits requests
-   */
-  public readonly memberBenefitsFunction: lambda.Function;
-  
-  /**
-   * The API Gateway REST API
-   */
   public readonly api: apigateway.RestApi;
-  
-  /**
-   * The CloudWatch log group for the Lambda function
-   */
-  public readonly logGroup: logs.LogGroup;
+  public readonly benefitsTable: dynamodb.Table;
+  public readonly memberBenefitsTable: dynamodb.Table;
+  public readonly assetsTable: dynamodb.Table;
+  public readonly assetsBucket: s3.Bucket;
+  public readonly getBenefitsFunction: lambda.Function;
+  public readonly getMemberBenefitsFunction: lambda.Function;
+  public readonly updateMemberBenefitsFunction: lambda.Function;
 
   constructor(scope: Construct, id: string, props?: MemberBenefitsStackProps) {
     super(scope, id, props);
 
     const environment = props?.environment || 'dev';
-    const logRetentionDays = props?.logRetentionDays || logs.RetentionDays.ONE_WEEK;
-    const memorySize = props?.memorySize || 512;
-    const timeout = props?.timeout || cdk.Duration.seconds(30);
+    const enableCors = props?.enableCors ?? true;
+    const logRetention = props?.logRetention || logs.RetentionDays.ONE_WEEK;
 
-    // Create CloudWatch Log Group
-    this.logGroup = new logs.LogGroup(this, 'MemberBenefitsLogGroup', {
-      logGroupName: `/aws/lambda/member-benefits-${environment}`,
-      retention: logRetentionDays,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    // DynamoDB Table for Benefits catalog
+    this.benefitsTable = new dynamodb.Table(this, 'BenefitsTable', {
+      tableName: `member-benefits-${environment}`,
+      partitionKey: {
+        name: 'benefitId',
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'category',
+        type: dynamodb.AttributeType.STRING,
+      },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      pointInTimeRecovery: true,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+      stream: dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
     });
 
-    // Create IAM role for Lambda function
+    // GSI for querying by category
+    this.benefitsTable.addGlobalSecondaryIndex({
+      indexName: 'CategoryIndex',
+      partitionKey: {
+        name: 'category',
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'priority',
+        type: dynamodb.AttributeType.NUMBER,
+      },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
+    // GSI for querying active benefits
+    this.benefitsTable.addGlobalSecondaryIndex({
+      indexName: 'StatusIndex',
+      partitionKey: {
+        name: 'status',
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'createdAt',
+        type: dynamodb.AttributeType.STRING,
+      },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
+    // DynamoDB Table for Member-specific benefits
+    this.memberBenefitsTable = new dynamodb.Table(this, 'MemberBenefitsTable', {
+      tableName: `member-benefits-mapping-${environment}`,
+      partitionKey: {
+        name: 'memberId',
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'benefitId',
+        type: dynamodb.AttributeType.STRING,
+      },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      pointInTimeRecovery: true,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+    });
+
+    // GSI for querying by benefit status
+    this.memberBenefitsTable.addGlobalSecondaryIndex({
+      indexName: 'BenefitStatusIndex',
+      partitionKey: {
+        name: 'memberId',
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'status',
+        type: dynamodb.AttributeType.STRING,
+      },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
+    // DynamoDB Table for tracking benefit assets metadata
+    this.assetsTable = new dynamodb.Table(this, 'BenefitAssetsTable', {
+      tableName: `member-benefits-assets-${environment}`,
+      partitionKey: {
+        name: 'assetId',
+        type: dynamodb.AttributeType.STRING,
+      },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+    });
+
+    // S3 Bucket for benefit assets (images, documents, etc.)
+    this.assetsBucket = new s3.Bucket(this, 'BenefitAssetsBucket', {
+      bucketName: `member-benefits-assets-${environment}-${this.account}`,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      versioned: true,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      lifecycleRules: [
+        {
+          id: 'DeleteOldVersions',
+          noncurrentVersionExpiration: cdk.Duration.days(90),
+        },
+      ],
+      cors: enableCors ? [
+        {
+          allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.HEAD],
+          allowedOrigins: ['*'],
+          allowedHeaders: ['*'],
+          maxAge: 3000,
+        },
+      ] : undefined,
+    });
+
+    // IAM Role for Lambda functions
     const lambdaRole = new iam.Role(this, 'MemberBenefitsLambdaRole', {
       roleName: `member-benefits-lambda-role-${environment}`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-      description: 'IAM role for Member Benefits Lambda function',
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AWSXRayDaemonWriteAccess'),
       ],
     });
 
-    // Add CloudWatch Logs permissions
-    lambdaRole.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: [
-          'logs:CreateLogGroup',
-          'logs:CreateLogStream',
-          'logs:PutLogEvents',
-        ],
-        resources: [this.logGroup.logGroupArn],
-      })
-    );
+    // Grant DynamoDB permissions
+    this.benefitsTable.grantReadData(lambdaRole);
+    this.memberBenefitsTable.grantReadWriteData(lambdaRole);
+    this.assetsTable.grantReadData(lambdaRole);
 
-    // Create Lambda function
-    this.memberBenefitsFunction = new lambda.Function(this, 'MemberBenefitsFunction', {
-      functionName: `member-benefits-${environment}`,
+    // Grant S3 permissions
+    this.assetsBucket.grantRead(lambdaRole);
+
+    // Common Lambda environment variables
+    const commonEnvironment = {
+      BENEFITS_TABLE_NAME: this.benefitsTable.tableName,
+      MEMBER_BENEFITS_TABLE_NAME: this.memberBenefitsTable.tableName,
+      ASSETS_TABLE_NAME: this.assetsTable.tableName,
+      ASSETS_BUCKET_NAME: this.assetsBucket.bucketName,
+      ENVIRONMENT: environment,
+      LOG_LEVEL: 'INFO',
+    };
+
+    // Lambda function to get all benefits
+    this.getBenefitsFunction = new lambda.Function(this, 'GetBenefitsFunction', {
+      functionName: `member-benefits-get-benefits-${environment}`,
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/memberBenefits')),
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/getBenefits')),
       role: lambdaRole,
-      memorySize,
-      timeout,
-      environment: {
-        ENVIRONMENT: environment,
-        LOG_LEVEL: environment === 'prod' ? 'INFO' : 'DEBUG',
-        NODE_ENV: environment === 'prod' ? 'production' : 'development',
-      },
-      logGroup: this.logGroup,
-      description: 'Lambda function for member benefits endpoint (PM-106)',
+      environment: commonEnvironment,
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      tracing: lambda.Tracing.ACTIVE,
+      logRetention,
+      description: 'Retrieves all available member benefits',
     });
 
-    // Create API Gateway REST API
+    // Lambda function to get member-specific benefits
+    this.getMemberBenefitsFunction = new lambda.Function(this, 'GetMemberBenefitsFunction', {
+      functionName: `member-benefits-get-member-benefits-${environment}`,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/getMemberBenefits')),
+      role: lambdaRole,
+      environment: commonEnvironment,
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      tracing: lambda.Tracing.ACTIVE,
+      logRetention,
+      description: 'Retrieves benefits for a specific member',
+    });
+
+    // Lambda function to update member benefits
+    this.updateMemberBenefitsFunction = new lambda.Function(this, 'UpdateMemberBenefitsFunction', {
+      functionName: `member-benefits-update-member-benefits-${environment}`,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/updateMemberBenefits')),
+      role: lambdaRole,
+      environment: commonEnvironment,
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      tracing: lambda.Tracing.ACTIVE,
+      logRetention,
+      description: 'Updates member benefit status and preferences',
+    });
+
+    // API Gateway REST API
     this.api = new apigateway.RestApi(this, 'MemberBenefitsApi', {
       restApiName: `member-benefits-api-${environment}`,
-      description: 'API Gateway for Member Benefits service',
+      description: 'API for Member Benefits feature',
       deployOptions: {
         stageName: environment,
-        loggingLevel: apigateway.MethodLoggingLevel.INFO,
-        dataTraceEnabled: environment !== 'prod',
-        metricsEnabled: true,
         tracingEnabled: true,
+        loggingLevel: apigateway.MethodLoggingLevel.INFO,
+        dataTraceEnabled: true,
+        metricsEnabled: true,
       },
-      defaultCorsPreflightOptions: {
+      defaultCorsPreflightOptions: enableCors ? {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
         allowMethods: apigateway.Cors.ALL_METHODS,
         allowHeaders: [
@@ -135,143 +256,119 @@ export class MemberBenefitsStack extends cdk.Stack {
           'X-Api-Key',
           'X-Amz-Security-Token',
         ],
-        allowCredentials: true,
-      },
+      } : undefined,
       cloudWatchRole: true,
     });
 
-    // Create Lambda integration
-    const lambdaIntegration = new apigateway.LambdaIntegration(this.memberBenefitsFunction, {
-      proxy: true,
-      allowTestInvoke: environment !== 'prod',
-      integrationResponses: [
-        {
-          statusCode: '200',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': "'*'",
-          },
-        },
-      ],
-    });
-
-    // Create /benefits resource
+    // API Resources
     const benefitsResource = this.api.root.addResource('benefits');
+    const memberBenefitsResource = this.api.root.addResource('member-benefits');
+    const memberIdResource = memberBenefitsResource.addResource('{memberId}');
 
-    // Add GET method to /benefits
-    benefitsResource.addMethod('GET', lambdaIntegration, {
-      methodResponses: [
-        {
-          statusCode: '200',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': true,
+    // GET /benefits - Get all benefits
+    benefitsResource.addMethod(
+      'GET',
+      new apigateway.LambdaIntegration(this.getBenefitsFunction, {
+        proxy: true,
+        integrationResponses: [
+          {
+            statusCode: '200',
           },
-        },
-        {
-          statusCode: '400',
-        },
-        {
-          statusCode: '500',
-        },
-      ],
-      authorizationType: apigateway.AuthorizationType.NONE,
-    });
-
-    // Add POST method to /benefits
-    benefitsResource.addMethod('POST', lambdaIntegration, {
-      methodResponses: [
-        {
-          statusCode: '200',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': true,
+        ],
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseModels: {
+              'application/json': apigateway.Model.EMPTY_MODEL,
+            },
           },
-        },
-        {
-          statusCode: '400',
-        },
-        {
-          statusCode: '500',
-        },
-      ],
-      authorizationType: apigateway.AuthorizationType.NONE,
-    });
+        ],
+      }
+    );
 
-    // Create /benefits/{id} resource for individual benefit operations
-    const benefitByIdResource = benefitsResource.addResource('{id}');
-
-    // Add GET method to /benefits/{id}
-    benefitByIdResource.addMethod('GET', lambdaIntegration, {
-      methodResponses: [
-        {
-          statusCode: '200',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': true,
+    // GET /member-benefits/{memberId} - Get member-specific benefits
+    memberIdResource.addMethod(
+      'GET',
+      new apigateway.LambdaIntegration(this.getMemberBenefitsFunction, {
+        proxy: true,
+        integrationResponses: [
+          {
+            statusCode: '200',
           },
+        ],
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseModels: {
+              'application/json': apigateway.Model.EMPTY_MODEL,
+            },
+          },
+        ],
+        requestParameters: {
+          'method.request.path.memberId': true,
         },
-        {
-          statusCode: '404',
+      }
+    );
+
+    // PUT /member-benefits/{memberId} - Update member benefits
+    memberIdResource.addMethod(
+      'PUT',
+      new apigateway.LambdaIntegration(this.updateMemberBenefitsFunction, {
+        proxy: true,
+        integrationResponses: [
+          {
+            statusCode: '200',
+          },
+        ],
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseModels: {
+              'application/json': apigateway.Model.EMPTY_MODEL,
+            },
+          },
+        ],
+        requestParameters: {
+          'method.request.path.memberId': true,
         },
-        {
-          statusCode: '500',
-        },
-      ],
-      authorizationType: apigateway.AuthorizationType.NONE,
-    });
+      }
+    );
 
-    // Add CloudWatch alarms for monitoring
-    const errorMetric = this.memberBenefitsFunction.metricErrors({
-      period: cdk.Duration.minutes(5),
-      statistic: 'Sum',
-    });
-
-    new cdk.aws_cloudwatch.Alarm(this, 'MemberBenefitsErrorAlarm', {
-      alarmName: `member-benefits-errors-${environment}`,
-      alarmDescription: 'Alarm when member benefits function errors exceed threshold',
-      metric: errorMetric,
-      threshold: 5,
-      evaluationPeriods: 1,
-      comparisonOperator: cdk.aws_cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
-      treatMissingData: cdk.aws_cloudwatch.TreatMissingData.NOT_BREACHING,
-    });
-
-    const durationMetric = this.memberBenefitsFunction.metricDuration({
-      period: cdk.Duration.minutes(5),
-      statistic: 'Average',
-    });
-
-    new cdk.aws_cloudwatch.Alarm(this, 'MemberBenefitsDurationAlarm', {
-      alarmName: `member-benefits-duration-${environment}`,
-      alarmDescription: 'Alarm when member benefits function duration is high',
-      metric: durationMetric,
-      threshold: 10000, // 10 seconds
-      evaluationPeriods: 2,
-      comparisonOperator: cdk.aws_cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
-      treatMissingData: cdk.aws_cloudwatch.TreatMissingData.NOT_BREACHING,
-    });
-
-    // Output values
-    new cdk.CfnOutput(this, 'MemberBenefitsApiUrl', {
+    // CloudFormation Outputs
+    new cdk.CfnOutput(this, 'ApiEndpoint', {
       value: this.api.url,
-      description: 'URL of the Member Benefits API',
-      exportName: `member-benefits-api-url-${environment}`,
+      description: 'Member Benefits API Gateway endpoint',
+      exportName: `member-benefits-api-endpoint-${environment}`,
     });
 
-    new cdk.CfnOutput(this, 'MemberBenefitsFunctionArn', {
-      value: this.memberBenefitsFunction.functionArn,
-      description: 'ARN of the Member Benefits Lambda function',
-      exportName: `member-benefits-function-arn-${environment}`,
+    new cdk.CfnOutput(this, 'BenefitsTableName', {
+      value: this.benefitsTable.tableName,
+      description: 'Benefits DynamoDB table name',
+      exportName: `member-benefits-table-name-${environment}`,
     });
 
-    new cdk.CfnOutput(this, 'MemberBenefitsLogGroupName', {
-      value: this.logGroup.logGroupName,
-      description: 'Name of the Member Benefits CloudWatch Log Group',
-      exportName: `member-benefits-log-group-${environment}`,
+    new cdk.CfnOutput(this, 'MemberBenefitsTableName', {
+      value: this.memberBenefitsTable.tableName,
+      description: 'Member Benefits mapping DynamoDB table name',
+      exportName: `member-benefits-mapping-table-name-${environment}`,
     });
 
-    // Add tags
+    new cdk.CfnOutput(this, 'AssetsBucketName', {
+      value: this.assetsBucket.bucketName,
+      description: 'Benefits assets S3 bucket name',
+      exportName: `member-benefits-assets-bucket-name-${environment}`,
+    });
+
+    // Tags
     cdk.Tags.of(this).add('Project', 'MemberBenefits');
     cdk.Tags.of(this).add('Environment', environment);
     cdk.Tags.of(this).add('ManagedBy', 'CDK');
-    cdk.Tags.of(this).add('Ticket', 'PM-106');
   }
 }
 ```
