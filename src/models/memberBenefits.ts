@@ -1,8 +1,8 @@
 /**
  * Member Benefits Data Models
  * 
- * This module defines TypeScript interfaces and types for member benefits data structure
- * including benefit categories, descriptions, and eligibility criteria.
+ * This module defines TypeScript interfaces and types for member benefits
+ * data structure including benefit categories, descriptions, and eligibility.
  * 
  * @module models/memberBenefits
  */
@@ -10,22 +10,22 @@
 import { z } from 'zod';
 
 /**
- * Enum representing different benefit categories
+ * Enum for benefit categories
  */
 export enum BenefitCategory {
   HEALTH = 'health',
+  FITNESS = 'fitness',
   WELLNESS = 'wellness',
   FINANCIAL = 'financial',
   EDUCATION = 'education',
-  TRAVEL = 'travel',
   ENTERTAINMENT = 'entertainment',
+  TRAVEL = 'travel',
   SHOPPING = 'shopping',
-  INSURANCE = 'insurance',
   OTHER = 'other',
 }
 
 /**
- * Enum representing membership tiers
+ * Enum for membership tiers
  */
 export enum MembershipTier {
   BASIC = 'basic',
@@ -35,7 +35,7 @@ export enum MembershipTier {
 }
 
 /**
- * Enum representing benefit status
+ * Enum for benefit status
  */
 export enum BenefitStatus {
   ACTIVE = 'active',
@@ -45,40 +45,40 @@ export enum BenefitStatus {
 }
 
 /**
- * Interface for benefit eligibility criteria
+ * Eligibility criteria for a benefit
  */
 export interface BenefitEligibility {
   /** Minimum membership tier required */
-  minimumTier: MembershipTier;
-  /** Minimum membership duration in months */
-  minimumMembershipMonths?: number;
-  /** Specific age requirements */
-  ageRequirement?: {
-    minimum?: number;
-    maximum?: number;
-  };
-  /** Geographic restrictions */
+  minTier: MembershipTier;
+  /** Required membership duration in months */
+  minMembershipMonths?: number;
+  /** Specific member IDs eligible (if restricted) */
+  restrictedToMembers?: string[];
+  /** Geographic restrictions (country codes) */
   geographicRestrictions?: string[];
-  /** Additional custom requirements */
-  customRequirements?: string[];
+  /** Age restrictions */
+  minAge?: number;
+  maxAge?: number;
+  /** Custom eligibility rules */
+  customRules?: Record<string, unknown>;
 }
 
 /**
- * Interface for benefit usage limits
+ * Usage limits for a benefit
  */
 export interface BenefitUsageLimit {
-  /** Maximum number of uses per period */
-  maxUses?: number;
-  /** Period type (daily, weekly, monthly, yearly) */
-  period?: 'daily' | 'weekly' | 'monthly' | 'yearly';
-  /** Maximum monetary value */
-  maxValue?: number;
-  /** Currency code */
-  currency?: string;
+  /** Maximum uses per member */
+  maxUsesPerMember?: number;
+  /** Maximum uses per time period */
+  maxUsesPerPeriod?: number;
+  /** Time period in days */
+  periodDays?: number;
+  /** Cooldown period between uses in days */
+  cooldownDays?: number;
 }
 
 /**
- * Interface for benefit provider information
+ * Provider information for a benefit
  */
 export interface BenefitProvider {
   /** Provider unique identifier */
@@ -98,122 +98,135 @@ export interface BenefitProvider {
 }
 
 /**
- * Main interface for member benefit
+ * Terms and conditions for a benefit
+ */
+export interface BenefitTerms {
+  /** Terms and conditions text */
+  text: string;
+  /** URL to full terms document */
+  url?: string;
+  /** Last updated timestamp */
+  lastUpdated: Date;
+  /** Version number */
+  version: string;
+}
+
+/**
+ * Main member benefit interface
  */
 export interface MemberBenefit {
-  /** Unique identifier for the benefit */
+  /** Unique benefit identifier */
   id: string;
   /** Benefit title */
   title: string;
-  /** Detailed description of the benefit */
+  /** Short description */
   description: string;
-  /** Short summary for display in lists */
-  shortDescription?: string;
+  /** Detailed description (supports markdown) */
+  detailedDescription?: string;
   /** Benefit category */
   category: BenefitCategory;
-  /** Current status of the benefit */
+  /** Benefit status */
   status: BenefitStatus;
   /** Eligibility criteria */
   eligibility: BenefitEligibility;
   /** Usage limits */
   usageLimit?: BenefitUsageLimit;
-  /** Benefit provider information */
+  /** Benefit provider */
   provider?: BenefitProvider;
+  /** Terms and conditions */
+  terms?: BenefitTerms;
+  /** Benefit value or discount percentage */
+  value?: string;
   /** Icon or image URL */
   imageUrl?: string;
-  /** Icon name for UI rendering */
+  /** Icon name (for icon libraries) */
   iconName?: string;
-  /** Terms and conditions URL */
-  termsUrl?: string;
-  /** How to redeem instructions */
-  redemptionInstructions?: string;
-  /** Redemption URL or code */
-  redemptionUrl?: string;
-  /** Start date of benefit availability */
-  startDate?: Date;
-  /** End date of benefit availability */
-  endDate?: Date;
-  /** Featured flag for highlighting */
-  featured?: boolean;
-  /** Sort order for display */
-  sortOrder?: number;
-  /** Tags for filtering and search */
-  tags?: string[];
+  /** Call-to-action text */
+  ctaText?: string;
+  /** Call-to-action URL */
+  ctaUrl?: string;
+  /** Featured benefit flag */
+  isFeatured?: boolean;
+  /** Display order/priority */
+  displayOrder?: number;
+  /** Valid from date */
+  validFrom?: Date;
+  /** Valid until date */
+  validUntil?: Date;
   /** Created timestamp */
   createdAt: Date;
   /** Last updated timestamp */
   updatedAt: Date;
-}
-
-/**
- * Interface for member benefit usage tracking
- */
-export interface BenefitUsage {
-  /** Unique identifier for the usage record */
-  id: string;
-  /** Member ID */
-  memberId: string;
-  /** Benefit ID */
-  benefitId: string;
-  /** Usage timestamp */
-  usedAt: Date;
-  /** Value of benefit used */
-  valueUsed?: number;
-  /** Currency code */
-  currency?: string;
-  /** Additional usage metadata */
+  /** Additional metadata */
   metadata?: Record<string, unknown>;
 }
 
 /**
- * Interface for member benefit enrollment
+ * Member benefit usage tracking
  */
-export interface BenefitEnrollment {
-  /** Unique identifier for the enrollment */
+export interface MemberBenefitUsage {
+  /** Unique usage record identifier */
   id: string;
-  /** Member ID */
+  /** Member identifier */
   memberId: string;
-  /** Benefit ID */
+  /** Benefit identifier */
+  benefitId: string;
+  /** Usage timestamp */
+  usedAt: Date;
+  /** Usage location/context */
+  location?: string;
+  /** Additional usage details */
+  details?: Record<string, unknown>;
+}
+
+/**
+ * Member benefit enrollment
+ */
+export interface MemberBenefitEnrollment {
+  /** Unique enrollment identifier */
+  id: string;
+  /** Member identifier */
+  memberId: string;
+  /** Benefit identifier */
   benefitId: string;
   /** Enrollment date */
   enrolledAt: Date;
   /** Enrollment status */
-  status: 'active' | 'cancelled' | 'suspended';
-  /** Cancellation date if applicable */
+  status: 'active' | 'cancelled' | 'expired';
+  /** Cancellation date */
   cancelledAt?: Date;
-  /** Notes or comments */
-  notes?: string;
+  /** Expiration date */
+  expiresAt?: Date;
 }
 
 /**
  * Zod schema for benefit eligibility validation
  */
 export const benefitEligibilitySchema = z.object({
-  minimumTier: z.nativeEnum(MembershipTier),
-  minimumMembershipMonths: z.number().min(0).optional(),
-  ageRequirement: z.object({
-    minimum: z.number().min(0).optional(),
-    maximum: z.number().min(0).optional(),
-  }).optional(),
+  minTier: z.nativeEnum(MembershipTier),
+  minMembershipMonths: z.number().min(0).optional(),
+  restrictedToMembers: z.array(z.string()).optional(),
   geographicRestrictions: z.array(z.string()).optional(),
-  customRequirements: z.array(z.string()).optional(),
+  minAge: z.number().min(0).max(150).optional(),
+  maxAge: z.number().min(0).max(150).optional(),
+  customRules: z.record(z.unknown()).optional(),
 });
 
 /**
  * Zod schema for benefit usage limit validation
  */
 export const benefitUsageLimitSchema = z.object({
-  maxUses: z.number().min(1).optional(),
-  period: z.enum(['daily', 'weekly', 'monthly', 'yearly']).optional(),
-  maxValue: z.number().min(0).optional(),
-  currency: z.string().length(3).optional(),
+  maxUsesPerMember: z.number().min(1).optional(),
+  maxUsesPerPeriod: z.number().min(1).optional(),
+  periodDays: z.number().min(1).optional(),
+  cooldownDays: z.number().min(0).optional(),
 });
 
 /**
  * Zod schema for benefit provider validation
  */
 export const benefitProviderSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().min(1),
   name: z.string().min(1),
   logoUrl: z.string().url().optional(),
   website: z.string().url().optional(),
@@ -225,60 +238,70 @@ export const benefitProviderSchema = z.object({
 });
 
 /**
+ * Zod schema for benefit terms validation
+ */
+export const benefitTermsSchema = z.object({
+  text: z.string().min(1),
+  url: z.string().url().optional(),
+  lastUpdated: z.date(),
+  version: z.string().min(1),
+});
+
+/**
  * Zod schema for member benefit validation
  */
 export const memberBenefitSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().min(1),
   title: z.string().min(1).max(200),
-  description: z.string().min(1),
-  shortDescription: z.string().max(500).optional(),
+  description: z.string().min(1).max(500),
+  detailedDescription: z.string().optional(),
   category: z.nativeEnum(BenefitCategory),
   status: z.nativeEnum(BenefitStatus),
   eligibility: benefitEligibilitySchema,
   usageLimit: benefitUsageLimitSchema.optional(),
   provider: benefitProviderSchema.optional(),
+  terms: benefitTermsSchema.optional(),
+  value: z.string().optional(),
   imageUrl: z.string().url().optional(),
   iconName: z.string().optional(),
-  termsUrl: z.string().url().optional(),
-  redemptionInstructions: z.string().optional(),
-  redemptionUrl: z.string().url().optional(),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
-  featured: z.boolean().optional(),
-  sortOrder: z.number().min(0).optional(),
-  tags: z.array(z.string()).optional(),
+  ctaText: z.string().optional(),
+  ctaUrl: z.string().url().optional(),
+  isFeatured: z.boolean().optional(),
+  displayOrder: z.number().min(0).optional(),
+  validFrom: z.date().optional(),
+  validUntil: z.date().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
-});
-
-/**
- * Zod schema for benefit usage validation
- */
-export const benefitUsageSchema = z.object({
-  id: z.string().uuid(),
-  memberId: z.string().uuid(),
-  benefitId: z.string().uuid(),
-  usedAt: z.date(),
-  valueUsed: z.number().min(0).optional(),
-  currency: z.string().length(3).optional(),
   metadata: z.record(z.unknown()).optional(),
 });
 
 /**
- * Zod schema for benefit enrollment validation
+ * Zod schema for member benefit usage validation
  */
-export const benefitEnrollmentSchema = z.object({
-  id: z.string().uuid(),
-  memberId: z.string().uuid(),
-  benefitId: z.string().uuid(),
-  enrolledAt: z.date(),
-  status: z.enum(['active', 'cancelled', 'suspended']),
-  cancelledAt: z.date().optional(),
-  notes: z.string().optional(),
+export const memberBenefitUsageSchema = z.object({
+  id: z.string().min(1),
+  memberId: z.string().min(1),
+  benefitId: z.string().min(1),
+  usedAt: z.date(),
+  location: z.string().optional(),
+  details: z.record(z.unknown()).optional(),
 });
 
 /**
- * Type for creating a new member benefit (without system-generated fields)
+ * Zod schema for member benefit enrollment validation
+ */
+export const memberBenefitEnrollmentSchema = z.object({
+  id: z.string().min(1),
+  memberId: z.string().min(1),
+  benefitId: z.string().min(1),
+  enrolledAt: z.date(),
+  status: z.enum(['active', 'cancelled', 'expired']),
+  cancelledAt: z.date().optional(),
+  expiresAt: z.date().optional(),
+});
+
+/**
+ * Type for creating a new member benefit (omits generated fields)
  */
 export type CreateMemberBenefitInput = Omit<MemberBenefit, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -290,14 +313,13 @@ export type UpdateMemberBenefitInput = Partial<Omit<MemberBenefit, 'id' | 'creat
 };
 
 /**
- * Type for benefit filter criteria
+ * Type for benefit filter options
  */
-export interface BenefitFilterCriteria {
-  category?: BenefitCategory[];
-  status?: BenefitStatus[];
-  membershipTier?: MembershipTier;
-  featured?: boolean;
-  tags?: string[];
+export interface BenefitFilterOptions {
+  categories?: BenefitCategory[];
+  statuses?: BenefitStatus[];
+  tiers?: MembershipTier[];
+  isFeatured?: boolean;
   searchQuery?: string;
 }
 
@@ -305,7 +327,7 @@ export interface BenefitFilterCriteria {
  * Type for benefit sort options
  */
 export interface BenefitSortOptions {
-  field: 'title' | 'category' | 'createdAt' | 'updatedAt' | 'sortOrder';
+  field: 'title' | 'category' | 'displayOrder' | 'createdAt' | 'updatedAt';
   direction: 'asc' | 'desc';
 }
 
@@ -323,22 +345,22 @@ export interface PaginatedBenefits {
 /**
  * Helper type for benefit category labels
  */
-export const BENEFIT_CATEGORY_LABELS: Record<BenefitCategory, string> = {
+export const BenefitCategoryLabels: Record<BenefitCategory, string> = {
   [BenefitCategory.HEALTH]: 'Health',
+  [BenefitCategory.FITNESS]: 'Fitness',
   [BenefitCategory.WELLNESS]: 'Wellness',
   [BenefitCategory.FINANCIAL]: 'Financial',
   [BenefitCategory.EDUCATION]: 'Education',
-  [BenefitCategory.TRAVEL]: 'Travel',
   [BenefitCategory.ENTERTAINMENT]: 'Entertainment',
+  [BenefitCategory.TRAVEL]: 'Travel',
   [BenefitCategory.SHOPPING]: 'Shopping',
-  [BenefitCategory.INSURANCE]: 'Insurance',
   [BenefitCategory.OTHER]: 'Other',
 };
 
 /**
  * Helper type for membership tier labels
  */
-export const MEMBERSHIP_TIER_LABELS: Record<MembershipTier, string> = {
+export const MembershipTierLabels: Record<MembershipTier, string> = {
   [MembershipTier.BASIC]: 'Basic',
   [MembershipTier.SILVER]: 'Silver',
   [MembershipTier.GOLD]: 'Gold',
@@ -348,7 +370,7 @@ export const MEMBERSHIP_TIER_LABELS: Record<MembershipTier, string> = {
 /**
  * Helper type for benefit status labels
  */
-export const BENEFIT_STATUS_LABELS: Record<BenefitStatus, string> = {
+export const BenefitStatusLabels: Record<BenefitStatus, string> = {
   [BenefitStatus.ACTIVE]: 'Active',
   [BenefitStatus.INACTIVE]: 'Inactive',
   [BenefitStatus.COMING_SOON]: 'Coming Soon',
