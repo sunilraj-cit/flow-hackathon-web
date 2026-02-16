@@ -4,6 +4,7 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
+import * as path from 'path';
 
 /**
  * Props for MemberBenefitsStack
@@ -12,7 +13,7 @@ export interface MemberBenefitsStackProps extends cdk.StackProps {
   /**
    * Environment name (e.g., 'dev', 'staging', 'prod')
    */
-  readonly environment: string;
+  readonly environment?: string;
 
   /**
    * Lambda function timeout in seconds
@@ -27,7 +28,7 @@ export interface MemberBenefitsStackProps extends cdk.StackProps {
   readonly lambdaMemorySize?: number;
 
   /**
-   * CloudWatch log retention period in days
+   * Log retention period in days
    * @default 7
    */
   readonly logRetentionDays?: logs.RetentionDays;
@@ -44,7 +45,7 @@ export interface MemberBenefitsStackProps extends cdk.StackProps {
  * 
  * This stack provisions:
  * - Lambda function for member benefits processing
- * - API Gateway REST API with Lambda integration
+ * - API Gateway REST API for HTTP access
  * - IAM roles and policies
  * - CloudWatch log groups
  * 
@@ -53,7 +54,7 @@ export interface MemberBenefitsStackProps extends cdk.StackProps {
  * new MemberBenefitsStack(app, 'MemberBenefitsStack', {
  *   environment: 'prod',
  *   lambdaTimeout: 30,
- *   lambdaMemorySize: 512,
+ *   lambdaMemorySize: 512
  * });
  * ```
  */
@@ -78,18 +79,16 @@ export class MemberBenefitsStack extends cdk.Stack {
    */
   public readonly apiLogGroup?: logs.LogGroup;
 
-  constructor(scope: Construct, id: string, props: MemberBenefitsStackProps) {
+  constructor(scope: Construct, id: string, props?: MemberBenefitsStackProps) {
     super(scope, id, props);
 
-    const {
-      environment,
-      lambdaTimeout = 30,
-      lambdaMemorySize = 512,
-      logRetentionDays = logs.RetentionDays.ONE_WEEK,
-      enableApiLogging = true,
-    } = props;
+    const environment = props?.environment || 'dev';
+    const lambdaTimeout = props?.lambdaTimeout || 30;
+    const lambdaMemorySize = props?.lambdaMemorySize || 512;
+    const logRetentionDays = props?.logRetentionDays || logs.RetentionDays.ONE_WEEK;
+    const enableApiLogging = props?.enableApiLogging ?? true;
 
-    // Create CloudWatch log group for Lambda
+    // Create CloudWatch Log Group for Lambda
     this.lambdaLogGroup = new logs.LogGroup(this, 'MemberBenefitsLambdaLogGroup', {
       logGroupName: `/aws/lambda/member-benefits-${environment}`,
       retention: logRetentionDays,
@@ -98,15 +97,18 @@ export class MemberBenefitsStack extends cdk.Stack {
 
     // Create IAM role for Lambda function
     const lambdaRole = new iam.Role(this, 'MemberBenefitsLambdaRole', {
-      roleName: `member-benefits-lambda-role-${environment}`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       description: 'IAM role for Member Benefits Lambda function',
+      roleName: `member-benefits-lambda-role-${environment}`,
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
       ],
     });
 
-    // Add CloudWatch Logs permissions
+    // Grant CloudWatch Logs permissions
+    this.lambdaLogGroup.grantWrite(lambdaRole);
+
+    // Add custom policies for member benefits operations
     lambdaRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
@@ -121,24 +123,24 @@ export class MemberBenefitsStack extends cdk.Stack {
 
     // Create Lambda function
     this.memberBenefitsFunction = new lambda.Function(this, 'MemberBenefitsFunction', {
-      functionName: `member-benefits-${environment}`,
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
-      code: lambda.Code.fromAsset('src/lambda/memberBenefits'),
-      role: lambdaRole,
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../../lambda/memberBenefits')),
+      functionName: `member-benefits-${environment}`,
+      description: 'Lambda function for processing member benefits requests',
       timeout: cdk.Duration.seconds(lambdaTimeout),
       memorySize: lambdaMemorySize,
+      role: lambdaRole,
       environment: {
         ENVIRONMENT: environment,
         LOG_LEVEL: environment === 'prod' ? 'INFO' : 'DEBUG',
         NODE_ENV: environment === 'prod' ? 'production' : 'development',
       },
       logGroup: this.lambdaLogGroup,
-      description: 'Lambda function for processing member benefits requests',
       tracing: lambda.Tracing.ACTIVE,
     });
 
-    // Create API Gateway log group if logging is enabled
+    // Create API Gateway access log group if enabled
     if (enableApiLogging) {
       this.apiLogGroup = new logs.LogGroup(this, 'MemberBenefitsApiLogGroup', {
         logGroupName: `/aws/apigateway/member-benefits-${environment}`,
@@ -153,28 +155,24 @@ export class MemberBenefitsStack extends cdk.Stack {
       description: 'API Gateway for Member Benefits service',
       deployOptions: {
         stageName: environment,
-        throttlingRateLimit: 100,
-        throttlingBurstLimit: 200,
-        metricsEnabled: true,
         loggingLevel: apigateway.MethodLoggingLevel.INFO,
         dataTraceEnabled: environment !== 'prod',
+        metricsEnabled: true,
         tracingEnabled: true,
         accessLogDestination: this.apiLogGroup
           ? new apigateway.LogGroupLogDestination(this.apiLogGroup)
           : undefined,
-        accessLogFormat: this.apiLogGroup
-          ? apigateway.AccessLogFormat.jsonWithStandardFields({
-              caller: true,
-              httpMethod: true,
-              ip: true,
-              protocol: true,
-              requestTime: true,
-              resourcePath: true,
-              responseLength: true,
-              status: true,
-              user: true,
-            })
-          : undefined,
+        accessLogFormat: apigateway.AccessLogFormat.jsonWithStandardFields({
+          caller: true,
+          httpMethod: true,
+          ip: true,
+          protocol: true,
+          requestTime: true,
+          resourcePath: true,
+          responseLength: true,
+          status: true,
+          user: true,
+        }),
       },
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
@@ -217,7 +215,6 @@ export class MemberBenefitsStack extends cdk.Stack {
           },
         },
       ],
-      apiKeyRequired: false,
     });
 
     // POST /benefits - Create new benefit
@@ -230,7 +227,6 @@ export class MemberBenefitsStack extends cdk.Stack {
           },
         },
       ],
-      apiKeyRequired: false,
     });
 
     // Create /benefits/{id} resource
@@ -246,7 +242,6 @@ export class MemberBenefitsStack extends cdk.Stack {
           },
         },
       ],
-      apiKeyRequired: false,
     });
 
     // PUT /benefits/{id} - Update benefit
@@ -259,7 +254,6 @@ export class MemberBenefitsStack extends cdk.Stack {
           },
         },
       ],
-      apiKeyRequired: false,
     });
 
     // DELETE /benefits/{id} - Delete benefit
@@ -272,13 +266,12 @@ export class MemberBenefitsStack extends cdk.Stack {
           },
         },
       ],
-      apiKeyRequired: false,
     });
 
-    // CloudFormation outputs
+    // Add CloudFormation outputs
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: this.api.url,
-      description: 'Member Benefits API Gateway URL',
+      description: 'Member Benefits API URL',
       exportName: `member-benefits-api-url-${environment}`,
     });
 
@@ -304,7 +297,5 @@ export class MemberBenefitsStack extends cdk.Stack {
     cdk.Tags.of(this).add('Project', 'MemberBenefits');
     cdk.Tags.of(this).add('Environment', environment);
     cdk.Tags.of(this).add('ManagedBy', 'CDK');
-    cdk.Tags.of(this).add('Ticket', 'PM-106');
   }
 }
-```
