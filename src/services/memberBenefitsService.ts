@@ -1,23 +1,21 @@
 import { DateTime } from 'luxon';
 
 /**
- * Represents a member benefit with all its details
+ * Represents a member benefit item
  */
 export interface MemberBenefit {
   id: string;
   title: string;
   description: string;
   category: BenefitCategory;
-  tier: MembershipTier;
   value?: string;
   icon?: string;
   isActive: boolean;
-  expiresAt?: string;
+  eligibilityRequirements?: string[];
+  expirationDate?: string;
   termsAndConditions?: string;
   redemptionUrl?: string;
-  redemptionCode?: string;
-  usageLimit?: number;
-  usageCount?: number;
+  displayOrder: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -27,318 +25,274 @@ export interface MemberBenefit {
  */
 export enum BenefitCategory {
   HEALTH = 'health',
-  FITNESS = 'fitness',
   WELLNESS = 'wellness',
-  NUTRITION = 'nutrition',
-  ENTERTAINMENT = 'entertainment',
+  FINANCIAL = 'financial',
+  LIFESTYLE = 'lifestyle',
   TRAVEL = 'travel',
-  SHOPPING = 'shopping',
   EDUCATION = 'education',
+  ENTERTAINMENT = 'entertainment',
   OTHER = 'other',
 }
 
 /**
- * Membership tier levels
+ * Formatted member benefit for display
  */
-export enum MembershipTier {
-  BASIC = 'basic',
-  SILVER = 'silver',
-  GOLD = 'gold',
-  PLATINUM = 'platinum',
-}
-
-/**
- * Formatted benefit for display purposes
- */
-export interface FormattedBenefit extends MemberBenefit {
-  isExpired: boolean;
+export interface FormattedMemberBenefit extends MemberBenefit {
+  formattedExpirationDate?: string;
   isExpiringSoon: boolean;
+  isExpired: boolean;
   daysUntilExpiration?: number;
-  usagePercentage?: number;
-  canRedeem: boolean;
 }
 
 /**
- * Filter options for retrieving benefits
+ * Filter options for member benefits
  */
 export interface BenefitFilterOptions {
   category?: BenefitCategory;
-  tier?: MembershipTier;
   isActive?: boolean;
   includeExpired?: boolean;
 }
 
 /**
- * Service class for managing member benefits
+ * Service class for managing member benefits data
  */
 class MemberBenefitsService {
-  private readonly EXPIRING_SOON_DAYS = 30;
+  private readonly EXPIRING_SOON_THRESHOLD_DAYS = 30;
 
   /**
-   * Retrieves all member benefits with optional filtering
-   * @param filters - Optional filter criteria
-   * @returns Promise resolving to array of formatted benefits
+   * Fetches all member benefits
+   * @returns Promise resolving to array of member benefits
    */
-  async getBenefits(filters?: BenefitFilterOptions): Promise<FormattedBenefit[]> {
+  async getAllBenefits(): Promise<MemberBenefit[]> {
     try {
-      // TODO: Replace with actual DynamoDB query when infrastructure is ready
-      const rawBenefits = await this.fetchBenefitsFromDataSource(filters);
+      // TODO: Replace with actual DynamoDB or API call
+      // Example: const response = await dynamoDBClient.scan({ TableName: 'MemberBenefits' });
       
-      return rawBenefits
-        .filter(benefit => this.applyFilters(benefit, filters))
-        .map(benefit => this.formatBenefit(benefit))
-        .sort((a, b) => this.sortBenefits(a, b));
+      // Mock data for development
+      const mockBenefits: MemberBenefit[] = [
+        {
+          id: '1',
+          title: 'Health Insurance Discount',
+          description: 'Get up to 20% discount on health insurance premiums',
+          category: BenefitCategory.HEALTH,
+          value: '20% off',
+          icon: 'heart',
+          isActive: true,
+          eligibilityRequirements: ['Active membership', 'Minimum 6 months tenure'],
+          expirationDate: DateTime.now().plus({ months: 3 }).toISO() || undefined,
+          displayOrder: 1,
+          createdAt: DateTime.now().minus({ months: 6 }).toISO() || '',
+          updatedAt: DateTime.now().toISO() || '',
+        },
+        {
+          id: '2',
+          title: 'Gym Membership',
+          description: 'Free access to partner gyms nationwide',
+          category: BenefitCategory.WELLNESS,
+          value: 'Free',
+          icon: 'dumbbell',
+          isActive: true,
+          eligibilityRequirements: ['Active membership'],
+          displayOrder: 2,
+          createdAt: DateTime.now().minus({ months: 6 }).toISO() || '',
+          updatedAt: DateTime.now().toISO() || '',
+        },
+        {
+          id: '3',
+          title: 'Financial Planning Consultation',
+          description: 'One free consultation with certified financial planners',
+          category: BenefitCategory.FINANCIAL,
+          value: '$200 value',
+          icon: 'dollar-sign',
+          isActive: true,
+          eligibilityRequirements: ['Active membership', 'First-time users only'],
+          displayOrder: 3,
+          createdAt: DateTime.now().minus({ months: 6 }).toISO() || '',
+          updatedAt: DateTime.now().toISO() || '',
+        },
+      ];
+
+      return mockBenefits;
     } catch (error) {
       console.error('Error fetching member benefits:', error);
-      throw new Error('Failed to retrieve member benefits');
+      throw new Error('Failed to fetch member benefits');
     }
   }
 
   /**
-   * Retrieves a single benefit by ID
-   * @param benefitId - The unique identifier of the benefit
-   * @returns Promise resolving to formatted benefit or null if not found
+   * Fetches a single member benefit by ID
+   * @param benefitId - The ID of the benefit to fetch
+   * @returns Promise resolving to a member benefit or null
    */
-  async getBenefitById(benefitId: string): Promise<FormattedBenefit | null> {
+  async getBenefitById(benefitId: string): Promise<MemberBenefit | null> {
     try {
-      // TODO: Replace with actual DynamoDB query
-      const benefit = await this.fetchBenefitByIdFromDataSource(benefitId);
+      // TODO: Replace with actual DynamoDB or API call
+      // Example: const response = await dynamoDBClient.get({ TableName: 'MemberBenefits', Key: { id: benefitId } });
       
-      if (!benefit) {
-        return null;
-      }
-
-      return this.formatBenefit(benefit);
+      const allBenefits = await this.getAllBenefits();
+      return allBenefits.find(benefit => benefit.id === benefitId) || null;
     } catch (error) {
       console.error(`Error fetching benefit ${benefitId}:`, error);
-      throw new Error('Failed to retrieve benefit');
+      throw new Error(`Failed to fetch benefit with ID: ${benefitId}`);
     }
   }
 
   /**
-   * Retrieves benefits by membership tier
-   * @param tier - The membership tier
-   * @returns Promise resolving to array of formatted benefits
+   * Fetches member benefits with optional filtering
+   * @param filters - Optional filter criteria
+   * @returns Promise resolving to filtered array of member benefits
    */
-  async getBenefitsByTier(tier: MembershipTier): Promise<FormattedBenefit[]> {
-    return this.getBenefits({ tier, isActive: true });
+  async getBenefitsWithFilters(filters?: BenefitFilterOptions): Promise<MemberBenefit[]> {
+    try {
+      let benefits = await this.getAllBenefits();
+
+      if (filters?.category) {
+        benefits = benefits.filter(benefit => benefit.category === filters.category);
+      }
+
+      if (filters?.isActive !== undefined) {
+        benefits = benefits.filter(benefit => benefit.isActive === filters.isActive);
+      }
+
+      if (!filters?.includeExpired) {
+        benefits = benefits.filter(benefit => {
+          if (!benefit.expirationDate) return true;
+          return DateTime.fromISO(benefit.expirationDate) > DateTime.now();
+        });
+      }
+
+      return benefits;
+    } catch (error) {
+      console.error('Error fetching filtered benefits:', error);
+      throw new Error('Failed to fetch filtered member benefits');
+    }
   }
 
   /**
-   * Retrieves benefits by category
-   * @param category - The benefit category
-   * @returns Promise resolving to array of formatted benefits
+   * Formats member benefits with additional computed properties
+   * @param benefits - Array of member benefits to format
+   * @returns Array of formatted member benefits
    */
-  async getBenefitsByCategory(category: BenefitCategory): Promise<FormattedBenefit[]> {
-    return this.getBenefits({ category, isActive: true });
+  formatBenefits(benefits: MemberBenefit[]): FormattedMemberBenefit[] {
+    return benefits.map(benefit => this.formatBenefit(benefit));
   }
 
   /**
-   * Retrieves active benefits that are expiring soon
-   * @returns Promise resolving to array of formatted benefits
+   * Formats a single member benefit with additional computed properties
+   * @param benefit - Member benefit to format
+   * @returns Formatted member benefit
    */
-  async getExpiringSoonBenefits(): Promise<FormattedBenefit[]> {
-    const allBenefits = await this.getBenefits({ isActive: true });
-    return allBenefits.filter(benefit => benefit.isExpiringSoon && !benefit.isExpired);
-  }
-
-  /**
-   * Formats a raw benefit with additional computed properties
-   * @param benefit - Raw benefit data
-   * @returns Formatted benefit with computed fields
-   */
-  private formatBenefit(benefit: MemberBenefit): FormattedBenefit {
+  formatBenefit(benefit: MemberBenefit): FormattedMemberBenefit {
     const now = DateTime.now();
-    const expiresAt = benefit.expiresAt ? DateTime.fromISO(benefit.expiresAt) : null;
+    let formattedExpirationDate: string | undefined;
+    let isExpiringSoon = false;
+    let isExpired = false;
+    let daysUntilExpiration: number | undefined;
 
-    const isExpired = expiresAt ? expiresAt < now : false;
-    const daysUntilExpiration = expiresAt ? Math.floor(expiresAt.diff(now, 'days').days) : undefined;
-    const isExpiringSoon = daysUntilExpiration !== undefined && 
-                           daysUntilExpiration > 0 && 
-                           daysUntilExpiration <= this.EXPIRING_SOON_DAYS;
-
-    const usagePercentage = benefit.usageLimit && benefit.usageCount !== undefined
-      ? (benefit.usageCount / benefit.usageLimit) * 100
-      : undefined;
-
-    const hasUsageRemaining = benefit.usageLimit === undefined || 
-                              (benefit.usageCount !== undefined && benefit.usageCount < benefit.usageLimit);
-
-    const canRedeem = benefit.isActive && !isExpired && hasUsageRemaining;
+    if (benefit.expirationDate) {
+      const expirationDateTime = DateTime.fromISO(benefit.expirationDate);
+      formattedExpirationDate = expirationDateTime.toLocaleString(DateTime.DATE_MED);
+      
+      const diff = expirationDateTime.diff(now, 'days').days;
+      daysUntilExpiration = Math.floor(diff);
+      
+      isExpired = diff < 0;
+      isExpiringSoon = !isExpired && diff <= this.EXPIRING_SOON_THRESHOLD_DAYS;
+    }
 
     return {
       ...benefit,
-      isExpired,
+      formattedExpirationDate,
       isExpiringSoon,
+      isExpired,
       daysUntilExpiration,
-      usagePercentage,
-      canRedeem,
     };
   }
 
   /**
-   * Applies filter criteria to a benefit
-   * @param benefit - The benefit to filter
-   * @param filters - Filter options
-   * @returns True if benefit matches filters
+   * Groups benefits by category
+   * @param benefits - Array of member benefits to group
+   * @returns Record of benefits grouped by category
    */
-  private applyFilters(benefit: MemberBenefit, filters?: BenefitFilterOptions): boolean {
-    if (!filters) {
-      return true;
-    }
+  groupBenefitsByCategory(benefits: MemberBenefit[]): Record<BenefitCategory, MemberBenefit[]> {
+    const grouped = {} as Record<BenefitCategory, MemberBenefit[]>;
 
-    if (filters.category && benefit.category !== filters.category) {
-      return false;
-    }
+    Object.values(BenefitCategory).forEach(category => {
+      grouped[category] = [];
+    });
 
-    if (filters.tier && benefit.tier !== filters.tier) {
-      return false;
-    }
-
-    if (filters.isActive !== undefined && benefit.isActive !== filters.isActive) {
-      return false;
-    }
-
-    if (!filters.includeExpired && benefit.expiresAt) {
-      const expiresAt = DateTime.fromISO(benefit.expiresAt);
-      if (expiresAt < DateTime.now()) {
-        return false;
+    benefits.forEach(benefit => {
+      if (grouped[benefit.category]) {
+        grouped[benefit.category].push(benefit);
       }
-    }
+    });
 
-    return true;
+    return grouped;
   }
 
   /**
-   * Sorts benefits by priority (active, expiring soon, then by creation date)
-   * @param a - First benefit
-   * @param b - Second benefit
-   * @returns Sort comparison result
+   * Sorts benefits by display order
+   * @param benefits - Array of member benefits to sort
+   * @returns Sorted array of member benefits
    */
-  private sortBenefits(a: FormattedBenefit, b: FormattedBenefit): number {
-    // Active benefits first
-    if (a.isActive !== b.isActive) {
-      return a.isActive ? -1 : 1;
-    }
-
-    // Expiring soon benefits next
-    if (a.isExpiringSoon !== b.isExpiringSoon) {
-      return a.isExpiringSoon ? -1 : 1;
-    }
-
-    // Sort by days until expiration (ascending)
-    if (a.daysUntilExpiration !== undefined && b.daysUntilExpiration !== undefined) {
-      return a.daysUntilExpiration - b.daysUntilExpiration;
-    }
-
-    // Finally, sort by creation date (newest first)
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  sortBenefitsByDisplayOrder(benefits: MemberBenefit[]): MemberBenefit[] {
+    return [...benefits].sort((a, b) => a.displayOrder - b.displayOrder);
   }
 
   /**
-   * Fetches benefits from data source (placeholder for DynamoDB integration)
-   * @param filters - Optional filter criteria
-   * @returns Promise resolving to array of benefits
+   * Gets active benefits sorted by display order
+   * @returns Promise resolving to sorted array of active benefits
    */
-  private async fetchBenefitsFromDataSource(filters?: BenefitFilterOptions): Promise<MemberBenefit[]> {
-    // TODO: Implement actual DynamoDB query
-    // This is mock data for development purposes
-    return this.getMockBenefits();
+  async getActiveBenefitsSorted(): Promise<FormattedMemberBenefit[]> {
+    try {
+      const benefits = await this.getBenefitsWithFilters({ 
+        isActive: true, 
+        includeExpired: false 
+      });
+      const sorted = this.sortBenefitsByDisplayOrder(benefits);
+      return this.formatBenefits(sorted);
+    } catch (error) {
+      console.error('Error fetching active benefits:', error);
+      throw new Error('Failed to fetch active member benefits');
+    }
   }
 
   /**
-   * Fetches a single benefit by ID from data source (placeholder for DynamoDB integration)
-   * @param benefitId - The benefit ID
-   * @returns Promise resolving to benefit or null
+   * Gets benefits expiring soon
+   * @returns Promise resolving to array of benefits expiring soon
    */
-  private async fetchBenefitByIdFromDataSource(benefitId: string): Promise<MemberBenefit | null> {
-    // TODO: Implement actual DynamoDB query
-    const benefits = await this.getMockBenefits();
-    return benefits.find(b => b.id === benefitId) || null;
+  async getExpiringSoonBenefits(): Promise<FormattedMemberBenefit[]> {
+    try {
+      const benefits = await this.getBenefitsWithFilters({ 
+        isActive: true, 
+        includeExpired: false 
+      });
+      const formatted = this.formatBenefits(benefits);
+      return formatted.filter(benefit => benefit.isExpiringSoon);
+    } catch (error) {
+      console.error('Error fetching expiring benefits:', error);
+      throw new Error('Failed to fetch expiring member benefits');
+    }
   }
 
   /**
-   * Returns mock benefits data for development
-   * @returns Array of mock benefits
+   * Gets benefits by category
+   * @param category - The category to filter by
+   * @returns Promise resolving to array of benefits in the specified category
    */
-  private getMockBenefits(): MemberBenefit[] {
-    const now = DateTime.now();
-    
-    return [
-      {
-        id: '1',
-        title: 'Free Gym Access',
-        description: 'Access to over 500 partner gyms nationwide',
-        category: BenefitCategory.FITNESS,
-        tier: MembershipTier.GOLD,
-        value: '$50/month value',
-        icon: 'dumbbell',
-        isActive: true,
-        expiresAt: now.plus({ months: 6 }).toISO(),
-        termsAndConditions: 'Valid at participating locations only',
-        redemptionUrl: 'https://example.com/gym-access',
-        createdAt: now.minus({ months: 2 }).toISO(),
-        updatedAt: now.minus({ days: 5 }).toISO(),
-      },
-      {
-        id: '2',
-        title: 'Nutrition Consultation',
-        description: 'One-on-one consultation with certified nutritionist',
-        category: BenefitCategory.NUTRITION,
-        tier: MembershipTier.PLATINUM,
-        value: '$150 value',
-        icon: 'apple',
-        isActive: true,
-        expiresAt: now.plus({ days: 15 }).toISO(),
-        usageLimit: 3,
-        usageCount: 1,
-        redemptionCode: 'NUTRI2024',
-        createdAt: now.minus({ months: 1 }).toISO(),
-        updatedAt: now.minus({ days: 2 }).toISO(),
-      },
-      {
-        id: '3',
-        title: 'Wellness App Premium',
-        description: 'Premium subscription to top wellness tracking app',
-        category: BenefitCategory.WELLNESS,
-        tier: MembershipTier.SILVER,
-        value: '$9.99/month value',
-        icon: 'heart',
-        isActive: true,
-        expiresAt: now.plus({ months: 12 }).toISO(),
-        redemptionUrl: 'https://example.com/wellness-app',
-        createdAt: now.minus({ months: 3 }).toISO(),
-        updatedAt: now.minus({ days: 10 }).toISO(),
-      },
-      {
-        id: '4',
-        title: 'Health Screening',
-        description: 'Annual comprehensive health screening',
-        category: BenefitCategory.HEALTH,
-        tier: MembershipTier.GOLD,
-        value: '$200 value',
-        icon: 'stethoscope',
-        isActive: true,
-        usageLimit: 1,
-        usageCount: 0,
-        createdAt: now.minus({ months: 1 }).toISO(),
-        updatedAt: now.minus({ days: 1 }).toISO(),
-      },
-      {
-        id: '5',
-        title: 'Travel Insurance',
-        description: 'Complimentary travel insurance for trips',
-        category: BenefitCategory.TRAVEL,
-        tier: MembershipTier.PLATINUM,
-        value: '$100 per trip',
-        icon: 'plane',
-        isActive: true,
-        expiresAt: now.plus({ months: 8 }).toISO(),
-        termsAndConditions: 'Coverage up to $10,000 per trip',
-        createdAt: now.minus({ months: 4 }).toISO(),
-        updatedAt: now.minus({ days: 7 }).toISO(),
-      },
-    ];
+  async getBenefitsByCategory(category: BenefitCategory): Promise<FormattedMemberBenefit[]> {
+    try {
+      const benefits = await this.getBenefitsWithFilters({ 
+        category, 
+        isActive: true, 
+        includeExpired: false 
+      });
+      const sorted = this.sortBenefitsByDisplayOrder(benefits);
+      return this.formatBenefits(sorted);
+    } catch (error) {
+      console.error(`Error fetching benefits for category ${category}:`, error);
+      throw new Error(`Failed to fetch benefits for category: ${category}`);
+    }
   }
 }
 
@@ -347,3 +301,4 @@ export const memberBenefitsService = new MemberBenefitsService();
 
 // Export class for testing purposes
 export { MemberBenefitsService };
+```
