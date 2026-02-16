@@ -1,143 +1,121 @@
+/**
+ * Member Benefits Models
+ * 
+ * TypeScript interfaces and types for member benefits data structures.
+ * Used for request/response models in the member benefits feature.
+ * 
+ * @module models/memberBenefits
+ */
+
 import { z } from 'zod';
 
 /**
- * Enum for benefit types
+ * Benefit category enumeration
  */
-export enum BenefitType {
-  DISCOUNT = 'DISCOUNT',
-  ACCESS = 'ACCESS',
-  REWARD = 'REWARD',
-  SERVICE = 'SERVICE',
-  PERK = 'PERK',
+export enum BenefitCategory {
+  HEALTH = 'health',
+  FITNESS = 'fitness',
+  WELLNESS = 'wellness',
+  FINANCIAL = 'financial',
+  ENTERTAINMENT = 'entertainment',
+  TRAVEL = 'travel',
+  EDUCATION = 'education',
+  OTHER = 'other',
 }
 
 /**
- * Enum for benefit status
+ * Benefit status enumeration
  */
 export enum BenefitStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  EXPIRED = 'EXPIRED',
-  COMING_SOON = 'COMING_SOON',
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  COMING_SOON = 'coming_soon',
+  EXPIRED = 'expired',
 }
 
 /**
- * Enum for member tier levels
+ * Member tier levels
  */
 export enum MemberTier {
-  BASIC = 'BASIC',
-  SILVER = 'SILVER',
-  GOLD = 'GOLD',
-  PLATINUM = 'PLATINUM',
+  BASIC = 'basic',
+  SILVER = 'silver',
+  GOLD = 'gold',
+  PLATINUM = 'platinum',
 }
 
 /**
- * Interface for benefit category
- */
-export interface BenefitCategory {
-  id: string;
-  name: string;
-  description?: string;
-  icon?: string;
-  order: number;
-}
-
-/**
- * Interface for benefit provider
- */
-export interface BenefitProvider {
-  id: string;
-  name: string;
-  logo?: string;
-  website?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-}
-
-/**
- * Interface for benefit terms and conditions
- */
-export interface BenefitTerms {
-  description: string;
-  restrictions?: string[];
-  expirationDate?: string;
-  redemptionInstructions?: string;
-  termsUrl?: string;
-}
-
-/**
- * Main interface for member benefit
+ * Core member benefit interface
  */
 export interface MemberBenefit {
   id: string;
   title: string;
   description: string;
-  type: BenefitType;
-  status: BenefitStatus;
   category: BenefitCategory;
-  provider?: BenefitProvider;
-  eligibleTiers: MemberTier[];
-  value?: string;
+  status: BenefitStatus;
+  tier: MemberTier[];
   imageUrl?: string;
-  thumbnailUrl?: string;
-  terms?: BenefitTerms;
-  startDate?: string;
-  endDate?: string;
-  featured: boolean;
-  order: number;
-  metadata?: Record<string, unknown>;
+  iconName?: string;
+  value?: string;
+  terms?: string;
+  expiryDate?: string;
+  redemptionUrl?: string;
+  redemptionCode?: string;
+  usageLimit?: number;
+  usageCount?: number;
   createdAt: string;
   updatedAt: string;
 }
 
 /**
- * Interface for member benefit summary (list view)
+ * Member benefit summary for list views
  */
 export interface MemberBenefitSummary {
   id: string;
   title: string;
   description: string;
-  type: BenefitType;
+  category: BenefitCategory;
   status: BenefitStatus;
-  categoryName: string;
-  providerName?: string;
-  thumbnailUrl?: string;
-  featured: boolean;
-  eligibleTiers: MemberTier[];
+  tier: MemberTier[];
+  imageUrl?: string;
+  iconName?: string;
+  value?: string;
 }
 
 /**
- * Interface for benefit usage tracking
+ * Member benefit details for detailed views
  */
-export interface BenefitUsage {
-  benefitId: string;
-  memberId: string;
-  usedAt: string;
-  usageCount: number;
-  metadata?: Record<string, unknown>;
+export interface MemberBenefitDetails extends MemberBenefit {
+  longDescription?: string;
+  features?: string[];
+  howToRedeem?: string[];
+  eligibilityCriteria?: string[];
+  contactInfo?: {
+    email?: string;
+    phone?: string;
+    website?: string;
+  };
+  relatedBenefits?: string[];
 }
 
 /**
- * Request interface for fetching member benefits
+ * Request model for fetching member benefits
  */
 export interface GetMemberBenefitsRequest {
   memberId?: string;
-  memberTier?: MemberTier;
-  type?: BenefitType;
+  category?: BenefitCategory;
   status?: BenefitStatus;
-  categoryId?: string;
-  featured?: boolean;
+  tier?: MemberTier;
   limit?: number;
   offset?: number;
-  sortBy?: 'title' | 'createdAt' | 'order' | 'featured';
+  sortBy?: 'title' | 'category' | 'createdAt' | 'updatedAt';
   sortOrder?: 'asc' | 'desc';
 }
 
 /**
- * Response interface for fetching member benefits
+ * Response model for member benefits list
  */
 export interface GetMemberBenefitsResponse {
-  benefits: MemberBenefit[];
+  benefits: MemberBenefitSummary[];
   total: number;
   limit: number;
   offset: number;
@@ -145,107 +123,176 @@ export interface GetMemberBenefitsResponse {
 }
 
 /**
- * Request interface for creating a member benefit
+ * Request model for fetching a single benefit
+ */
+export interface GetMemberBenefitRequest {
+  benefitId: string;
+  memberId?: string;
+}
+
+/**
+ * Response model for a single benefit
+ */
+export interface GetMemberBenefitResponse {
+  benefit: MemberBenefitDetails;
+}
+
+/**
+ * Request model for creating a new benefit
  */
 export interface CreateMemberBenefitRequest {
   title: string;
   description: string;
-  type: BenefitType;
+  longDescription?: string;
+  category: BenefitCategory;
   status: BenefitStatus;
-  categoryId: string;
-  providerId?: string;
-  eligibleTiers: MemberTier[];
-  value?: string;
+  tier: MemberTier[];
   imageUrl?: string;
-  thumbnailUrl?: string;
-  terms?: BenefitTerms;
-  startDate?: string;
-  endDate?: string;
-  featured?: boolean;
-  order?: number;
-  metadata?: Record<string, unknown>;
+  iconName?: string;
+  value?: string;
+  terms?: string;
+  expiryDate?: string;
+  redemptionUrl?: string;
+  redemptionCode?: string;
+  usageLimit?: number;
+  features?: string[];
+  howToRedeem?: string[];
+  eligibilityCriteria?: string[];
+  contactInfo?: {
+    email?: string;
+    phone?: string;
+    website?: string;
+  };
 }
 
 /**
- * Request interface for updating a member benefit
+ * Response model for creating a benefit
+ */
+export interface CreateMemberBenefitResponse {
+  benefit: MemberBenefitDetails;
+  message: string;
+}
+
+/**
+ * Request model for updating a benefit
  */
 export interface UpdateMemberBenefitRequest {
-  id: string;
+  benefitId: string;
   title?: string;
   description?: string;
-  type?: BenefitType;
+  longDescription?: string;
+  category?: BenefitCategory;
   status?: BenefitStatus;
-  categoryId?: string;
-  providerId?: string;
-  eligibleTiers?: MemberTier[];
-  value?: string;
+  tier?: MemberTier[];
   imageUrl?: string;
-  thumbnailUrl?: string;
-  terms?: BenefitTerms;
-  startDate?: string;
-  endDate?: string;
-  featured?: boolean;
-  order?: number;
-  metadata?: Record<string, unknown>;
+  iconName?: string;
+  value?: string;
+  terms?: string;
+  expiryDate?: string;
+  redemptionUrl?: string;
+  redemptionCode?: string;
+  usageLimit?: number;
+  features?: string[];
+  howToRedeem?: string[];
+  eligibilityCriteria?: string[];
+  contactInfo?: {
+    email?: string;
+    phone?: string;
+    website?: string;
+  };
 }
 
 /**
- * Response interface for single benefit operations
+ * Response model for updating a benefit
  */
-export interface MemberBenefitResponse {
-  benefit: MemberBenefit;
+export interface UpdateMemberBenefitResponse {
+  benefit: MemberBenefitDetails;
+  message: string;
 }
 
 /**
- * Request interface for tracking benefit usage
+ * Request model for deleting a benefit
  */
-export interface TrackBenefitUsageRequest {
+export interface DeleteMemberBenefitRequest {
+  benefitId: string;
+}
+
+/**
+ * Response model for deleting a benefit
+ */
+export interface DeleteMemberBenefitResponse {
+  success: boolean;
+  message: string;
+}
+
+/**
+ * Request model for redeeming a benefit
+ */
+export interface RedeemBenefitRequest {
   benefitId: string;
   memberId: string;
+  redemptionData?: Record<string, unknown>;
+}
+
+/**
+ * Response model for redeeming a benefit
+ */
+export interface RedeemBenefitResponse {
+  success: boolean;
+  message: string;
+  redemptionId?: string;
+  redemptionCode?: string;
+  redemptionUrl?: string;
+}
+
+/**
+ * Member benefit usage tracking
+ */
+export interface BenefitUsage {
+  id: string;
+  benefitId: string;
+  memberId: string;
+  redeemedAt: string;
+  redemptionCode?: string;
+  status: 'pending' | 'completed' | 'cancelled';
   metadata?: Record<string, unknown>;
 }
 
 /**
- * Response interface for benefit usage
+ * Request model for fetching benefit usage history
  */
-export interface BenefitUsageResponse {
-  usage: BenefitUsage;
-  success: boolean;
+export interface GetBenefitUsageRequest {
+  memberId: string;
+  benefitId?: string;
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * Response model for benefit usage history
+ */
+export interface GetBenefitUsageResponse {
+  usage: BenefitUsage[];
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
 }
 
 /**
  * Zod schema for benefit category validation
  */
-export const benefitCategorySchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(1).max(100),
-  description: z.string().max(500).optional(),
-  icon: z.string().optional(),
-  order: z.number().int().min(0),
-});
+export const benefitCategorySchema = z.nativeEnum(BenefitCategory);
 
 /**
- * Zod schema for benefit provider validation
+ * Zod schema for benefit status validation
  */
-export const benefitProviderSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(1).max(200),
-  logo: z.string().url().optional(),
-  website: z.string().url().optional(),
-  contactEmail: z.string().email().optional(),
-  contactPhone: z.string().optional(),
-});
+export const benefitStatusSchema = z.nativeEnum(BenefitStatus);
 
 /**
- * Zod schema for benefit terms validation
+ * Zod schema for member tier validation
  */
-export const benefitTermsSchema = z.object({
-  description: z.string().min(1),
-  restrictions: z.array(z.string()).optional(),
-  expirationDate: z.string().datetime().optional(),
-  redemptionInstructions: z.string().optional(),
-  termsUrl: z.string().url().optional(),
-});
+export const memberTierSchema = z.nativeEnum(MemberTier);
 
 /**
  * Zod schema for member benefit validation
@@ -253,128 +300,100 @@ export const benefitTermsSchema = z.object({
 export const memberBenefitSchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1).max(200),
-  description: z.string().min(1).max(2000),
-  type: z.nativeEnum(BenefitType),
-  status: z.nativeEnum(BenefitStatus),
+  description: z.string().min(1).max(1000),
   category: benefitCategorySchema,
-  provider: benefitProviderSchema.optional(),
-  eligibleTiers: z.array(z.nativeEnum(MemberTier)).min(1),
-  value: z.string().max(100).optional(),
+  status: benefitStatusSchema,
+  tier: z.array(memberTierSchema).min(1),
   imageUrl: z.string().url().optional(),
-  thumbnailUrl: z.string().url().optional(),
-  terms: benefitTermsSchema.optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
-  featured: z.boolean(),
-  order: z.number().int().min(0),
-  metadata: z.record(z.unknown()).optional(),
+  iconName: z.string().optional(),
+  value: z.string().optional(),
+  terms: z.string().optional(),
+  expiryDate: z.string().datetime().optional(),
+  redemptionUrl: z.string().url().optional(),
+  redemptionCode: z.string().optional(),
+  usageLimit: z.number().int().positive().optional(),
+  usageCount: z.number().int().nonnegative().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
 
 /**
- * Zod schema for get member benefits request validation
+ * Zod schema for creating a member benefit
  */
-export const getMemberBenefitsRequestSchema = z.object({
-  memberId: z.string().uuid().optional(),
-  memberTier: z.nativeEnum(MemberTier).optional(),
-  type: z.nativeEnum(BenefitType).optional(),
-  status: z.nativeEnum(BenefitStatus).optional(),
-  categoryId: z.string().uuid().optional(),
-  featured: z.boolean().optional(),
-  limit: z.number().int().min(1).max(100).default(20),
-  offset: z.number().int().min(0).default(0),
-  sortBy: z.enum(['title', 'createdAt', 'order', 'featured']).default('order'),
-  sortOrder: z.enum(['asc', 'desc']).default('asc'),
-});
-
-/**
- * Zod schema for create member benefit request validation
- */
-export const createMemberBenefitRequestSchema = z.object({
+export const createMemberBenefitSchema = z.object({
   title: z.string().min(1).max(200),
-  description: z.string().min(1).max(2000),
-  type: z.nativeEnum(BenefitType),
-  status: z.nativeEnum(BenefitStatus),
-  categoryId: z.string().uuid(),
-  providerId: z.string().uuid().optional(),
-  eligibleTiers: z.array(z.nativeEnum(MemberTier)).min(1),
-  value: z.string().max(100).optional(),
+  description: z.string().min(1).max(1000),
+  longDescription: z.string().optional(),
+  category: benefitCategorySchema,
+  status: benefitStatusSchema,
+  tier: z.array(memberTierSchema).min(1),
   imageUrl: z.string().url().optional(),
-  thumbnailUrl: z.string().url().optional(),
-  terms: benefitTermsSchema.optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
-  featured: z.boolean().default(false),
-  order: z.number().int().min(0).default(0),
-  metadata: z.record(z.unknown()).optional(),
+  iconName: z.string().optional(),
+  value: z.string().optional(),
+  terms: z.string().optional(),
+  expiryDate: z.string().datetime().optional(),
+  redemptionUrl: z.string().url().optional(),
+  redemptionCode: z.string().optional(),
+  usageLimit: z.number().int().positive().optional(),
+  features: z.array(z.string()).optional(),
+  howToRedeem: z.array(z.string()).optional(),
+  eligibilityCriteria: z.array(z.string()).optional(),
+  contactInfo: z.object({
+    email: z.string().email().optional(),
+    phone: z.string().optional(),
+    website: z.string().url().optional(),
+  }).optional(),
 });
 
 /**
- * Zod schema for update member benefit request validation
+ * Zod schema for updating a member benefit
  */
-export const updateMemberBenefitRequestSchema = z.object({
-  id: z.string().uuid(),
-  title: z.string().min(1).max(200).optional(),
-  description: z.string().min(1).max(2000).optional(),
-  type: z.nativeEnum(BenefitType).optional(),
-  status: z.nativeEnum(BenefitStatus).optional(),
-  categoryId: z.string().uuid().optional(),
-  providerId: z.string().uuid().optional(),
-  eligibleTiers: z.array(z.nativeEnum(MemberTier)).min(1).optional(),
-  value: z.string().max(100).optional(),
-  imageUrl: z.string().url().optional(),
-  thumbnailUrl: z.string().url().optional(),
-  terms: benefitTermsSchema.optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
-  featured: z.boolean().optional(),
-  order: z.number().int().min(0).optional(),
-  metadata: z.record(z.unknown()).optional(),
+export const updateMemberBenefitSchema = createMemberBenefitSchema.partial().extend({
+  benefitId: z.string().uuid(),
 });
 
 /**
- * Zod schema for track benefit usage request validation
+ * Zod schema for redeeming a benefit
  */
-export const trackBenefitUsageRequestSchema = z.object({
+export const redeemBenefitSchema = z.object({
   benefitId: z.string().uuid(),
   memberId: z.string().uuid(),
-  metadata: z.record(z.unknown()).optional(),
+  redemptionData: z.record(z.unknown()).optional(),
 });
 
 /**
- * Type guards for runtime type checking
+ * Type guard to check if a value is a valid BenefitCategory
  */
-export const isMemberBenefit = (obj: unknown): obj is MemberBenefit => {
-  return memberBenefitSchema.safeParse(obj).success;
-};
-
-export const isGetMemberBenefitsRequest = (obj: unknown): obj is GetMemberBenefitsRequest => {
-  return getMemberBenefitsRequestSchema.safeParse(obj).success;
-};
-
-export const isCreateMemberBenefitRequest = (obj: unknown): obj is CreateMemberBenefitRequest => {
-  return createMemberBenefitRequestSchema.safeParse(obj).success;
-};
-
-export const isUpdateMemberBenefitRequest = (obj: unknown): obj is UpdateMemberBenefitRequest => {
-  return updateMemberBenefitRequestSchema.safeParse(obj).success;
-};
-
-export const isTrackBenefitUsageRequest = (obj: unknown): obj is TrackBenefitUsageRequest => {
-  return trackBenefitUsageRequestSchema.safeParse(obj).success;
-};
+export function isBenefitCategory(value: unknown): value is BenefitCategory {
+  return Object.values(BenefitCategory).includes(value as BenefitCategory);
+}
 
 /**
- * Utility type for partial member benefit updates
+ * Type guard to check if a value is a valid BenefitStatus
  */
-export type PartialMemberBenefit = Partial<Omit<MemberBenefit, 'id' | 'createdAt' | 'updatedAt'>>;
+export function isBenefitStatus(value: unknown): value is BenefitStatus {
+  return Object.values(BenefitStatus).includes(value as BenefitStatus);
+}
 
 /**
- * Utility type for member benefit filters
+ * Type guard to check if a value is a valid MemberTier
  */
-export type MemberBenefitFilters = Pick<
-  GetMemberBenefitsRequest,
-  'type' | 'status' | 'categoryId' | 'featured' | 'memberTier'
->;
+export function isMemberTier(value: unknown): value is MemberTier {
+  return Object.values(MemberTier).includes(value as MemberTier);
+}
+
+/**
+ * Helper type for partial updates
+ */
+export type PartialMemberBenefit = Partial<MemberBenefit>;
+
+/**
+ * Helper type for benefit filters
+ */
+export type BenefitFilters = Pick<GetMemberBenefitsRequest, 'category' | 'status' | 'tier'>;
+
+/**
+ * Helper type for benefit sorting
+ */
+export type BenefitSort = Pick<GetMemberBenefitsRequest, 'sortBy' | 'sortOrder'>;
 ```
